@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaFleet | Marine Operations Database</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+  <nav class="app-navbar" aria-label="Primary navigation">
+    <a class="brand-mark" href="#dashboard" data-view="dashboard" aria-label="AquaFleet dashboard"><span aria-hidden="true">≈</span></a>
+    <button class="mobile-menu-button" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation"><span aria-hidden="true">☰</span></button>
+    <div class="mobile-brand"><strong>AquaFleet</strong><small>Marine Operations</small></div>
+    <div class="collapse navbar-collapse" id="primary-navigation">
+      <div class="mobile-nav-heading">Navigate</div>
+      <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link active" href="#dashboard" data-view="dashboard" data-tooltip="Dashboard"><span class="nav-icon" aria-hidden="true">⌁</span><span class="nav-text">Dashboard</span></a>
+          </li>
+          <li class="nav-item nav-group">
+            <button class="nav-link" type="button" data-nav-group="master" aria-expanded="false" data-tooltip="Master Data">
+              <span class="nav-icon" aria-hidden="true">◇</span><span class="nav-text">Master Data</span>
+            </button>
+            <ul class="dropdown-menu nav-flyout" data-flyout="master">
+              <li class="flyout-title">Master Data</li>
+              <li><a class="dropdown-item" href="#vessels" data-view="vessels" data-title="Research Vessels">Research Vessels</a></li>
+              <li><a class="dropdown-item" href="#marine-zones" data-view="marine-zones" data-title="Marine Zones">Marine Zones</a></li>
+              <li><a class="dropdown-item" href="#vehicles" data-view="vehicles" data-title="AUV/ROV Vehicles">AUV/ROV Vehicles</a></li>
+              <li><a class="dropdown-item" href="#operators" data-view="operators" data-title="Operators">Operators</a></li>
+              <li><a class="dropdown-item" href="#sensors" data-view="sensors" data-title="Sensors">Sensors</a></li>
+              <li><a class="dropdown-item" href="#battery-packs" data-view="battery-packs" data-title="Battery Packs">Battery Packs</a></li>
+              <li><a class="dropdown-item" href="#offshore-assets" data-view="offshore-assets" data-title="Offshore Assets">Offshore Assets</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item nav-group">
+            <button class="nav-link" type="button" data-nav-group="operations" aria-expanded="false" data-tooltip="Operations">
+              <span class="nav-icon" aria-hidden="true">◎</span><span class="nav-text">Operations</span>
+            </button>
+            <ul class="dropdown-menu nav-flyout" data-flyout="operations">
+              <li class="flyout-title">Operations</li>
+              <li><a class="dropdown-item" href="#expeditions" data-view="expeditions" data-title="Expeditions">Expeditions</a></li>
+              <li><a class="dropdown-item" href="#missions" data-view="missions" data-title="Missions">Missions</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item nav-group">
+            <button class="nav-link" type="button" data-nav-group="assignments" aria-expanded="false" data-tooltip="Assignments">
+              <span class="nav-icon" aria-hidden="true">⊞</span><span class="nav-text">Assignments</span>
+            </button>
+            <ul class="dropdown-menu nav-flyout" data-flyout="assignments">
+              <li class="flyout-title">Assignments</li>
+              <li><a class="dropdown-item" href="#mission-vehicles" data-view="mission-vehicles" data-title="Mission Vehicles">Mission Vehicles</a></li>
+              <li><a class="dropdown-item" href="#mission-operators" data-view="mission-operators" data-title="Mission Operators">Mission Operators</a></li>
+              <li><a class="dropdown-item" href="#vehicle-sensors" data-view="vehicle-sensors" data-title="Vehicle Sensors">Vehicle Sensors</a></li>
+              <li><a class="dropdown-item" href="#vehicle-batteries" data-view="vehicle-batteries" data-title="Vehicle Batteries">Vehicle Batteries</a></li>
+            </ul>
+          </li>
+
+          <li class="nav-item nav-group">
+            <button class="nav-link" type="button" data-nav-group="science" aria-expanded="false" data-tooltip="Scientific Records">
+              <span class="nav-icon" aria-hidden="true">◉</span><span class="nav-text">Scientific Records</span>
+            </button>
+            <ul class="dropdown-menu nav-flyout" data-flyout="science">
+              <li class="flyout-title">Scientific Records</li>
+              <li><a class="dropdown-item" href="#maintenance-records" data-view="maintenance-records" data-title="Maintenance Records">Maintenance Records</a></li>
+              <li><a class="dropdown-item" href="#telemetry-points" data-view="telemetry-points" data-title="Telemetry Points">Telemetry Points</a></li>
+              <li><a class="dropdown-item" href="#samples" data-view="samples" data-title="Samples">Samples</a></li>
+              <li><a class="dropdown-item" href="#sample-aliquots" data-view="sample-aliquots" data-title="Sample Aliquots">Sample Aliquots</a></li>
+              <li><a class="dropdown-item" href="#incidents" data-view="incidents" data-title="Incidents">Incidents</a></li>
+              <li><a class="dropdown-item" href="#inspection-tasks" data-view="inspection-tasks" data-title="Inspection Tasks">Inspection Tasks</a></li>
+            </ul>
+          </li>
+      </ul>
+    </div>
+    <div id="health-indicator" class="health-indicator" aria-live="polite" aria-atomic="true" data-tooltip="System health">
+      <span class="health-dot" aria-hidden="true"></span><span id="health-indicator-text">Checking</span>
+    </div>
+  </nav>
+
+  <div class="workspace-shell">
+  <main id="main-content" class="app-main" tabindex="-1">
+    <header class="page-header">
+      <div>
+        <p class="page-eyebrow mb-1">AquaFleet Command</p>
+        <h1 id="page-title" class="mb-1">Dashboard</h1>
+        <p id="page-subtitle" class="text-secondary mb-0">Shared frontend foundation and system health.</p>
+      </div>
+      <div class="header-tools"><div class="search-foundation" aria-label="Table filter foundation"><span aria-hidden="true">⌕</span><span>Filter foundation</span></div><div id="page-actions" class="page-actions" aria-label="Page actions"></div></div>
+    </header>
+
+    <div id="alert-region" class="alert-region" aria-live="assertive" aria-atomic="true"></div>
+
+    <section class="content-card" aria-labelledby="page-title">
+      <div id="content-panel" class="content-panel" aria-live="polite" aria-busy="false">
+        <div class="state-panel loading-state" role="status">
+          <div class="spinner-border text-primary" aria-hidden="true"></div>
+          <p class="mb-0">Preparing AquaFleet…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <aside id="context-rail" class="context-rail" aria-label="Operational summary"></aside>
+  </div>
+  </div>
+
+  <div
+    class="modal fade"
+    id="app-modal"
+    tabindex="-1"
+    aria-labelledby="app-modal-title"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title fs-5" id="app-modal-title">AquaFleet</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div id="app-modal-body" class="modal-body"></div>
+        <div id="app-modal-footer" class="modal-footer"></div>
+      </div>
+    </div>
+  </div>
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+    defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/resources.js" defer></script>
+  <script src="js/master-data.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>

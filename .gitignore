@@ -1,0 +1,24 @@
+# Environment secrets
+.env
+backend/.env
+
+# Python virtual environment
+venv/
+backend/venv/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# IDE and Claude temporary configuration
+.vscode/
+.idea/
+.claude/
+
+# Test and session files
+cookies.txt
+*.log
+
+# Operating-system files
+.DS_Store
+Thumbs.db
