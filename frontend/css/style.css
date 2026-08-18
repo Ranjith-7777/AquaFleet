@@ -32,3 +32,99 @@
   .rail-progress{margin-top:auto}
   .context-rail>.connection-card{flex:0 0 auto;margin-top:auto}
 }
+
+/* --- Phase 9: authentication gate ------------------------------------------
+   Uses the existing palette tokens only (--af-sidebar navy, --af-coral /
+   --af-pink, --af-aqua, white). The dashboard is hidden rather than removed
+   while the gate is up, so its DOM and the internal flex rules above are
+   untouched. */
+body.auth-gate-active .app-shell{display:none}
+.auth-screen{position:fixed;inset:0;z-index:1080;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);background:var(--af-shell);overflow:auto}
+.auth-screen-checking{grid-template-columns:1fr;place-items:center}
+.auth-checking{display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--af-muted);font-size:13px}
+
+.auth-aside{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:48px;background:linear-gradient(135deg,var(--af-coral),var(--af-rose) 48%,var(--af-pink));color:#fff;overflow:hidden}
+.auth-aside-kicker{margin:0;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.auth-aside-title{max-width:15ch;margin:0;font-size:38px;font-weight:760;letter-spacing:-.035em;line-height:1.1}
+.auth-aside-note{margin:6px 0 0;color:rgba(255,255,255,.82);font-size:12px}
+.auth-aside-wave{position:absolute;right:-40px;top:12%;width:80%;height:170px;opacity:.45;background:repeating-radial-gradient(ellipse at 50% 100%,transparent 0 15px,rgba(255,255,255,.6) 16px 17px,transparent 18px 30px);transform:rotate(-6deg)}
+
+.auth-card{display:flex;flex-direction:column;justify-content:center;gap:26px;padding:48px clamp(28px,6vw,72px);background:var(--af-surface)}
+.auth-brand{display:flex;align-items:center;gap:13px}
+.auth-mark{display:grid;width:46px;height:46px;place-items:center;border-radius:15px;background:linear-gradient(145deg,var(--af-coral),var(--af-pink));color:#fff;font-size:32px;font-weight:900;line-height:1;transform:rotate(-7deg)}
+.auth-brand strong{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.auth-brand small{display:block;color:var(--af-muted);font-size:11px}
+.auth-form{display:flex;max-width:390px;flex-direction:column;gap:15px}
+.auth-title{margin:0;font-size:27px;font-weight:760;letter-spacing:-.035em}
+.auth-subtitle{margin:-8px 0 4px;color:var(--af-muted);font-size:12px}
+.auth-field{display:flex;flex-direction:column;gap:6px}
+.auth-label{color:var(--af-text);font-size:11px;font-weight:750;letter-spacing:.02em}
+.auth-input{height:44px;padding:0 13px;border:1px solid var(--af-border);border-radius:12px;background:#fff;font-size:13px}
+.auth-input:focus{border-color:var(--af-blue);box-shadow:0 0 0 4px rgba(65,111,245,.14);outline:0}
+.auth-password-wrap{position:relative;display:flex}
+.auth-password-wrap .auth-input{width:100%;padding-right:66px}
+.auth-reveal{position:absolute;right:6px;top:50%;padding:6px 9px;border:0;border-radius:9px;background:transparent;color:var(--af-blue);font-size:11px;font-weight:750;transform:translateY(-50%)}
+.auth-reveal:hover{background:#f0f1f5}
+.auth-reveal:focus-visible{outline:2px solid var(--af-blue);outline-offset:2px}
+.auth-error{display:none;margin:0;padding:10px 12px;border-radius:11px;background:#fff5f5;color:#b63c49;font-size:12px;font-weight:650}
+.auth-error.auth-error-visible{display:block}
+.auth-submit{height:44px;margin-top:4px;font-size:13px}
+
+/* Sidebar account control. Trigger shows initials; identity and Log out live
+   in the same flyout pattern the navigation groups already use. */
+.user-control{position:relative;margin-top:auto;margin-bottom:10px}
+.user-trigger{display:grid;width:46px;height:46px;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:15px;background:#20263a;color:#fff;font-size:12px;font-weight:800;letter-spacing:.03em}
+.user-trigger:hover,.user-trigger:focus-visible{background:#2b3350}
+.user-trigger[data-tooltip]::after{position:absolute;left:60px;top:50%;z-index:50;padding:7px 10px;border-radius:8px;background:#171b2d;color:#fff;content:attr(data-tooltip);font-size:12px;font-weight:650;white-space:nowrap;opacity:0;pointer-events:none;transform:translate(7px,-50%);transition:.18s}
+.user-trigger[data-tooltip]:hover::after{opacity:1;transform:translate(0,-50%)}
+.user-open .user-trigger[data-tooltip]::after{display:none}
+.user-flyout{position:absolute;left:60px;bottom:0;z-index:60;display:flex;width:228px;flex-direction:column;gap:11px;padding:14px;border:1px solid var(--af-border);border-radius:16px;background:rgba(255,255,255,.98);box-shadow:0 18px 50px rgba(20,26,48,.2);opacity:0;pointer-events:none;transform:translateX(10px);transition:.2s}
+.user-control.user-open .user-flyout{opacity:1;pointer-events:auto;transform:none}
+.user-details{display:flex;flex-direction:column;gap:2px}
+.user-details strong{color:var(--af-text);font-size:13px;font-weight:760}
+.user-details small{color:var(--af-muted);font-size:11px}
+.user-role{margin-top:6px;padding:4px 8px;border-radius:8px;background:#eef2ff;color:var(--af-blue);font-size:9px;font-weight:800;letter-spacing:.08em;align-self:flex-start}
+.user-logout{width:100%}
+
+@media(max-width:900px){
+  .auth-screen{grid-template-columns:1fr}
+  .auth-aside{display:none}
+  .auth-card{justify-content:flex-start;padding:40px 22px}
+  .auth-form{max-width:none}
+}
+@media(max-width:767.98px){
+  /* The sidebar becomes a 64px top bar, so the account control sits inline
+     and its flyout drops below instead of to the right. */
+  .user-control{margin:0;grid-column:3}
+  .user-trigger{width:42px;height:42px;border-radius:12px}
+  .user-trigger[data-tooltip]::after{display:none}
+  .user-flyout{left:auto;right:0;bottom:auto;top:52px;transform:translateY(-8px)}
+}
+
+/* --- Header search -----------------------------------------------------------
+   The .search-foundation box keeps its existing size, border and radius; only
+   its contents change from decorative spans to a real input plus a clear
+   control. */
+.search-foundation{position:relative;padding-right:4px;color:var(--af-muted);transition:border-color .18s,box-shadow .18s}
+.search-foundation:focus-within{border-color:var(--af-blue);box-shadow:0 0 0 4px rgba(65,111,245,.13)}
+.search-icon{flex:0 0 auto;font-size:14px;line-height:1}
+.search-input{width:100%;min-width:0;height:100%;padding:0;border:0;background:transparent;color:var(--af-text);font-size:12px}
+.search-input::placeholder{color:#a0a4ae}
+.search-input:focus{outline:0}
+/* The type="search" widget draws its own clear button in some browsers; ours
+   is used instead so the accessible name and behaviour are under our control. */
+.search-input::-webkit-search-cancel-button,.search-input::-webkit-search-decoration{-webkit-appearance:none;appearance:none}
+.search-clear{display:grid;width:22px;height:22px;flex:0 0 auto;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--af-muted);font-size:15px;line-height:1}
+.search-clear:hover{background:#f0f1f5;color:var(--af-text)}
+.search-clear:focus-visible{outline:2px solid var(--af-blue);outline-offset:1px}
+.search-clear[hidden]{display:none}
+
+/* "No missions match …" inside the dashboard activity panel. */
+.activity-no-match{display:flex;flex:1 1 auto;flex-direction:column;align-items:flex-start;justify-content:center;padding:18px 4px;color:var(--af-muted);font-size:12px}
+
+@media(max-width:767.98px){
+  /* Restored on mobile - it was previously hidden. It shares the header-tools
+     row with the page actions and shrinks rather than pushing them off-screen. */
+  .search-foundation{display:flex;width:auto;flex:1 1 auto;min-width:0;margin-right:8px}
+  .page-actions{flex:0 0 auto;margin-left:0}
+}
