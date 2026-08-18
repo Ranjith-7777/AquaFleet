@@ -4,12 +4,13 @@ app.py
 Entry point of the AquaFleet backend.
 
 This file is deliberately small. It only:
-  1. creates the Flask application,
-  2. enables CORS so the HTML/JS frontend can call this API,
+  1. creates the Flask application and configures the session cookie,
+  2. enables credentialed CORS for the known frontend origin,
   3. exposes two health-check endpoints:
        GET /api/health           - is Flask itself running?
        GET /api/health/database  - can Flask reach MySQL?
-  4. registers the feature Blueprints that live in the `routes/` package.
+  4. registers the feature Blueprints that live in the `routes/` package,
+  5. enforces authentication for every API route in ONE place.
 
 The actual CRUD endpoints are NOT written here. Each resource gets its own
 module under `routes/` so this file stays readable.
@@ -18,12 +19,14 @@ Run with:
     python app.py
 """
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from mysql.connector import Error as MySQLError
 
+from authentication import guard_request
 from config import Config
 from database import get_db_connection
+from routes.auth import auth_bp
 from routes.battery_packs import battery_packs_bp
 from routes.expeditions import expeditions_bp
 from routes.incidents import incidents_bp
@@ -47,13 +50,41 @@ from routes.vessels import vessels_bp
 # Create the Flask application object.
 app = Flask(__name__)
 
-# Enable Cross-Origin Resource Sharing.
-# The frontend is opened as a file / on a different port, so the browser
-# treats it as a different origin. CORS(app) allows those requests.
-CORS(app)
+# ---------------------------------------------------------------------------
+# Session configuration
+# ---------------------------------------------------------------------------
+# SECRET_KEY signs the session cookie. Without it Flask cannot keep anyone
+# logged in; with a guessable one, anybody could forge a session, which is why
+# the built-in development fallback is refused outside DEBUG.
+app.config["SECRET_KEY"] = Config.SECRET_KEY
+app.config["SESSION_COOKIE_HTTPONLY"] = Config.SESSION_COOKIE_HTTPONLY
+app.config["SESSION_COOKIE_SAMESITE"] = Config.SESSION_COOKIE_SAMESITE
+app.config["SESSION_COOKIE_SECURE"] = Config.SESSION_COOKIE_SECURE
+
+_secret_warning = Config.check_secret_key()
+if _secret_warning:
+    if Config.DEBUG:
+        app.logger.warning("%s", _secret_warning)
+    else:
+        raise RuntimeError(_secret_warning)
+
+# ---------------------------------------------------------------------------
+# Cross-Origin Resource Sharing
+# ---------------------------------------------------------------------------
+# The frontend is served from another port, so the browser treats it as a
+# different origin. Session cookies only travel cross-origin when the server
+# names the exact origin and opts in to credentials - the "*" wildcard is
+# forbidden by the browser once credentials are enabled, and would be unsafe
+# anyway, since any site could then call this API with the user's cookie.
+CORS(
+    app,
+    resources={r"/api/*": {"origins": Config.CORS_ORIGINS}},
+    supports_credentials=True,
+)
 
 # Register the feature Blueprints. Each one already carries its own
 # url_prefix, so no prefix is needed here.
+app.register_blueprint(auth_bp)
 app.register_blueprint(vessels_bp)
 app.register_blueprint(marine_zones_bp)
 app.register_blueprint(vehicles_bp)
@@ -73,6 +104,54 @@ app.register_blueprint(samples_bp)
 app.register_blueprint(sample_aliquots_bp)
 app.register_blueprint(incidents_bp)
 app.register_blueprint(inspection_tasks_bp)
+
+
+# ---------------------------------------------------------------------------
+# Central authentication guard
+# ---------------------------------------------------------------------------
+# Every API route is protected here rather than by decorating 19 blueprints
+# individually. One hook means a new resource module is protected the moment
+# it is registered - there is no per-route step to forget - and the complete
+# list of things that stay public is visible in one place.
+PUBLIC_ENDPOINTS = frozenset({
+    "/api/health",           # is Flask up? used before login by the frontend
+    "/api/health/database",  # is MySQL reachable?
+    "/api/auth/login",       # you cannot be logged in to log in
+    "/api/auth/logout",      # idempotent, and safe to call when logged out
+})
+
+
+@app.before_request
+def require_authentication():
+    """Reject invalid API calls before any route function runs.
+
+    Three categories pass through without a check:
+
+      * OPTIONS - the browser sends CORS preflights without cookies, so
+        answering them with 401 would break every cross-origin request
+        before the real call was ever made.
+      * the public endpoints listed above.
+      * anything outside /api/, such as the root page.
+
+    GET /api/auth/me is intentionally NOT public: it is the endpoint the
+    frontend asks "am I logged in?", and a 401 is the correct answer when the
+    reply is no.
+
+    Everything else is verified against app_user, not merely against the
+    cookie. A signed session proves who logged in; it does not prove the
+    account is still usable. Checking only the session would let an account
+    deactivated a moment ago keep full access until its cookie expired.
+    guard_request() performs one indexed lookup, caches the row on flask.g
+    for the rest of the request, and clears the session on any terminal
+    problem so a stale cookie is rejected exactly once.
+    """
+    if request.method == "OPTIONS":
+        return None
+    if not request.path.startswith("/api/"):
+        return None
+    if request.path in PUBLIC_ENDPOINTS:
+        return None
+    return guard_request()
 
 
 @app.route("/api/health", methods=["GET"])

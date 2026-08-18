@@ -29,10 +29,13 @@ AquaFleet/
 │   ├── app.py              # Flask app + /api/health endpoint
 │   ├── config.py           # Reads settings from environment variables
 │   ├── database.py         # get_db_connection() helper
+│   ├── authentication.py   # session helpers + login guard
+│   ├── create_demo_users.py # LOCAL demo account setup (run by hand)
 │   ├── requirements.txt    # Python dependencies
 │   ├── .env.example        # Template for your local .env
 │   └── routes/
 │       ├── __init__.py     # Blueprint package
+│       ├── auth.py         # login / me / logout
 │       ├── vessels.py      # CRUD for research_vessel
 │       ├── marine_zones.py # CRUD for marine_zone
 │       ├── vehicles.py     # CRUD for auv_rov
@@ -51,9 +54,14 @@ AquaFleet/
 │   ├── css/
 │   │   └── style.css       # Custom styles
 │   └── js/
-│       └── app.js          # Calls GET /api/health
+│       ├── api.js          # HTTP client (credentialed, central 401 hook)
+│       ├── ui.js           # safe DOM + formatting helpers
+│       ├── resources.js    # resource definitions
+│       ├── master-data.js  # CRUD forms
+│       ├── auth.js         # login screen, boot gate, logout
+│       └── app.js          # SPA coordinator
 ├── database/
-│   ├── schema.sql          # 20 tables, constraints and indexes
+│   ├── schema.sql          # 20 domain tables + app_user, constraints, indexes
 │   └── sample_data.sql     # demo rows + validation queries
 ├── .gitignore
 └── README.md
@@ -224,6 +232,235 @@ Expected response (HTTP 200):
 ```
 
 On failure it returns HTTP 500 with `success: false` and a short error message. Credentials are never included in the response.
+
+---
+
+## Phase 9 — Authentication
+
+**Every API below this section requires a logged-in session.** Only the two health endpoints and the login/logout endpoints are public.
+
+### Architecture
+
+User accounts live in MySQL and are verified by Flask. There is no OAuth, no JWT, no third-party identity provider and no token in browser storage — just a database table, a password hash and Flask's signed session cookie.
+
+```
+Browser  --POST /api/auth/login (username + password)-->  Flask
+                                                            |
+                                          SELECT ... FROM app_user WHERE username = %s
+                                                            |
+                                          check_password_hash(stored_hash, password)
+                                                            |
+Browser  <--Set-Cookie: session=<signed>  +  200 profile---  Flask
+   |
+   |  every later request carries the cookie (fetch credentials:"include")
+   v
+Flask before_request  -->  session has user_id?  --no-->  401 Authentication required
+                                  |
+                                 yes
+                                  v
+                           the resource route runs unchanged
+```
+
+Three properties worth naming:
+
+- **The cookie is signed, not encrypted.** The browser can read it but cannot alter it without invalidating the `SECRET_KEY` signature, so the server trusts the identity inside it. That is why `user_id` and `role` are read from the session, never from the request body — a client sending `{"role":"ADMIN"}` is rejected as an unknown field.
+- **The cookie is `HttpOnly`.** JavaScript cannot read it, so an XSS bug cannot exfiltrate the session.
+- **`/api/auth/me` re-reads the account from MySQL.** A user deleted or deactivated after logging in loses access on their next call rather than when the cookie expires.
+
+### The `app_user` table
+
+```sql
+CREATE TABLE app_user (
+    user_id       INT AUTO_INCREMENT,
+    username      VARCHAR(50)  NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name     VARCHAR(100) NOT NULL,
+    role          VARCHAR(20)  NOT NULL,
+    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_app_user          PRIMARY KEY (user_id),
+    CONSTRAINT uq_app_user_username UNIQUE (username),
+    CONSTRAINT chk_app_user_role
+        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER'))
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+```
+
+It is deliberately isolated: no domain table references `app_user`, and `app_user` references no domain table. The marine-domain model and the login system can be reasoned about independently.
+
+**Why hashes and not passwords.** `password_hash` stores a werkzeug **scrypt** hash (~162 characters), which is one-way — the stored value cannot be turned back into the password. Anyone who obtains a dump of the table still cannot log in. scrypt is also deliberately slow and memory-hard, so guessing at scale is expensive. The column is never selected by any endpoint except the login check itself, and never appears in any response.
+
+### Public vs protected endpoints
+
+| Endpoint | Access |
+| --- | --- |
+| `GET /api/health` | **public** |
+| `GET /api/health/database` | **public** |
+| `POST /api/auth/login` | **public** — you cannot be logged in to log in |
+| `POST /api/auth/logout` | **public** — idempotent, safe when already logged out |
+| `GET /api/auth/me` | returns **401** when not signed in; that is its answer, not an error |
+| **Every other `/api/...` route** | **protected** — 401 without a session |
+| `OPTIONS` (any path) | **exempt** — CORS preflights carry no cookie |
+
+Protection is enforced by a single `@app.before_request` hook in `app.py`, not by decorating 19 blueprints. A new resource module is protected the moment it is registered, and the complete list of exemptions is visible in one place.
+
+Unauthenticated access returns:
+
+```json
+{ "success": false, "message": "Authentication required" }
+```
+
+### Local setup
+
+**1. Generate a SECRET_KEY**
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Put it in `backend/.env` (which is git-ignored — never commit it):
+
+```
+SECRET_KEY=<paste the generated value here>
+CORS_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
+SESSION_COOKIE_SECURE=False
+```
+
+`SESSION_COOKIE_SECURE=False` is correct for local HTTP only. **Set it to `True` for any HTTPS deployment**, otherwise the session cookie travels in the clear. `app.py` refuses to start with the built-in fallback secret when `FLASK_DEBUG=False`.
+
+**2. Create the `app_user` table** — already included in `database/schema.sql`. On an existing database that predates Phase 9, add just this one table rather than re-running the whole schema:
+
+```bash
+mysql -u root -p aquafleet_db -e "CREATE TABLE IF NOT EXISTS app_user (user_id INT AUTO_INCREMENT, username VARCHAR(50) NOT NULL, password_hash VARCHAR(255) NOT NULL, full_name VARCHAR(100) NOT NULL, role VARCHAR(20) NOT NULL, is_active BOOLEAN NOT NULL DEFAULT TRUE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT pk_app_user PRIMARY KEY (user_id), CONSTRAINT uq_app_user_username UNIQUE (username), CONSTRAINT chk_app_user_role CHECK (role IN ('ADMIN','OPERATOR','RESEARCHER'))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+```
+
+**3. Create the demonstration accounts**
+
+```bash
+cd AquaFleet\backend
+```
+
+```bash
+venv\Scripts\python.exe create_demo_users.py
+```
+
+The script is idempotent — run it as often as you like. It creates an account only when the username is absent, never resets an existing password, and never prints a hash. Flask does **not** run it at startup.
+
+### Demonstration credentials
+
+| Username | Password | Role | Full name |
+| --- | --- | --- | --- |
+| `admin` | `AquaAdmin@2026` | ADMIN | AquaFleet Administrator |
+| `researcher` | `AquaResearch@2026` | RESEARCHER | Marine Researcher |
+
+These are throwaway credentials for a local coursework deployment. They exist in plaintext only inside `create_demo_users.py` — never in `schema.sql`, `sample_data.sql` or any frontend file — and the database stores only their hashes. Change them before running this anywhere reachable by anyone else.
+
+### Verifying with curl (Windows CMD)
+
+Session state lives in a cookie, so every command needs the same cookie jar: `-c` writes it, `-b` sends it.
+
+**Protected endpoint without a session → 401**
+
+```bash
+curl.exe -i http://127.0.0.1:5000/api/vessels
+```
+
+**Log in — this writes `cookies.txt`**
+
+```bash
+curl.exe -i -c cookies.txt -X POST http://127.0.0.1:5000/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"AquaAdmin@2026\"}"
+```
+
+**Who am I?**
+
+```bash
+curl.exe -i -b cookies.txt http://127.0.0.1:5000/api/auth/me
+```
+
+**A protected endpoint, now with the session**
+
+```bash
+curl.exe -i -b cookies.txt http://127.0.0.1:5000/api/vessels
+```
+
+**Log out**
+
+```bash
+curl.exe -i -c cookies.txt -b cookies.txt -X POST http://127.0.0.1:5000/api/auth/logout
+```
+
+**Confirm the session is gone → 401**
+
+```bash
+curl.exe -i -b cookies.txt http://127.0.0.1:5000/api/auth/me
+```
+
+### Expected responses
+
+**200 — successful login** (note: no `password_hash`)
+
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user_id": 1,
+    "username": "admin",
+    "full_name": "AquaFleet Administrator",
+    "role": "ADMIN"
+  }
+}
+```
+
+**400 — validation failure**
+
+```bash
+curl.exe -i -X POST http://127.0.0.1:5000/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"admin\"}"
+```
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": { "password": "password is required" }
+}
+```
+
+Unknown fields are rejected the same way, so `{"username":"admin","password":"x","role":"ADMIN"}` is a 400 — the client cannot choose its own role.
+
+**401 — bad credentials**
+
+```bash
+curl.exe -i -X POST http://127.0.0.1:5000/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"wrong\"}"
+```
+
+```json
+{ "success": false, "message": "Invalid username or password" }
+```
+
+A **nonexistent username returns exactly this same body**. The API never reveals which half was wrong, because doing so would turn the login form into a tool for discovering valid usernames.
+
+**403 — correct password, deactivated account**
+
+```json
+{ "success": false, "message": "This account is inactive. Contact an administrator." }
+```
+
+Distinct from 401 on purpose: the credentials were right, so the person is better served by being told to contact an administrator.
+
+### Role-based authorization is NOT enforced yet
+
+`role` is stored, returned by the API and displayed in the sidebar, but **ADMIN, OPERATOR and RESEARCHER currently reach exactly the same functionality**. Any authenticated user can perform every CRUD operation. The column and the session field exist so that authorization can be layered on later without another migration — but as of Phase 9 the only distinction the backend makes is authenticated vs not.
+
+### Security limitations of this local academic deployment
+
+Honest scope notes, not oversights:
+
+- **No rate limiting or lockout.** Login accepts unlimited attempts, so the password is the only barrier against automated guessing.
+- **No CSRF token.** `SameSite=Lax` blocks the straightforward cross-site POST, but a token would be needed for a real deployment.
+- **Sessions do not expire** beyond the browser session, and there is no server-side session store, so a session cannot be revoked centrally — deactivating the account is the available lever.
+- **HTTP, not HTTPS.** The password is sent in the clear over the loopback interface. On any real network this needs TLS plus `SESSION_COOKIE_SECURE=True`.
+- **No password policy, reset flow, or account management UI.** Accounts are created by running the setup script.
 
 ---
 

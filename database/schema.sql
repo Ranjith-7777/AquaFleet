@@ -28,6 +28,9 @@ USE aquafleet_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Application authentication (independent of the marine-domain tables)
+DROP TABLE IF EXISTS app_user;
+
 -- Offshore inspection tables
 DROP TABLE IF EXISTS inspection_task;
 
@@ -594,6 +597,46 @@ CREATE TABLE inspection_task (
   COLLATE = utf8mb4_unicode_ci;
 
 
+-- ############################################################################
+-- SECTION 6 : APPLICATION AUTHENTICATION
+-- Deliberately separate from the marine-domain model above. No domain table
+-- references app_user, and app_user references no domain table, so the two
+-- can be reasoned about - and dropped or reloaded - independently.
+-- ############################################################################
+
+-- ----------------------------------------------------------------------------
+-- app_user : login accounts for the AquaFleet web application
+--
+-- password_hash holds a werkzeug hash (scrypt by default), never a password.
+-- 255 characters leaves ample room: a current scrypt hash is ~162 characters.
+-- No API ever selects or returns this column.
+--
+-- role is stored and returned to the client, but Phase 9 does NOT enforce
+-- role-based authorization - every authenticated role reaches the same
+-- functionality. The column exists so that authorization can be layered on
+-- later without another migration.
+-- ----------------------------------------------------------------------------
+CREATE TABLE app_user (
+    user_id       INT AUTO_INCREMENT,
+    username      VARCHAR(50)  NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name     VARCHAR(100) NOT NULL,
+    role          VARCHAR(20)  NOT NULL,
+    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_app_user          PRIMARY KEY (user_id),
+    CONSTRAINT uq_app_user_username UNIQUE (username),
+    CONSTRAINT chk_app_user_role
+        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER'))
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+
 -- ============================================================================
--- End of schema. Next step: run database/sample_data.sql
+-- End of schema. Next steps:
+--   1. run database/sample_data.sql      (marine-domain demonstration data)
+--   2. run backend/create_demo_users.py  (login accounts - passwords are
+--      hashed by that script and never appear in this file)
 -- ============================================================================

@@ -25,12 +25,14 @@ Implemented:
     sample_aliquots.py     - CRUD for sample_aliquot
     incidents.py           - CRUD for incident
     inspection_tasks.py    - CRUD for inspection_task
+    auth.py                - session login/logout for app_user
 
 Re-exported here so app.py can simply write:
 
     from routes import vessels_bp, marine_zones_bp, vehicles_bp, ...
 """
 
+from routes.auth import auth_bp
 from routes.battery_packs import battery_packs_bp
 from routes.expeditions import expeditions_bp
 from routes.incidents import incidents_bp
@@ -52,6 +54,7 @@ from routes.vehicles import vehicles_bp
 from routes.vessels import vessels_bp
 
 __all__ = [
+    "auth_bp",
     "vessels_bp",
     "marine_zones_bp",
     "vehicles_bp",
