@@ -3,7 +3,7 @@ create_demo_users.py
 --------------------
 LOCAL ACADEMIC DEMONSTRATION SETUP - run by hand, never by the application.
 
-Creates the two AquaFleet demonstration login accounts in the `app_user`
+Creates the four AquaFleet demonstration login accounts in the `app_user`
 table. Flask does NOT import or execute this file; it exists so a marker or a
 teammate can bring up a working login on a fresh database with one command:
 
@@ -46,6 +46,18 @@ DEMO_USERS = (
         "password": "AquaResearch@2026",
         "full_name": "Marine Researcher",
         "role": "RESEARCHER",
+    },
+    {
+        "username": "operator",
+        "password": "AquaOperator@2026",
+        "full_name": "Fleet Operations Officer",
+        "role": "OPERATOR",
+    },
+    {
+        "username": "viewer",
+        "password": "AquaViewer@2026",
+        "full_name": "AquaFleet Viewer",
+        "role": "VIEWER",
     },
 )
 

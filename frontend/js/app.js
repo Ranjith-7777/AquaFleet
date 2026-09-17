@@ -1,4 +1,4 @@
-/* AquaFleet read-only SPA coordinator for dashboard and resource views. */
+/* AquaFleet SPA coordinator for dashboard, resources and role-aware CRUD. */
 (function initializeAquaFleetApp(global) {
   "use strict";
 
@@ -6,6 +6,7 @@
   const Ui = global.AquaFleetUi;
   const Resources = global.AquaFleetResources;
   const Master = global.AquaFleetMasterData;
+  const Reports = global.AquaFleetReports;
   const dashboardMetrics = [
     ["vessels", "Research Vessels"], ["vehicles", "AUV/ROV Vehicles"],
     ["expeditions", "Expeditions"], ["missions", "Missions"],
@@ -121,6 +122,7 @@
   /* Re-render the current screen from data already in state. Never fetches. */
   function reapplySearch() {
     if (state.currentView === "dashboard") { renderMissionActivity(); return; }
+    if (state.currentView === "reports") return;
     const config = Resources.byKey[state.currentResource];
     if (config && !state.loading) renderTable(config, state.rows, state.totalCount);
   }
@@ -237,7 +239,7 @@
 
   function setResourceActions(config, refresh) {
     const actions = document.getElementById("page-actions"); Ui.clearElement(actions);
-    if (Master.isCrud(config.key)) {
+    if (Master.can(config.key, "create")) {
       const add = Ui.element("button", {className:"btn btn-primary btn-sm primary-action",text:"Add "+config.form.label,attributes:{type:"button"}});
       add.addEventListener("click",()=>Master.openCreate(config.key)); actions.appendChild(add);
     }
@@ -362,6 +364,7 @@
   async function renderDashboard(button) {
     const sequence = ++state.requestSequence;
     state.currentView = "dashboard"; state.currentResource = null; state.rows = []; state.loading = true;
+    const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader("Dashboard", "Read-only operational summary from existing AquaFleet APIs.");
     setSearchPlaceholder("Search missions");
     Ui.clearAlerts(); updateActiveNavigation("dashboard");
@@ -458,10 +461,15 @@
       });
       view.addEventListener("click", function openDetails() { showDetails(config, row); });
       actions.appendChild(view);
-      if(Master.isCrud(config.key)){
+      if(Master.can(config.key,"update")||Master.can(config.key,"delete")){
+        if(Master.can(config.key,"update")){
         const edit=Ui.element("button",{className:"btn btn-sm btn-outline-secondary",text:"Edit",attributes:{type:"button","aria-label":"Edit "+Master.label(config.key,row)}});
-        const del=Ui.element("button",{className:"btn btn-sm btn-outline-danger",text:"Delete",attributes:{type:"button","aria-label":"Delete "+Master.label(config.key,row)}});
-        edit.addEventListener("click",()=>Master.openEdit(config.key,row));del.addEventListener("click",()=>Master.openDelete(config.key,row));actions.append(edit,del);
+        edit.addEventListener("click",()=>Master.openEdit(config.key,row));actions.appendChild(edit);
+        }
+        if(Master.can(config.key,"delete")){
+          const del=Ui.element("button",{className:"btn btn-sm btn-outline-danger",text:"Delete",attributes:{type:"button","aria-label":"Delete "+Master.label(config.key,row)}});
+          del.addEventListener("click",()=>Master.openDelete(config.key,row));actions.appendChild(del);
+        }
       }
       tr.appendChild(actions); body.appendChild(tr);
     });
@@ -490,7 +498,7 @@
     });
     body.appendChild(list);
     let footer=null;
-    if(Master.isCrud(config.key)){footer=Ui.element("div",{className:"modal-actions"});const close=Ui.element("button",{className:"btn btn-light",text:"Close",attributes:{type:"button","data-bs-dismiss":"modal"}});const edit=Ui.element("button",{className:"btn btn-primary",text:"Edit",attributes:{type:"button"}});edit.addEventListener("click",()=>{Ui.closeModal();setTimeout(()=>Master.openEdit(config.key,row),180);});footer.append(close,edit);}
+    if(Master.can(config.key,"update")){footer=Ui.element("div",{className:"modal-actions"});const close=Ui.element("button",{className:"btn btn-light",text:"Close",attributes:{type:"button","data-bs-dismiss":"modal"}});const edit=Ui.element("button",{className:"btn btn-primary",text:"Edit",attributes:{type:"button"}});edit.addEventListener("click",()=>{Ui.closeModal();setTimeout(()=>Master.openEdit(config.key,row),180);});footer.append(close,edit);}
     Ui.openModal({ title: config.title + " Details", body: body,footer:footer });
   }
 
@@ -504,6 +512,7 @@
     if (!config) { renderDashboard(); return; }
     const sequence = ++state.requestSequence;
     state.currentView = key; state.currentResource = key; state.rows = []; state.loading = true;
+    const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader(config.title, config.subtitle); Ui.clearAlerts(); updateActiveNavigation(key);
     /* Refresh and post-CRUD reloads land here with the query intact, so the
        placeholder is set but the query is deliberately NOT cleared. Clearing
@@ -528,13 +537,25 @@
     }
   }
 
+  function renderReports() {
+    ++state.requestSequence;
+    state.currentView = "reports"; state.currentResource = null; state.rows = []; state.loading = false;
+    Ui.setPageHeader("Reports", "Read-only database views expose joined and derived AquaFleet information.");
+    Ui.clearAlerts(); updateActiveNavigation("reports"); setActions(null);
+    clearSearch(false); setSearchPlaceholder("Report filters are shown below");
+    const search = searchInput(); if (search) search.disabled = true;
+    Reports.render(document.getElementById("content-panel"));
+  }
+
   function navigate(view) {
     closeMobileNavigation();
     /* A screen change starts clean: a vessel search must not silently carry
        into missions. Refresh and post-CRUD reloads do NOT come through here,
        which is exactly why they keep the query. */
     clearSearch(false);
-    if (view === "dashboard") renderDashboard(); else renderResource(view);
+    if (view === "dashboard") renderDashboard();
+    else if (view === "reports") renderReports();
+    else renderResource(view);
   }
 
   async function mutationComplete(key,message){if(state.currentResource===key){await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");}}
@@ -601,6 +622,7 @@
   global.AquaFleetApp = Object.freeze({
     getState: function getState() { return Object.assign({}, state); },
     navigate: navigate, renderDashboard: renderDashboard, renderResource: renderResource,
+    renderReports: renderReports,
     mutationComplete:mutationComplete,refreshIfCurrent:refreshIfCurrent,
     /* auth.js calls this so a query never survives a logout or a session
        loss into the next person's session. */

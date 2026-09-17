@@ -2,7 +2,7 @@
 
 **Integrated Autonomous Underwater Expedition, Research Vessel Coordination, Marine Sample Lineage and Offshore Inspection Database**
 
-A DBMS course project. This repository currently contains only the **initial project scaffold** — no tables, CRUD APIs, authentication or complete frontend pages yet.
+A DBMS course project implementing the AquaFleet relational schema, authenticated REST API, role-based access control, dashboard, resource browsing and CRUD workflows.
 
 ---
 
@@ -235,7 +235,7 @@ On failure it returns HTTP 500 with `success: false` and a short error message. 
 
 ---
 
-## Phase 9 — Authentication
+## Authentication and role-based access control
 
 **Every API below this section requires a logged-in session.** Only the two health endpoints and the login/logout endpoints are public.
 
@@ -258,14 +258,20 @@ Flask before_request  -->  session has user_id?  --no-->  401 Authentication req
                                   |
                                  yes
                                   v
-                           the resource route runs unchanged
+                       reload active user from MySQL
+                                  |
+                                  v
+                      authorize role + resource + method
+                         | allowed          | denied
+                         v                  v
+                  resource route     403 INSUFFICIENT_PERMISSIONS
 ```
 
 Three properties worth naming:
 
 - **The cookie is signed, not encrypted.** The browser can read it but cannot alter it without invalidating the `SECRET_KEY` signature, so the server trusts the identity inside it. That is why `user_id` and `role` are read from the session, never from the request body — a client sending `{"role":"ADMIN"}` is rejected as an unknown field.
 - **The cookie is `HttpOnly`.** JavaScript cannot read it, so an XSS bug cannot exfiltrate the session.
-- **`/api/auth/me` re-reads the account from MySQL.** A user deleted or deactivated after logging in loses access on their next call rather than when the cookie expires.
+- **Every protected request re-reads the account from MySQL.** Deactivation and role changes therefore take effect on the next API call without reissuing the cookie.
 
 ### The `app_user` table
 
@@ -282,7 +288,7 @@ CREATE TABLE app_user (
     CONSTRAINT pk_app_user          PRIMARY KEY (user_id),
     CONSTRAINT uq_app_user_username UNIQUE (username),
     CONSTRAINT chk_app_user_role
-        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER'))
+        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER', 'VIEWER'))
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 ```
 
@@ -328,10 +334,10 @@ SESSION_COOKIE_SECURE=False
 
 `SESSION_COOKIE_SECURE=False` is correct for local HTTP only. **Set it to `True` for any HTTPS deployment**, otherwise the session cookie travels in the clear. `app.py` refuses to start with the built-in fallback secret when `FLASK_DEBUG=False`.
 
-**2. Create the `app_user` table** — already included in `database/schema.sql`. On an existing database that predates Phase 9, add just this one table rather than re-running the whole schema:
+**2. Create or update the `app_user` table** — fresh databases receive it from `database/schema.sql`. For a database that already has the pre-RBAC table, run the one-time migration instead of rebuilding the schema:
 
 ```bash
-mysql -u root -p aquafleet_db -e "CREATE TABLE IF NOT EXISTS app_user (user_id INT AUTO_INCREMENT, username VARCHAR(50) NOT NULL, password_hash VARCHAR(255) NOT NULL, full_name VARCHAR(100) NOT NULL, role VARCHAR(20) NOT NULL, is_active BOOLEAN NOT NULL DEFAULT TRUE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT pk_app_user PRIMARY KEY (user_id), CONSTRAINT uq_app_user_username UNIQUE (username), CONSTRAINT chk_app_user_role CHECK (role IN ('ADMIN','OPERATOR','RESEARCHER'))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+mysql -u root -p aquafleet_db < database/migrations/phase1_add_viewer_role.sql
 ```
 
 **3. Create the demonstration accounts**
@@ -352,6 +358,8 @@ The script is idempotent — run it as often as you like. It creates an account 
 | --- | --- | --- | --- |
 | `admin` | `AquaAdmin@2026` | ADMIN | AquaFleet Administrator |
 | `researcher` | `AquaResearch@2026` | RESEARCHER | Marine Researcher |
+| `operator` | `AquaOperator@2026` | OPERATOR | Fleet Operations Officer |
+| `viewer` | `AquaViewer@2026` | VIEWER | AquaFleet Viewer |
 
 These are throwaway credentials for a local coursework deployment. They exist in plaintext only inside `create_demo_users.py` — never in `schema.sql`, `sample_data.sql` or any frontend file — and the database stores only their hashes. Change them before running this anywhere reachable by anyone else.
 
@@ -443,14 +451,36 @@ A **nonexistent username returns exactly this same body**. The API never reveals
 **403 — correct password, deactivated account**
 
 ```json
-{ "success": false, "message": "This account is inactive. Contact an administrator." }
+{ "success": false, "message": "This account is inactive. Contact an administrator.", "error_code": "ACCOUNT_INACTIVE" }
 ```
 
 Distinct from 401 on purpose: the credentials were right, so the person is better served by being told to contact an administrator.
 
-### Role-based authorization is NOT enforced yet
+### Permission matrix
 
-`role` is stored, returned by the API and displayed in the sidebar, but **ADMIN, OPERATOR and RESEARCHER currently reach exactly the same functionality**. Any authenticated user can perform every CRUD operation. The column and the session field exist so that authorization can be layered on later without another migration — but as of Phase 9 the only distinction the backend makes is authenticated vs not.
+All active roles may read every registered resource. Mutation permissions are enforced by Flask before a route runs; hiding a button in the browser is only a usability feature.
+
+| Resource group | ADMIN | RESEARCHER | OPERATOR | VIEWER |
+| --- | --- | --- | --- | --- |
+| Master data | create/update/delete | read | read | read |
+| Expeditions | create/update/delete | create/update | read | read |
+| Missions | create/update/delete | create/update | update | read |
+| Mission vehicle/operator assignments | create/update/delete | create/update/delete | create/update/delete | read |
+| Vehicle sensor/battery assignments | create/update/delete | read | create/update/delete | read |
+| Telemetry, incidents, inspections, maintenance | create/update/delete | read | create/update/delete | read |
+| Samples and aliquots | create/update/delete | create/update | read | read |
+
+An authenticated user without a grant receives HTTP 403 and remains logged in:
+
+```json
+{
+  "success": false,
+  "message": "You do not have permission to perform this action",
+  "error_code": "INSUFFICIENT_PERMISSIONS"
+}
+```
+
+To verify a role, log in with its demonstration account, browse any resource, and compare the available controls with this matrix. A direct forbidden POST/PUT/DELETE must still return the 403 above even if a control is hidden.
 
 ### Security limitations of this local academic deployment
 
@@ -2071,21 +2101,134 @@ Then visit `http://localhost:5500` in your browser.
 
 ### What you should see
 
-- The AquaFleet landing page with the subtitle "Marine Operations Database"
-- A green **Connected** badge with the message "AquaFleet API is running"
-- A **Check again** button that re-runs the health check
+- A login screen followed by the AquaFleet dashboard after authentication
+- A connected health indicator and live resource totals
+- Searchable tables and record details for all domain resources
+- Create/edit/delete controls that match the signed-in role's permission row
+- Relationship forms that show readable vessel, expedition, zone, vehicle,
+  operator, sensor, battery, sample and asset labels instead of raw IDs
 
-If the badge is red, the Flask server is not running — start it and click **Check again**.
-
----
-
-## Not included in this phase
-
-React, Node.js, Express, MongoDB, SQLAlchemy, Docker and authentication are deliberately excluded from this project.
+If the indicator is red, confirm Flask and MySQL are running and refresh the dashboard.
 
 ---
 
-## Next steps
+## Phase 2 — DBMS depth and reporting
 
-1. Add CRUD blueprints for the remaining resources under `backend/routes/`
-2. Build the frontend pages that consume those APIs
+Phase 2 keeps the normalized tables as the source of truth and adds reusable
+database programming objects for integrity and reporting. Re-run
+`database/schema.sql`, then `database/sample_data.sql`, to install them in a
+fresh database. The Reports item in the SPA is read-only for every role.
+
+### Views
+
+| View | Tables used | Purpose | Example |
+|---|---|---|---|
+| `vw_expedition_summary` | `expedition`, `research_vessel`, `mission` | Vessel and campaign details with a derived mission count | `SELECT * FROM vw_expedition_summary WHERE status = 'Active';` |
+| `vw_mission_operations` | `mission`, `expedition`, `marine_zone`, both mission junctions | Mission context, `TIMESTAMPDIFF` duration and assignment counts | `SELECT * FROM vw_mission_operations WHERE zone_id = 2;` |
+| `vw_vehicle_readiness` | `auv_rov`, `vehicle_sensor`, `vehicle_battery`, `maintenance_record` | Configuration and maintenance overview; an “open battery assignment” means only `end_cycle IS NULL` | `SELECT * FROM vw_vehicle_readiness WHERE status = 'Available';` |
+| `vw_sample_lineage` | `expedition`, `mission`, `sample`, `sample_aliquot` | Traceability from campaign to each sample and optional aliquot | `SELECT * FROM vw_sample_lineage WHERE sample_id = 1;` |
+| `vw_incident_overview` | `incident`, `mission`, `expedition`, `marine_zone` | Incident severity with operational location and campaign context | `SELECT * FROM vw_incident_overview WHERE severity = 'High';` |
+
+The views name every selected column and derive values rather than duplicating
+them in base tables.
+
+### Triggers
+
+| Trigger | Timing/event | Rule protected |
+|---|---|---|
+| `trg_mission_validate_bi` | Before mission insert | Depth is within the chosen zone and mission dates are within its expedition |
+| `trg_mission_validate_bu` | Before mission update | The same cross-table mission rules remain true after edits |
+| `trg_mission_vehicle_ready_bi` | Before assignment insert | A retired vehicle cannot be assigned to a mission |
+| `trg_mission_vehicle_ready_bu` | Before assignment update | An assignment cannot be changed to a retired vehicle |
+
+Flask performs the same checks early so API clients receive friendly errors.
+The rejection triggers use `SIGNAL SQLSTATE '45000'` because integrity must
+also hold for direct SQL, imports, and any future application client. They do
+not make hidden status changes.
+
+### Stored procedures
+
+| Procedure | Parameters | Result |
+|---|---|---|
+| `sp_get_expedition_report` | `IN p_expedition_id INT` | Expedition summary plus ordered mission summaries |
+| `sp_get_vehicle_maintenance_history` | `IN p_vehicle_id INT` | Vehicle readiness plus its maintenance history and costs |
+| `sp_get_mission_summary` | `IN p_mission_id INT` | Mission context, vehicle assignments and operator assignments |
+| `sp_get_expedition_metrics` | expedition ID plus three `OUT INT` values | Mission, incident and sample counts without inventing a cost relationship |
+
+Example calls:
+
+```sql
+CALL sp_get_expedition_report(1);
+CALL sp_get_vehicle_maintenance_history(1);
+CALL sp_get_mission_summary(1);
+CALL sp_get_expedition_metrics(1, @missions, @incidents, @samples);
+SELECT @missions, @incidents, @samples;
+```
+
+A nonexistent ID returns empty report result sets (or zero metrics) rather
+than modifying data.
+
+### Transaction demonstrations
+
+Run `database/demo_transactions.sql` only after loading the schema and sample
+data. It demonstrates two real atomic workflows and removes every committed
+demo row before finishing:
+
+1. Mission creation plus vehicle/operator assignment. One path deliberately
+   issues `ROLLBACK`; the successful path uses `COMMIT`.
+2. Sample creation plus dependent aliquots. A questionable aliquot is undone
+   with `ROLLBACK TO SAVEPOINT`, replaced, and then committed.
+
+Atomicity means each multi-table workflow is accepted as a consistent unit or
+none of it survives. `COMMIT` makes valid work durable, `ROLLBACK` abandons the
+whole transaction, and a `SAVEPOINT` permits a partial correction without
+discarding earlier valid statements.
+
+### Reporting API and UI
+
+The `reports` Flask blueprint exposes authenticated, read-only endpoints:
+
+- `GET /api/reports/expeditions?status=Completed`
+- `GET /api/reports/missions?status=Completed&zone_id=2`
+- `GET /api/reports/vehicle-readiness?status=Available`
+- `GET /api/reports/sample-lineage?expedition_id=1&mission_id=1`
+- `GET /api/reports/incidents?severity=High&expedition_id=1`
+
+Filters are allow-listed, validated and passed as SQL parameters. Successful
+responses use `{success, report, count, data}`; validation and database errors
+follow the existing AquaFleet error format. ADMIN, RESEARCHER, OPERATOR and
+VIEWER can read reports, while every report mutation is denied. The SPA uses
+five compact selector tabs and table-first results with clear empty states.
+
+### Index review
+
+Primary and unique keys already index identifiers. Existing explicit foreign
+key indexes support the main joins, including expedition-to-vessel,
+mission-to-expedition/zone, the two mission junctions, and mission-owned
+telemetry, samples, incidents and inspections.
+
+Phase 2 adds only three report-filter indexes:
+
+- `idx_expedition_status (status)` for expedition summary filtering.
+- `idx_mission_status (status)` for mission operations filtering.
+- `idx_incident_severity_time (severity, time_reported)` for severity filters
+  followed by the report's time ordering.
+
+`EXPLAIN` verification confirms all three are candidate keys. MySQL may still
+choose a full scan for the deliberately tiny sample dataset; the cost-based
+choice can change as operational rows grow.
+
+### Phase 2 verification
+
+The integration suite creates `aquafleet_phase2_test`, loads the schema and
+sample data, tests views/triggers/procedures/reports/query plans and the
+transaction demo, then drops that database. Normal local AquaFleet data is not
+changed.
+
+```bat
+set AQUAFLEET_RUN_DB_TESTS=1
+backend\venv\Scripts\python.exe -m unittest backend.tests.test_phase2_database -v
+backend\venv\Scripts\python.exe -m unittest backend.tests.test_rbac -v
+node frontend\tests\phase1.test.js
+node frontend\tests\phase2.test.js
+```

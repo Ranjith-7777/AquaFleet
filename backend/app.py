@@ -23,7 +23,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from mysql.connector import Error as MySQLError
 
-from authentication import guard_request
+from authentication import guard_authorization, guard_request
 from config import Config
 from database import get_db_connection
 from routes.auth import auth_bp
@@ -38,6 +38,7 @@ from routes.mission_vehicles import mission_vehicles_bp
 from routes.missions import missions_bp
 from routes.offshore_assets import offshore_assets_bp
 from routes.operators import operators_bp
+from routes.reports import reports_bp
 from routes.sensors import sensors_bp
 from routes.sample_aliquots import sample_aliquots_bp
 from routes.samples import samples_bp
@@ -104,6 +105,7 @@ app.register_blueprint(samples_bp)
 app.register_blueprint(sample_aliquots_bp)
 app.register_blueprint(incidents_bp)
 app.register_blueprint(inspection_tasks_bp)
+app.register_blueprint(reports_bp)
 
 
 # ---------------------------------------------------------------------------
@@ -151,7 +153,10 @@ def require_authentication():
         return None
     if request.path in PUBLIC_ENDPOINTS:
         return None
-    return guard_request()
+    blocked = guard_request()
+    if blocked is not None:
+        return blocked
+    return guard_authorization()
 
 
 @app.route("/api/health", methods=["GET"])
