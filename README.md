@@ -26,43 +26,31 @@ A DBMS course project implementing the AquaFleet relational schema, authenticate
 ```
 AquaFleet/
 ├── backend/
-│   ├── app.py              # Flask app + /api/health endpoint
-│   ├── config.py           # Reads settings from environment variables
-│   ├── database.py         # get_db_connection() helper
-│   ├── authentication.py   # session helpers + login guard
-│   ├── create_demo_users.py # LOCAL demo account setup (run by hand)
-│   ├── requirements.txt    # Python dependencies
-│   ├── .env.example        # Template for your local .env
-│   └── routes/
-│       ├── __init__.py     # Blueprint package
-│       ├── auth.py         # login / me / logout
-│       ├── vessels.py      # CRUD for research_vessel
-│       ├── marine_zones.py # CRUD for marine_zone
-│       ├── vehicles.py     # CRUD for auv_rov
-│       ├── operators.py    # CRUD for operator + operator_contact
-│       ├── sensors.py      # CRUD for sensor
-│       ├── battery_packs.py # CRUD for battery_pack
-│       ├── offshore_assets.py # CRUD for offshore_asset
-│       ├── expeditions.py  # CRUD for expedition
-│       ├── missions.py     # CRUD for mission
-│       ├── mission_vehicles.py   # CRUD for mission_vehicle
-│       ├── mission_operators.py  # CRUD for mission_operator
-│       ├── vehicle_sensors.py    # CRUD for vehicle_sensor
-│       └── vehicle_batteries.py  # CRUD for vehicle_battery
+│   ├── app.py                    # Flask app, guards, health and Blueprints
+│   ├── authentication.py         # signed-session helpers + central RBAC
+│   ├── config.py / database.py   # environment config + MySQL connection
+│   ├── create_demo_users.py      # explicit local demo-account setup/reset
+│   ├── apply_database_upgrade.py # guarded existing-database migration
+│   ├── routes/                   # auth, reports and 20 domain Blueprints
+│   └── tests/                    # RBAC, DB objects, migration and regression
 ├── frontend/
-│   ├── index.html          # Bootstrap 5 landing page
-│   ├── css/
-│   │   └── style.css       # Custom styles
+│   ├── index.html                # authenticated SPA shell
+│   ├── css/style.css             # responsive AquaFleet visual system
 │   └── js/
-│       ├── api.js          # HTTP client (credentialed, central 401 hook)
-│       ├── ui.js           # safe DOM + formatting helpers
-│       ├── resources.js    # resource definitions
-│       ├── master-data.js  # CRUD forms
-│       ├── auth.js         # login screen, boot gate, logout
-│       └── app.js          # SPA coordinator
+│       ├── api.js / auth.js      # REST client and login/session UI
+│       ├── permissions.js        # frontend mirror of backend RBAC
+│       ├── resources.js          # resource/form definitions
+│       ├── master-data.js        # shared CRUD modal workflows
+│       ├── reporting.js          # five view-backed reports
+│       └── app.js / ui.js        # SPA coordination and DOM helpers
 ├── database/
-│   ├── schema.sql          # 20 domain tables + app_user, constraints, indexes
-│   └── sample_data.sql     # demo rows + validation queries
+│   ├── schema.sql                # 21 tables + DB programming objects
+│   ├── sample_data.sql           # deterministic domain demo reset
+│   ├── demo_transactions.sql     # commit/rollback/savepoint workflows
+│   ├── faculty_demo.sql          # ordered viva SQL demonstrations
+│   └── migrations/               # safe upgrades for existing databases
+├── docs/                         # final inventory, guides, runbook and viva Q&A
+├── scripts/verify.ps1            # complete automated verification runner
 ├── .gitignore
 └── README.md
 ```
@@ -352,6 +340,11 @@ venv\Scripts\python.exe create_demo_users.py
 
 The script is idempotent — run it as often as you like. It creates an account only when the username is absent, never resets an existing password, and never prints a hash. Flask does **not** run it at startup.
 
+For a deliberate local faculty-demo reset, run
+`venv\Scripts\python.exe create_demo_users.py --reset`. The explicit flag
+resets only the four usernames below to their documented password, canonical
+role, full name and active state. It never changes or deletes any other user.
+
 ### Demonstration credentials
 
 | Username | Password | Role | Full name |
@@ -361,7 +354,10 @@ The script is idempotent — run it as often as you like. It creates an account 
 | `operator` | `AquaOperator@2026` | OPERATOR | Fleet Operations Officer |
 | `viewer` | `AquaViewer@2026` | VIEWER | AquaFleet Viewer |
 
-These are throwaway credentials for a local coursework deployment. They exist in plaintext only inside `create_demo_users.py` — never in `schema.sql`, `sample_data.sql` or any frontend file — and the database stores only their hashes. Change them before running this anywhere reachable by anyone else.
+These are throwaway credentials for a local coursework deployment. They exist
+only in local setup/documentation—never in `schema.sql`, `sample_data.sql` or
+any frontend file—and the database stores only their hashes. Change them before
+running this anywhere reachable by anyone else.
 
 ### Verifying with curl (Windows CMD)
 
@@ -2284,3 +2280,24 @@ administration; RESEARCHER manages expeditions, missions and scientific sample
 records; OPERATOR manages assigned operational records such as telemetry;
 VIEWER is read-only. Flask authorization remains the security boundary even
 when the SPA hides unavailable controls.
+
+---
+
+## Final evaluation package
+
+The Phase 4 freeze adds prepared, implementation-specific faculty material:
+
+- `database/faculty_demo.sql` — ordered SQL demonstrations with cleanup
+- `docs/FACULTY_DEMO_RUNBOOK.md` — deterministic 5–7 minute demo
+- `docs/FINAL_DATABASE_INVENTORY.md` — authoritative object/constraint inventory
+- `docs/ARCHITECTURE_AND_CODE_GUIDE.md` — request flow and repository guide
+- `docs/RELATIONSHIP_GUIDE.md` — cardinality, participation and FK actions
+- `docs/DBMS_CONCEPT_MAP.md` — direct course-concept mapping
+- `docs/ROLE_MATRIX.md` — accounts and effective permissions
+- `docs/VIVA_QA.md` — concise viva question bank
+- `docs/PROJECT_OVERVIEW.md` — implemented system overview
+- `docs/LIMITATIONS_AND_FUTURE_WORK.md` — honest scope and extensions
+
+Use the runbook as the presentation entry point. It names the exact accounts,
+screens, records, queries and expected outcomes, while avoiding unnecessary
+live data creation.
