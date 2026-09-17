@@ -207,7 +207,7 @@ def database_health():
         return jsonify({
             "success": False,
             "message": "Database connection failed",
-            "error": str(err.msg) if getattr(err, "msg", None) else "Unable to reach MySQL"
+            "error": "Unable to reach MySQL"
         }), 500
 
     finally:

@@ -18,6 +18,7 @@ __pycache__/
 # Test and session files
 cookies.txt
 *.log
+.local_backups/
 
 # Operating-system files
 .DS_Store

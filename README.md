@@ -157,7 +157,7 @@ If `mysql` is not on your PATH on Windows, use the full path:
 
 1. Open MySQL Workbench and connect to your local MySQL 8 instance.
 2. **File → Open SQL Script…** and choose `database/schema.sql`.
-3. Click the lightning bolt (**Execute All**). The script creates `aquafleet_db` and all 20 tables.
+3. Click the lightning bolt (**Execute All**). The script creates `aquafleet_db` and all 21 tables.
 4. **File → Open SQL Script…** and choose `database/sample_data.sql`.
 5. Click **Execute All**. The inserts run first, then eight validation `SELECT` queries produce result grids.
 6. Right-click **aquafleet_db** in the Navigator and choose **Refresh All** to see the tables.
@@ -2232,3 +2232,55 @@ backend\venv\Scripts\python.exe -m unittest backend.tests.test_rbac -v
 node frontend\tests\phase1.test.js
 node frontend\tests\phase2.test.js
 ```
+
+---
+
+## Phase 3 — existing-database upgrade and hardening
+
+Phase 3 adds a non-destructive upgrade path for an existing `aquafleet_db`.
+It preserves base-table rows and application users while installing the
+VIEWER-compatible role constraint and the Phase 2 views, triggers, procedures
+and report indexes. The migration is idempotent, so an interrupted deployment
+can be checked and run again safely.
+
+### Upgrade an existing local database
+
+1. Stop writers and create a verified `mysqldump` backup outside committed
+   source files. Keep database credentials in environment variables or the
+   existing local `.env`; do not put them on the command line or in Git.
+2. From `backend`, run the guarded upgrade utility:
+
+   ```bat
+   venv\Scripts\python.exe apply_database_upgrade.py
+   ```
+
+3. Confirm the utility reports preserved table counts and user records, plus
+   21 tables, 5 views, 4 triggers, 4 procedures and 3 reporting indexes.
+4. Start Flask and check `GET /api/health` and
+   `GET /api/health/database` before allowing normal use.
+
+The utility deliberately refuses any `DB_NAME` other than `aquafleet_db`.
+The underlying SQL is
+`database/migrations/phase3_upgrade_existing_database.sql`; do not substitute
+`schema.sql` for this step because the schema bootstrap intentionally recreates
+the database and is only for fresh installations.
+
+### Verification
+
+Run the complete project check from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
+```
+
+Use `-SkipDatabase` only when MySQL is unavailable; that skips the integration
+coverage that proves migration idempotency, real-MySQL RBAC/CRUD/reporting,
+trigger and constraint rejections, transaction rollback/commit behavior and
+savepoint recovery. The database tests use disposable schemas and drop them
+afterward; they do not mutate the normal `aquafleet_db`.
+
+Phase 3 also verifies all role paths in a real browser. ADMIN has full domain
+administration; RESEARCHER manages expeditions, missions and scientific sample
+records; OPERATOR manages assigned operational records such as telemetry;
+VIEWER is read-only. Flask authorization remains the security boundary even
+when the SPA hides unavailable controls.

@@ -37,7 +37,7 @@
   .context-rail>.connection-card{flex:0 0 auto;margin-top:auto}
 }
 
-/* --- Phase 9: authentication gate ------------------------------------------
+/* --- Authentication gate ---------------------------------------------------
    Uses the existing palette tokens only (--af-sidebar navy, --af-coral /
    --af-pink, --af-aqua, white). The dashboard is hidden rather than removed
    while the gate is up, so its DOM and the internal flex rules above are
