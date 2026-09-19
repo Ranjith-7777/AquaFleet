@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#e9eff5;font-family:Manrope,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1c6f93;text-decoration:none}a:hover{color:#0e4f6c}
+@keyframes afIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes afGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#c7d8e2;border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+main::-webkit-scrollbar{width:0;height:0}
+main{scrollbar-width:none}
+</style>
+</helmet>
+<div style="display:flex;width:100%;min-height:100vh;height:100vh;background:#e9eff5;overflow:hidden;color:#173544">
+
+  <nav style="position:relative;z-index:3;display:flex;flex:0 0 100px;min-height:0;flex-direction:column;align-items:center;padding:clamp(12px,2.4vh,26px) 0 clamp(12px,2.2vh,24px);background:linear-gradient(180deg,#071d2c 0%,#0b2b3a 100%);border-radius:0;box-shadow:10px 0 30px rgba(8,39,57,.16)">
+    <a href="AquaFleet Dashboard.dc.html" title="AquaFleet" style="display:grid;flex:0 0 auto;width:52px;height:52px;place-items:center;border:1px solid rgba(123,203,222,.38);border-radius:16px;background:#0c3545;color:#a8e2ed;font-family:Manrope,sans-serif;font-size:26px;font-weight:700;line-height:1;text-decoration:none">≈</a>
+
+    <div style="display:flex;flex:1 1 auto;min-height:0;flex-direction:column;justify-content:center;align-items:center;gap:clamp(8px,2.2vh,26px);width:100%;position:relative;overflow:visible">
+      <a href="AquaFleet Dashboard.dc.html" title="Dashboard" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">⌁</a>
+      <a href="AquaFleet Vessels.dc.html" title="Fleet &amp; Crew" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◇</a>
+      <a href="AquaFleet Missions.dc.html" title="Missions" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◎</a>
+      <a href="AquaFleet Expeditions.dc.html" title="Expeditions" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">⊞</a>
+      <a href="AquaFleet Vehicles.dc.html" title="Vehicles" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◉</a>
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:56px">
+        <div style="position:absolute;left:0;right:0;top:0;bottom:0;background:#fff;border-radius:0;box-shadow:none"></div>
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#54c3e0"></div>
+        <span style="position:relative;display:grid;place-items:center;width:100%;height:56px;color:#12637f;font-size:24px;font-weight:700;line-height:1">▤</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:clamp(8px,1.6vh,14px);padding-top:10px">
+      <div style="display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(140,216,232,.26);border-radius:15px;background:#124257;color:#cfeaf2;font-size:12px;font-weight:800;letter-spacing:.04em">TU</div>
+      <div title="Database connected" style="display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(140,216,232,.23);border-radius:15px;background:#10394d">
+        <span style="display:block;width:9px;height:9px;border-radius:50%;background:#4ac780;box-shadow:0 0 0 5px rgba(74,199,128,.14)"></span>
+      </div>
+    </div>
+  </nav><main style="position:relative;z-index:1;flex:1;min-width:0;margin:0 0 0 -100px;padding:22px 24px 24px 126px;background:#e9eff5;border-radius:0;box-shadow:inset 0 0 0 1px rgba(23,53,68,.04);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:14px">
+
+    <header data-af-header="1" style="position:relative;flex:0 0 auto;min-height:126px;margin:-22px -24px 4px -126px;box-sizing:border-box;width:auto;display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:18px 30px 18px 148px;border-radius:0;background:linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%);box-shadow:0 12px 30px rgba(17,91,135,.22);overflow:hidden;animation:afIn .5s ease both;align-self:stretch">
+      <div style="position:absolute;top:-104px;right:26%;width:240px;height:240px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03);pointer-events:none"></div>
+      <div style="position:relative;min-width:0;flex:1 1 320px">
+        <p style="margin:0 0 2px;color:#d4eef3;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;font-weight:500;letter-spacing:.11em;text-transform:uppercase">AquaFleet Command · Reporting</p>
+        <h1 style="margin:0;color:#fff;font-family:Sora,Manrope,sans-serif;font-size:36px;font-weight:700;letter-spacing:-.045em;line-height:1.05">Reports</h1>
+        <p style="margin:6px 0 0;color:#e2f4f8;font-size:12.5px;font-weight:500">Read-only results from the AquaFleet SQL reporting views. No derived data is stored.</p>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:10px;width:260px;height:48px;padding:0 18px;border-radius:999px;background:#fff;box-shadow:0 8px 20px rgba(6,48,76,.18)">
+          <span style="display:grid;place-items:center;width:18px;height:18px;color:#327f97;font-size:16px;line-height:1">⌕</span>
+          <input type="text" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search report rows" style="min-width:0;flex:1;border:0;outline:none;background:transparent;color:#193443;font-family:Manrope,sans-serif;font-size:13px;font-weight:500">
+        </label>
+        <div style="display:flex;flex-direction:column;gap:2px;color:#cde8ef;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">
+          <span>SQL view</span>
+          <strong style="color:#fff;font-size:11px;letter-spacing:.02em;white-space:nowrap">{{ view }}</strong>
+        </div>
+        <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid rgba(255,255,255,.67);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background 170ms ease,color 170ms ease,transform 170ms ease" style-hover="background:#f0fbfd;color:#0c526f;border-color:#fff;transform:translateY(-2px)"><span style="font-size:16px;font-weight:500;line-height:1">↻</span>Refresh Report</button>
+      </div>
+    </header>
+
+    <nav aria-label="Reports" style="flex:0 0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:0 4px 2px;border-bottom:1px solid #dde6ec;animation:afIn .5s ease .04s both">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+        <a href="#" onClick="{{ tab.onPick }}" style="{{ tab.style }}">{{ tab.label }}</a>
+      </sc-for>
+    </nav>
+
+    <section style="display:flex;flex:1 1 auto;min-height:340px;gap:14px;flex-wrap:wrap">
+      <article style="display:flex;min-width:520px;min-height:0;flex:3 1 660px;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);overflow:hidden;animation:afIn .5s ease .3s both">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;padding:18px 22px 12px">
+          <div style="min-width:0;flex:1 1 260px">
+            <h2 style="margin:0;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">{{ title }}</h2>
+            <p style="margin:4px 0 0;color:#718996;font-size:11.5px;font-weight:500">{{ description }}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase">{{ filterLabel }}</span>
+            <div style="display:flex;align-items:center;gap:6px;padding:3px;border-radius:10px;background:#f1f5f8">
+              <sc-for list="{{ filters }}" as="filter" hint-placeholder-count="4">
+                <button type="button" onClick="{{ filter.onPick }}" style="{{ filter.style }}">{{ filter.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="{{ headStyle }}">
+          <sc-for list="{{ head }}" as="h" hint-placeholder-count="6">
+            <span style="{{ h.style }}">{{ h.label }}</span>
+          </sc-for>
+        </div>
+
+        <div style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 10px 10px">
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="6">
+            <div style="{{ row.style }}">
+              <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="6">
+                <span style="{{ cell.style }}">{{ cell.value }}</span>
+              </sc-for>
+            </div>
+            <div style="height:1px;margin:0 12px;background:#eef2f5"></div>
+          </sc-for>
+          <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;place-items:center;gap:6px;padding:46px 20px;text-align:center">
+              <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#eef4f8;color:#8aa3ad;font-size:19px">⌕</span>
+              <strong style="color:#254a59;font-size:13px;font-weight:700">No report rows</strong>
+              <small style="color:#718996;font-size:11px">The selected view and filters returned no records.</small>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 22px;border-top:1px solid #eef2f5">
+          <span style="min-width:0;flex:1;color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">{{ pageLabel }}</span>
+          <a href="#" style="color:#1c7595;font-size:11.5px;font-weight:700">Export CSV</a>
+        </div>
+      </article>
+
+      <article style="display:flex;min-width:300px;min-height:0;flex:1 1 300px;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);overflow:hidden;animation:afIn .5s ease .36s both">
+        <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 10px">
+          <h2 style="margin:0;min-width:0;flex:1;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Report Context</h2>
+        </div>
+        <div style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 22px 18px">
+          <div style="padding:13px 14px;border-radius:10px;background:#f6f9fb">
+            <p style="margin:0 0 3px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Rows returned</p>
+            <strong style="color:#183e50;font-family:Sora,Manrope,sans-serif;font-size:26px;font-weight:700;letter-spacing:-.03em">{{ rowCount }}</strong>
+            <p style="margin:2px 0 0;color:#718996;font-size:10.5px;font-weight:500">Read-only result set</p>
+          </div>
+          <div style="margin-top:8px;padding:13px 14px;border-radius:10px;background:#f6f9fb">
+            <p style="margin:0 0 3px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">SQL source</p>
+            <strong style="display:block;color:#183e50;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;font-weight:500">{{ view }}</strong>
+            <p style="margin:5px 0 0;color:#718996;font-size:10.5px;font-weight:500">Derived from normalized AquaFleet tables at query time.</p>
+          </div>
+
+          <p style="margin:18px 0 8px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Available reports</p>
+          <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+            <div onClick="{{ tab.onPick }}" style="{{ tab.rowStyle }}" style-hover="background:#f3f8fb">
+              <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">{{ tab.label }}</strong><small style="color:#718996;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px">{{ tab.view }}</small></div>
+              <span style="color:#8aa3ad;font-size:13px">›</span>
+            </div>
+          </sc-for>
+
+          <p style="margin:14px 0 0;color:#8296a0;font-size:10px;font-weight:500">Reports are read-only. Records are created and edited from their own workspace.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;headerFrom&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#1266a5&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#1266a5&quot;,&quot;#0e527e&quot;,&quot;#12607f&quot;,&quot;#1b4f8f&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;headerTo&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#54c3e0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#54c3e0&quot;,&quot;#4aa7cc&quot;,&quot;#63d6cf&quot;,&quot;#7fd0ef&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Comfortable&quot;,&quot;options&quot;:[&quot;Comfortable&quot;,&quot;Compact&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+const PILL_BASE = "display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap";
+const TONE = { green:"background:#e8f5ee;color:#25795a", blue:"background:#e5f3fa;color:#16617e", amber:"background:#fbf2e2;color:#8a6224", red:"background:#fdeceb;color:#a9453c", grey:"background:#eef2f5;color:#5b7381" };
+const TONE_OF = { Completed:"green", Active:"green", Available:"green", Low:"green", Stored:"green", Received:"green",
+  "In Progress":"blue", Deployed:"blue", Sealed:"blue", Collected:"blue", Moderate:"amber", Maintenance:"amber", "In Transit":"amber",
+  High:"red", Critical:"red", Aborted:"red", Planned:"grey", Cancelled:"grey", Retired:"grey", Released:"grey" };
+
+const REPORTS = [
+  { key:"expeditions", title:"Expedition Summary", view:"vw_expedition_summary",
+    description:"Vessels, budgets, campaign dates and derived mission totals.",
+    filterLabel:"Expedition status", filters:["All","Planned","Active","Completed","Cancelled"], filterIdx:5,
+    cols:[["ID","62px","id"],["Expedition","minmax(200px,2.3fr)","text"],["Vessel","minmax(150px,1.5fr)","text"],["Start","96px","mono"],["End","96px","mono"],["Status","108px","pill"],["Budget","124px","num"],["Missions","84px","num"]],
+    rows:[
+      ["01","Andaman Deep Reef Biodiversity Survey","ORV Sagar Nidhi","03/11/2025","28/11/2025","Completed","18,500,000.00","3"],
+      ["02","Carlsberg Ridge Hydrothermal Vent Programme","RV Samudra Anveshak","20/07/2026","30/08/2026","Active","42,750,000.00","2"],
+      ["03","Bengal Fan Sediment Core Campaign","RV Sindhu Sadhana","12/01/2026","08/02/2026","Completed","23,100,000.00","1"],
+      ["04","Kochi Offshore Pipeline Integrity Campaign","ORV Sagar Nidhi","15/09/2026","10/10/2026","Planned","9,800,000.00","1"]] },
+
+  { key:"missions", title:"Mission Operations", view:"vw_mission_operations",
+    description:"Expedition and zone context with derived duration and assignment counts.",
+    filterLabel:"Mission status", filters:["All","Planned","In Progress","Completed","Aborted"], filterIdx:7,
+    cols:[["ID","54px","id"],["Mission","minmax(190px,2.1fr)","text"],["Expedition","minmax(170px,1.8fr)","text"],["Zone","minmax(140px,1.4fr)","text"],["Minutes","84px","num"],["Vehicles","82px","num"],["Operators","90px","num"],["Status","116px","pill"]],
+    rows:[
+      ["01","Benthic Photographic Transect","Andaman Deep Reef Biodiversity Survey","Andaman Deep Reef Shelf","390","2","3","Completed"],
+      ["02","Coral Tissue Sample Collection","Andaman Deep Reef Biodiversity Survey","Andaman Deep Reef Shelf","325","1","2","Completed"],
+      ["03","Water Column Profiling","Andaman Deep Reef Biodiversity Survey","Andaman Deep Reef Shelf","315","1","1","Completed"],
+      ["04","Hydrothermal Plume Survey","Carlsberg Ridge Hydrothermal Vent Programme","Carlsberg Ridge Vent Field","440","2","2","Completed"],
+      ["05","Vent Fauna Sampling","Carlsberg Ridge Hydrothermal Vent Programme","Carlsberg Ridge Vent Field","—","1","1","In Progress"],
+      ["06","Sediment Core Extraction","Bengal Fan Sediment Core Campaign","Bengal Fan Sediment Basin","520","1","1","Completed"],
+      ["07","Pipeline Corrosion Inspection","Kochi Offshore Pipeline Integrity Campaign","Kochi Offshore Shelf","—","0","0","Planned"]] },
+
+  { key:"vehicle-readiness", title:"Vehicle Readiness", view:"vw_vehicle_readiness",
+    description:"Configuration counts and maintenance dates without storing derived readiness data.",
+    filterLabel:"Vehicle status", filters:["All","Available","Deployed","Maintenance","Retired"], filterIdx:3,
+    cols:[["ID","54px","id"],["Vehicle","minmax(180px,2fr)","text"],["Type","78px","text"],["Status","120px","pill"],["Sensors","82px","num"],["Open batteries","118px","num"],["Last maintenance","132px","mono"],["Next due","104px","mono"]],
+    rows:[
+      ["01","Varuna AUV-1","AUV","Available","3","1","18/06/2026","18/12/2026"],
+      ["02","Neelkanth ROV-1","ROV","Deployed","2","0","14/02/2026","14/08/2026"],
+      ["03","Sagarika AUV-2","AUV","Deployed","3","0","30/05/2026","30/05/2027"],
+      ["04","Trishul ROV-2","ROV","Maintenance","0","0","01/08/2026","—"],
+      ["05","Meghna AUV-3","AUV","Retired","0","0","22/03/2026","—"]] },
+
+  { key:"sample-lineage", title:"Sample Lineage", view:"vw_sample_lineage",
+    description:"Traceability from expedition and mission through samples to aliquots.",
+    filterLabel:"Custody state", filters:["All","Collected","Sealed","In Transit","Received","Stored","Released"], filterIdx:5,
+    cols:[["Expedition","minmax(170px,1.9fr)","text"],["Mission","minmax(160px,1.7fr)","text"],["Sample","70px","id"],["Sample Type","minmax(150px,1.6fr)","text"],["Collected","124px","mono"],["Custody","112px","pill"],["Aliquot","78px","num"],["Volume (ml)","104px","num"]],
+    rows:[
+      ["Andaman Deep Reef Biodiversity Survey","Coral Tissue Sample Collection","01","Coral Tissue","09/11/2025 09:40","Stored","1","15.00"],
+      ["Andaman Deep Reef Biodiversity Survey","Coral Tissue Sample Collection","01","Coral Tissue","09/11/2025 09:40","Stored","2","15.00"],
+      ["Andaman Deep Reef Biodiversity Survey","Coral Tissue Sample Collection","02","Reef Sediment","09/11/2025 10:25","Stored","1","120.50"],
+      ["Andaman Deep Reef Biodiversity Survey","Coral Tissue Sample Collection","03","Seawater - Reef Column","09/11/2025 11:50","Released","1","500.00"],
+      ["Carlsberg Ridge Hydrothermal Vent Programme","Hydrothermal Plume Survey","04","Hydrothermal Fluid","24/07/2026 09:30","Received","1","60.00"],
+      ["Carlsberg Ridge Hydrothermal Vent Programme","Hydrothermal Plume Survey","05","Vent Chimney Sulphide","24/07/2026 10:20","Stored","1","25.75"],
+      ["Carlsberg Ridge Hydrothermal Vent Programme","Vent Fauna Sampling","06","Vent Fauna - Shrimp","03/08/2026 06:15","In Transit","1","8.50"],
+      ["Bengal Fan Sediment Core Campaign","Sediment Core Extraction","07","Sediment Core Section A","18/01/2026 11:10","Sealed","1","250.00"],
+      ["Bengal Fan Sediment Core Campaign","Sediment Core Extraction","08","Sediment Core Section B","18/01/2026 14:20","Collected","1","310.00"]] },
+
+  { key:"incidents", title:"Incident Overview", view:"vw_incident_overview",
+    description:"Incident severity with mission, expedition and zone context.",
+    filterLabel:"Severity", filters:["All","Low","Moderate","High","Critical"], filterIdx:2,
+    cols:[["ID","54px","id"],["Incident","minmax(180px,2fr)","text"],["Severity","112px","pill"],["Mission","minmax(160px,1.7fr)","text"],["Expedition","minmax(160px,1.7fr)","text"],["Zone","minmax(140px,1.4fr)","text"],["Reported","126px","mono"]],
+    rows:[
+      ["01","Acoustic Positioning Dropout","Moderate","Benthic Photographic Transect","Andaman Deep Reef Biodiversity Survey","Andaman Deep Reef Shelf","05/11/2025 11:35"],
+      ["02","Fishing Net Entanglement Risk","Low","Benthic Photographic Transect","Andaman Deep Reef Biodiversity Survey","Andaman Deep Reef Shelf","05/11/2025 13:20"],
+      ["03","Thermal Shutdown Warning","High","Hydrothermal Plume Survey","Carlsberg Ridge Hydrothermal Vent Programme","Carlsberg Ridge Vent Field","24/07/2026 10:05"],
+      ["04","Turbidity Loss of Visibility","Moderate","Hydrothermal Plume Survey","Carlsberg Ridge Hydrothermal Vent Programme","Carlsberg Ridge Vent Field","24/07/2026 11:25"],
+      ["05","Manipulator Hydraulic Leak","Critical","Vent Fauna Sampling","Carlsberg Ridge Hydrothermal Vent Programme","Carlsberg Ridge Vent Field","03/08/2026 07:40"],
+      ["06","Core Barrel Jam","Low","Sediment Core Extraction","Bengal Fan Sediment Core Campaign","Bengal Fan Sediment Basin","18/01/2026 13:05"]] }
+];
+
+const CELL = {
+  id: "color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10.5px",
+  mono: "min-width:0;overflow:hidden;color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;text-overflow:ellipsis;white-space:nowrap",
+  num: "color:#254a59;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;text-align:right",
+  text: "min-width:0;overflow:hidden;color:#486774;font-size:11.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap"
+};
+
+class Component extends DCLogic {
+  state = { key: "expeditions", filter: "All", query: "" };
+
+  componentDidMount() {
+    const header = document.querySelector("[data-af-header]");
+    if (header && this.props.headerFrom && this.props.headerTo) {
+      header.style.background = "linear-gradient(100deg," + this.props.headerFrom + " 0%," + this.props.headerTo + " 100%)";
+    }
+  }
+
+  renderVals() {
+    const cfg = REPORTS.find(r => r.key === this.state.key) || REPORTS[0];
+    const grid = cfg.cols.map(c => c[1]).join(" ");
+    const q = this.state.query.trim().toLowerCase();
+    const rows = cfg.rows.filter(r =>
+      (!q || r.join(" ").toLowerCase().includes(q)) &&
+      (this.state.filter === "All" || String(r[cfg.filterIdx]) === this.state.filter));
+
+    return {
+      query: this.state.query,
+      onQuery: e => this.setState({ query: e.target.value }),
+      title: cfg.title,
+      description: cfg.description,
+      view: cfg.view,
+      filterLabel: cfg.filterLabel,
+      rowCount: String(rows.length),
+      pageLabel: rows.length ? "Showing " + rows.length + " of " + cfg.rows.length + " rows" : "No rows returned",
+      isEmpty: rows.length === 0,
+      headStyle: "display:grid;grid-template-columns:" + grid + ";gap:12px;align-items:center;padding:8px 22px;border-top:1px solid #eef2f5;border-bottom:1px solid #eef2f5;background:#fafcfd;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase",
+      head: cfg.cols.map(c => ({
+        label: c[0],
+        style: "min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" + (c[2] === "num" ? ";text-align:right" : "")
+      })),
+      tabs: REPORTS.map(r => ({
+        label: r.title,
+        view: r.view,
+        onPick: e => { if (e && e.preventDefault) e.preventDefault(); this.setState({ key: r.key, filter: "All" }); },
+        style: r.key === this.state.key
+          ? "padding:0 0 9px;color:#12637f;font-size:12px;font-weight:700;box-shadow:inset 0 -2px 0 #2b8fc7"
+          : "padding:0 0 9px;color:#65818e;font-size:12px;font-weight:600",
+        rowStyle: "display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;transition:background 150ms ease;background:" +
+          (r.key === this.state.key ? "#f1f9fc;box-shadow:inset 3px 0 0 #54c3e0" : "transparent")
+      })),
+      filters: cfg.filters.map(label => ({
+        label,
+        onPick: () => this.setState({ filter: label }),
+        style: "padding:6px 12px;border:0;border-radius:8px;background:" + (this.state.filter === label ? "#fff" : "transparent") +
+          ";color:" + (this.state.filter === label ? "#12637f" : "#5f7f8c") +
+          ";font-family:Manrope,sans-serif;font-size:11px;font-weight:700;cursor:pointer;box-shadow:" +
+          (this.state.filter === label ? "0 2px 6px rgba(23,53,68,.10)" : "none")
+      })),
+      rows: rows.map(r => ({
+        style: "display:grid;grid-template-columns:" + grid + ";gap:12px;align-items:center;padding:" +
+          (this.props.density === "Compact" ? "7px 12px" : "11px 12px") +
+          ";border-radius:10px;transition:background 150ms ease",
+        cells: r.map((v, i) => {
+          const type = cfg.cols[i][2];
+          return { value: v, style: type === "pill" ? PILL_BASE + ";" + (TONE[TONE_OF[v]] || TONE.grey) : CELL[type] || CELL.text };
+        })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

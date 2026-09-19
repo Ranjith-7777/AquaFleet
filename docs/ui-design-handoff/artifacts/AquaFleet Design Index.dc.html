@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;min-height:100%;background:#e9eff5;font-family:Manrope,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1c6f93;text-decoration:none}a:hover{color:#0e4f6c}
+@keyframes afIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+*{box-sizing:border-box}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#e9eff5;color:#173544">
+  <header style="position:relative;display:flex;align-items:center;gap:24px;flex-wrap:wrap;min-height:126px;padding:22px 30px;background:linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%);box-shadow:0 12px 30px rgba(17,91,135,.22);overflow:hidden;animation:afIn .5s ease both">
+    <div style="position:absolute;top:-104px;right:22%;width:240px;height:240px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03);pointer-events:none"></div>
+    <div style="display:grid;place-items:center;width:52px;height:52px;flex:0 0 auto;border:1px solid rgba(255,255,255,.5);border-radius:16px;background:rgba(255,255,255,.16);color:#fff;font-size:26px;font-weight:700;line-height:1">≈</div>
+    <div style="position:relative;min-width:0;flex:1 1 320px">
+      <p style="margin:0 0 2px;color:#d4eef3;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;font-weight:500;letter-spacing:.11em;text-transform:uppercase">AquaFleet Design System · Review Set</p>
+      <h1 style="margin:0;color:#fff;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.045em;line-height:1.05">Authenticated Application Designs</h1>
+      <p style="margin:6px 0 0;max-width:760px;color:#e2f4f8;font-size:12.5px;font-weight:500">Every authenticated workspace, designed against the approved Research Vessels page. Visual design only — no application code has been changed.</p>
+    </div>
+  </header>
+
+  <main style="max-width:1280px;margin:0 auto;padding:22px 24px 40px;display:flex;flex-direction:column;gap:18px">
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+      <div style="padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06)">
+        <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Workspaces designed</p>
+        <strong style="display:block;margin-top:4px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:32px;font-weight:700;letter-spacing:-.04em">21</strong>
+      </div>
+      <div style="padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06)">
+        <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Visual anchor</p>
+        <strong style="display:block;margin-top:4px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Research Vessels</strong>
+        <p style="margin:4px 0 0;color:#718a95;font-size:10.5px;font-weight:500">Frozen; used as the reference for every page</p>
+      </div>
+      <div style="padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06)">
+        <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Data source</p>
+        <strong style="display:block;margin-top:4px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">sample_data.sql</strong>
+        <p style="margin:4px 0 0;color:#718a95;font-size:10.5px;font-weight:500">Real seeded records, no invented entities</p>
+      </div>
+      <div style="padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06)">
+        <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Implementation</p>
+        <strong style="display:block;margin-top:4px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Not started</strong>
+        <p style="margin:4px 0 0;color:#718a95;font-size:10.5px;font-weight:500">Awaiting your approval for handoff</p>
+      </div>
+    </section>
+
+    <section style="padding:18px 22px 20px;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07)">
+      <h2 style="margin:0 0 12px;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Overview</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">
+        <a href="AquaFleet Dashboard.dc.html" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;background:#f6f9fb" style-hover="background:#eef6fa">
+          <span style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#e7f4f9;color:#1c7595;font-size:16px">⌁</span>
+          <span style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Dashboard</strong><small style="color:#718996;font-size:10.5px">Approved · unchanged</small></span>
+        </a>
+        <a href="AquaFleet Reports.dc.html" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;background:#f6f9fb" style-hover="background:#eef6fa">
+          <span style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#e8f1fb;color:#1a5f97;font-size:16px">▤</span>
+          <span style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Reports</strong><small style="color:#718996;font-size:10.5px">5 read-only SQL views</small></span>
+        </a>
+        <a href="AquaFleet Interface States.dc.html" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;background:#f6f9fb" style-hover="background:#eef6fa">
+          <span style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#e6f5f1;color:#1f7f72;font-size:16px">◈</span>
+          <span style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Interface States</strong><small style="color:#718996;font-size:10.5px">Loading, empty, error, modal, toast</small></span>
+        </a>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+      <article style="padding:18px 22px 20px;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07)">
+        <h2 style="margin:0;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.03em">Fleet &amp; Crew</h2>
+        <p style="margin:4px 0 12px;color:#718996;font-size:11px;font-weight:500">Master data for platforms, zones, assets and personnel.</p>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <a href="AquaFleet Vessels.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Research Vessels</strong><span style="padding:4px 10px;border-radius:999px;background:#e8f5ee;color:#25795a;font-size:9.5px;font-weight:700">Approved</span></a>
+          <a href="AquaFleet Marine Zones.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Marine Zones</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Offshore Assets.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Offshore Assets</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Operators.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Operators</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+        </div>
+      </article>
+
+      <article style="padding:18px 22px 20px;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07)">
+        <h2 style="margin:0;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.03em">Vehicles &amp; Equipment</h2>
+        <p style="margin:4px 0 12px;color:#718996;font-size:11px;font-weight:500">Vehicles and everything fitted to or serviced on them.</p>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <a href="AquaFleet Vehicles.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">AUV / ROV Vehicles</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Sensors.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Sensors</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Battery Packs.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Battery Packs</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Vehicle Sensors.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Vehicle Sensors</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Vehicle Batteries.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Vehicle Batteries</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Maintenance Records.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Maintenance Records</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+        </div>
+      </article>
+
+      <article style="padding:18px 22px 20px;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07)">
+        <h2 style="margin:0;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.03em">Operations</h2>
+        <p style="margin:4px 0 12px;color:#718996;font-size:11px;font-weight:500">Mission execution, assignments and what missions generate.</p>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <a href="AquaFleet Missions.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Missions</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Mission Vehicles.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Mission Vehicles</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Mission Operators.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Mission Operators</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Telemetry Points.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Telemetry Points</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Incidents.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Incidents</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Inspection Tasks.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Inspection Tasks</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+        </div>
+      </article>
+
+      <article style="padding:18px 22px 20px;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07)">
+        <h2 style="margin:0;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.03em">Programme &amp; Science</h2>
+        <p style="margin:4px 0 12px;color:#718996;font-size:11px;font-weight:500">Campaign planning and the sample chain it produces.</p>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <a href="AquaFleet Expeditions.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Expeditions</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Samples.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Samples</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+          <a href="AquaFleet Sample Aliquots.dc.html" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px" style-hover="background:#f3f8fb"><strong style="min-width:0;flex:1;color:#193949;font-size:12.5px;font-weight:700">Sample Aliquots</strong><span style="color:#8aa3ad;font-size:13px">›</span></a>
+        </div>
+      </article>
+    </section>
+
+    <section style="padding:18px 22px 20px;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07)">
+      <h2 style="margin:0 0 10px;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.03em">System rules applied to every page</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+        <div style="padding:12px 14px;border-radius:10px;background:#f6f9fb"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">Sidebar</strong><small style="color:#718996;font-size:10.5px">100px navy rail, workspace pulled under it by -100px so the two read as one surface; active item is a full-bleed white rectangle with a 4px cyan edge.</small></div>
+        <div style="padding:12px 14px;border-radius:10px;background:#f6f9fb"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">Header</strong><small style="color:#718996;font-size:10.5px">Full-bleed blue/cyan band, eyebrow + 36px Sora title + one-line context, search pill, record count, one primary action.</small></div>
+        <div style="padding:12px 14px;border-radius:10px;background:#f6f9fb"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">Surfaces</strong><small style="color:#718996;font-size:10.5px">White cards on #e9eff5; radius 16 for panels, 14 for stat cards, 10 for interior rows; one soft shadow, no borders on cards.</small></div>
+        <div style="padding:12px 14px;border-radius:10px;background:#f6f9fb"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">Tables</strong><small style="color:#718996;font-size:10.5px">Mono uppercase column heads, 11.5px row text, mono for IDs and numerics, one status pill per row, inline View / Edit / Delete.</small></div>
+        <div style="padding:12px 14px;border-radius:10px;background:#f6f9fb"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">Selection</strong><small style="color:#718996;font-size:10.5px">Selected row tints #f1f9fc with a 3px cyan inset edge and drives the detail panel on the right.</small></div>
+        <div style="padding:12px 14px;border-radius:10px;background:#f6f9fb"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">Density</strong><small style="color:#718996;font-size:10.5px">Table and detail panel scroll internally; the page itself does not scroll at 1366×768.</small></div>
+      </div>
+      <p style="margin:14px 0 0;color:#8296a0;font-size:10.5px;font-weight:500">Designs only. No application, API, database or permission code has been modified.</p>
+    </section>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>
