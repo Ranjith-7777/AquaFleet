@@ -53,7 +53,7 @@
     return card;
   }
   global.AquaFleetWorkspace.register({
-    key: "marine-zones", title: "Marine Zones", relationKey: "missions", idField: "zone_id", filterField: "risk_level",
+    key: "marine-zones", title: "Marine Zones", subtitle: "Survey regions, operating depth envelopes and risk classification for mission planning.", searchPlaceholder: "Search zones or regions", addLabel: "Add Zone", relationKey: "missions", idField: "zone_id", filterField: "risk_level",
     registerTitle: "Zone Register", pageSize: 8, filters: ["All", "Low", "Moderate", "High", "Critical"], searchFields: ["zone_id", "zone_name", "region", "risk_level"],
     tabs: [{ key: "vessels", label: "Research Vessels" }, { key: "marine-zones", label: "Marine Zones" }, { key: "offshore-assets", label: "Offshore Assets" }, { key: "operators", label: "Operators" }],
     columnsTemplate: "52px minmax(190px,2.1fr) 92px 92px 78px 104px 122px",

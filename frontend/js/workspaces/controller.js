@@ -1,4 +1,4 @@
-/* Small controller for the first database-backed register workspace. */
+/* Shared controller for database-backed register workspaces. */
 (function exposeWorkspace(global) {
   "use strict";
   const Api = global.AquaFleetApi, Ui = global.AquaFleetUi;
@@ -9,11 +9,15 @@
   const panel = function () { return document.getElementById("content-panel"); };
 
   function register(config) { pages[config.key] = config; }
+  function has(key) { return Boolean(pages[key]); }
+  function describe(key) { return pages[key]; }
   function active() { return Boolean(pages[view.key]); }
   function isCurrent(key) { return view.key === key && global.AquaFleetApp.getState().currentResource === key; }
-  function filtered(config) {
+  function filtered(config, context) {
     return view.rows.filter(function keep(row) {
-      return (view.filter === "All" || row[config.filterField] === view.filter) && Data.matches(row, config.searchFields, view.query);
+      const status = config.filterValue ? config.filterValue(row, context) : row[config.filterField];
+      const searchable = config.searchValues ? config.searchValues(row, context) : config.searchFields.map(function (field) { return row[field]; });
+      return (view.filter === "All" || status === view.filter) && Data.matches(searchable, searchable.map(function (_, index) { return index; }), view.query);
     });
   }
   function choose(rows, config) {
@@ -43,9 +47,9 @@
     });
     header.appendChild(C.el("span", "ws-col-actions", "Actions")); grid.appendChild(header);
     const body = C.el("div", "ws-table-body"); body.setAttribute("role", "rowgroup");
-    if (!view.rows.length) C.state(body, "empty", "No zones recorded", "Add a zone to begin.");
+    if (!view.rows.length) C.state(body, "empty", "No " + config.title.toLowerCase() + " recorded", "Add a record to begin.");
     else if (!list.length) {
-      C.state(body, "empty", "No matching records", "Adjust the search or filter to see zones.");
+      C.state(body, "empty", "No matching records", "Adjust the search or filter to see " + config.title.toLowerCase() + ".");
       body.querySelector(".ws-state").appendChild(C.button("Clear filters", "ws-state-retry", function () {
         view.filter = "All"; view.query = ""; const input = document.getElementById("global-search"); if (input) input.value = "";
         global.AquaFleetApp.clearCurrentSearch(); render();
@@ -57,8 +61,8 @@
       row.addEventListener("keydown", function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(item[config.idField], false); } });
       config.columns.forEach(function column(col) {
         const cell = C.el("span", "ws-cell ws-col-" + col.type); cell.setAttribute("role", "cell");
-        if (col.type === "primary") cell.append(C.el("strong", "", item[col.field]), C.el("small", "", item[col.subField]));
-        else if (col.type === "pill") cell.appendChild(C.pill(item[col.field], config.tone(item[col.field])));
+        if (col.type === "primary") cell.append(C.el("strong", "", col.value ? col.value(item, context) : item[col.field]), C.el("small", "", col.subValue ? col.subValue(item, context) : item[col.subField]));
+        else if (col.type === "pill") { const value = col.value ? col.value(item, context) : item[col.field]; cell.appendChild(C.pill(value, config.tone(value))); }
         else cell.textContent = String(col.value ? col.value(item, context) : item[col.field] ?? "—");
         row.appendChild(cell);
       });
@@ -79,7 +83,7 @@
   }
   function render() {
     const config = pages[view.key]; if (!config || !isCurrent(config.key) || view.loading) return;
-    const context = config.context(view.rows, view.relation), list = filtered(config);
+    const context = config.context(view.rows, view.relation), list = filtered(config, context);
     choose(list, config);
     const pageData = Data.pageOf(list, view.page, config.pageSize); view.page = pageData.page;
     Ui.clearElement(panel()); panel().setAttribute("aria-busy", "false");
@@ -96,18 +100,24 @@
   async function fetch(config) {
     const version = ++view.version; view.loading = true;
     panel().setAttribute("aria-busy", "true");
-    C.state(panel(), "loading", "Loading marine zones", "Querying aquafleet_db…");
-    const results = await Promise.allSettled([Api.get(Resources[config.key].path), Api.get(Resources[config.relationKey].path)]);
+    C.state(panel(), "loading", "Loading " + config.title.toLowerCase(), "Querying aquafleet_db…");
+    const relationKeys = config.relationKeys || [config.relationKey];
+    const results = await Promise.allSettled([Api.get(Resources[config.key].path)].concat(relationKeys.map(function (key) { return Api.get(Resources[key].path); })));
     if (version !== view.version || !isCurrent(config.key)) return;
     view.loading = false;
     panel().setAttribute("aria-busy", "false");
     if (results[0].status !== "fulfilled") {
       const error = results[0].reason;
-      C.state(panel(), error && error.status === 403 ? "restricted" : "error", "Unable to load Marine Zones", error && error.message || "The zones could not be loaded. No data was changed.", function () { fetch(config); });
+      C.state(panel(), error && error.status === 403 ? "restricted" : "error", "Unable to load " + config.title, error && error.message || "The records could not be loaded. No data was changed.", function () { fetch(config); });
       return;
     }
     view.rows = Array.isArray(results[0].value.data) ? results[0].value.data : [];
-    view.relation = results[1].status === "fulfilled" && Array.isArray(results[1].value.data) ? results[1].value.data : null;
+    if (config.relationKeys) {
+      view.relation = Object.fromEntries(relationKeys.map(function (key, index) {
+        const result = results[index + 1];
+        return [key, result.status === "fulfilled" && Array.isArray(result.value.data) ? result.value.data : null];
+      }));
+    } else view.relation = results[1].status === "fulfilled" && Array.isArray(results[1].value.data) ? results[1].value.data : null;
     const meta = document.querySelector(".ws-record-count"); if (meta) meta.textContent = view.rows.length + (view.rows.length === 1 ? " RECORD" : " RECORDS");
     render();
   }
@@ -119,5 +129,5 @@
   function refresh() { if (active()) return fetch(pages[view.key]); }
   function setQuery(query) { if (!active()) return; view.query = query; view.page = 1; render(); }
   function leave() { ++view.version; view.key = null; view.rows = []; view.relation = null; }
-  global.AquaFleetWorkspace = Object.freeze({ register: register, open: open, refresh: refresh, setQuery: setQuery, leave: leave, isCurrent: isCurrent });
+  global.AquaFleetWorkspace = Object.freeze({ register: register, has: has, describe: describe, open: open, refresh: refresh, setQuery: setQuery, leave: leave, isCurrent: isCurrent });
 })(window);

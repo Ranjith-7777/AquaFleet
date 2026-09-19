@@ -34,5 +34,33 @@
     return card;
   }
   function action(label, tone, handler) { return button(label, "ws-link ws-link-" + tone, handler); }
-  global.AquaFleetWorkspaceComponents = Object.freeze({ el: el, button: button, pill: pill, metric: metric, state: state, fact: fact, action: action });
+  function detailCard(options) {
+    const card = el("article", "ws-card ws-detail"), header = el("div", "ws-detail-head");
+    header.append(el("h2", "", options.title), el("span", "ws-detail-ref", options.row ? "#" + String(options.id).padStart(2, "0") : "—")); card.appendChild(header);
+    const body = el("div", "ws-detail-body");
+    if (!options.row) { state(body, "empty", "No record selected", "Select a record from the register."); card.appendChild(body); return card; }
+    body.append(el("strong", "ws-detail-title", options.name), el("p", "ws-detail-sub", options.subtitle), pill(options.status, options.tone));
+    const facts = el("div", "ws-facts"); options.facts.forEach(function (item) { facts.appendChild(fact(item[0], item[1])); }); body.appendChild(facts);
+    options.fields.forEach(function (item) { body.appendChild(fact(item[0], item[1], true)); });
+    body.appendChild(el("p", "ws-section-label", options.linkedLabel));
+    const list = el("div", "ws-linked");
+    if (options.linked === null) {
+      list.append(el("p", "ws-linked-empty", "Related data unavailable."), button("Retry", "ws-state-retry", function () { global.AquaFleetWorkspace.refresh(); }));
+    } else if (!options.linked.length) list.appendChild(el("p", "ws-linked-empty", options.emptyLinked));
+    else options.linked.forEach(function (item) {
+      const row = el("div", "ws-linked-row"), copy = el("div", "ws-linked-copy");
+      copy.append(el("strong", "", item.title), el("small", "", item.meta)); row.appendChild(copy);
+      if (item.status) row.appendChild(pill(item.status, item.tone)); list.appendChild(row);
+    });
+    body.appendChild(list); card.appendChild(body);
+    const master = global.AquaFleetMasterData, key = options.key;
+    if (master.can(key, "update") || master.can(key, "delete")) {
+      const footer = el("div", "ws-detail-footer"), actions = el("div", "ws-detail-actions");
+      if (master.can(key, "update")) actions.appendChild(button(options.editLabel, "ws-primary", function () { master.openEdit(key, options.row); }));
+      if (master.can(key, "delete")) actions.appendChild(button("Delete", "ws-danger", function () { master.openDelete(key, options.row); }));
+      footer.append(actions, el("p", "ws-detail-note", options.note)); card.appendChild(footer);
+    }
+    return card;
+  }
+  global.AquaFleetWorkspaceComponents = Object.freeze({ el: el, button: button, pill: pill, metric: metric, state: state, fact: fact, action: action, detailCard: detailCard });
 })(window);

@@ -124,7 +124,7 @@
   function reapplySearch() {
     if (state.currentView === "dashboard") { renderMissionActivity(); return; }
     if (state.currentView === "reports") return;
-    if (state.currentView === "marine-zones") { Workspace.setQuery(state.searchQuery); return; }
+    if (Workspace.has(state.currentView)) { Workspace.setQuery(state.searchQuery); return; }
     if (state.currentView === "vessels") {
       if (!state.loading) { vesselState.page = 1; renderVesselWorkspace(); }
       return;
@@ -953,7 +953,7 @@
     const config = Resources.byKey[key];
     if (!config) { renderDashboard(); return; }
     if (key === "vessels") return renderVessels();
-    if (key === "marine-zones") return renderMarineZones();
+    if (Workspace.has(key)) return renderWorkspaceResource(key);
     const sequence = ++state.requestSequence;
     state.currentView = key; state.currentResource = key; state.rows = []; state.loading = true;
     document.body.classList.remove("dashboard-view", "vessels-view"); setEyebrow();
@@ -982,15 +982,17 @@
     }
   }
 
-  function renderMarineZones() {
+  function renderWorkspaceResource(key) {
+    const page = Workspace.describe(key);
     ++state.requestSequence;
-    state.currentView = "marine-zones"; state.currentResource = "marine-zones"; state.rows = []; state.loading = false;
-    document.body.classList.add("dashboard-view", "marine-zones-view");
+    state.currentView = key; state.currentResource = key; state.rows = []; state.loading = false;
+    document.body.classList.add("dashboard-view", "workspace-view");
     document.body.classList.remove("vessels-view");
+    document.body.setAttribute("data-workspace", key);
     const search = searchInput(); if (search) search.disabled = false;
-    Ui.setPageHeader("Marine Zones", "Survey regions, operating depth envelopes and risk classification for mission planning.");
-    setEyebrow("AquaFleet Command · Fleet & Crew"); setSearchPlaceholder("Search zones or regions");
-    Ui.clearAlerts(); updateActiveNavigation("marine-zones");
+    Ui.setPageHeader(page.title, page.subtitle);
+    setEyebrow(page.eyebrow || "AquaFleet Command · Fleet & Crew"); setSearchPlaceholder(page.searchPlaceholder);
+    Ui.clearAlerts(); updateActiveNavigation(key);
     document.querySelectorAll("[data-nav-group]").forEach(function closeFlyout(button) {
       button.setAttribute("aria-expanded", "false");
       button.closest(".nav-group").classList.remove("flyout-open");
@@ -998,12 +1000,12 @@
     const actions = document.getElementById("page-actions"); Ui.clearElement(actions);
     const meta = Ui.element("div", { className: "ws-record-meta", children: [Ui.element("span", { text: "RECORDS" }), Ui.element("strong", { className: "ws-record-count", text: "— RECORDS" })] });
     actions.appendChild(meta);
-    if (Master.can("marine-zones", "create")) {
-      const add = Ui.element("button", { className: "ws-add-button", attributes: { type: "button" }, children: [Ui.element("span", { text: "＋", attributes: { "aria-hidden": "true" } }), Ui.element("span", { text: "Add Zone" })] });
-      add.addEventListener("click", function () { Master.openCreate("marine-zones"); }); actions.appendChild(add);
+    if (Master.can(key, "create")) {
+      const add = Ui.element("button", { className: "ws-add-button", attributes: { type: "button" }, children: [Ui.element("span", { text: "＋", attributes: { "aria-hidden": "true" } }), Ui.element("span", { text: page.addLabel })] });
+      add.addEventListener("click", function () { Master.openCreate(key); }); actions.appendChild(add);
     }
     Ui.clearElement(document.getElementById("context-rail"));
-    Workspace.open("marine-zones", state.searchQuery);
+    Workspace.open(key, state.searchQuery);
   }
 
   function renderReports() {
@@ -1018,8 +1020,8 @@
   }
 
   function navigate(view) {
-    if (state.currentView === "marine-zones" && view !== "marine-zones") Workspace.leave();
-    if (view !== "marine-zones") document.body.classList.remove("marine-zones-view");
+    if (Workspace.has(state.currentView) && view !== state.currentView) Workspace.leave();
+    if (!Workspace.has(view)) { document.body.classList.remove("workspace-view"); document.body.removeAttribute("data-workspace"); }
     closeMobileNavigation();
     /* A screen change starts clean: a vessel search must not silently carry
        into missions. Refresh and post-CRUD reloads do NOT come through here,
@@ -1030,8 +1032,8 @@
     else renderResource(view);
   }
 
-  async function mutationComplete(key,message){if(state.currentResource===key){if(key==="marine-zones")await Workspace.refresh();else await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");}}
-  async function refreshIfCurrent(key){if(state.currentResource===key){if(key==="marine-zones")await Workspace.refresh();else await renderResource(key);}}
+  async function mutationComplete(key,message){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");}}
+  async function refreshIfCurrent(key){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);}}
 
   function initializeNavigation() {
     document.querySelectorAll("[data-view]").forEach(function register(link) {
