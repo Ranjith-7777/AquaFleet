@@ -24,7 +24,7 @@
     /* The dashboard's mission list, kept so the Mission Activity panel can
        be re-filtered on keystroke without another API call. KPI cards are
        computed from this same full list and never from the filtered view. */
-    missions: []
+    missions: [], missionsAvailable: true
   };
 
   /* =====================================================================
@@ -123,6 +123,10 @@
   function reapplySearch() {
     if (state.currentView === "dashboard") { renderMissionActivity(); return; }
     if (state.currentView === "reports") return;
+    if (state.currentView === "vessels") {
+      if (!state.loading) { vesselState.page = 1; renderVesselWorkspace(); }
+      return;
+    }
     const config = Resources.byKey[state.currentResource];
     if (config && !state.loading) renderTable(config, state.rows, state.totalCount);
   }
@@ -187,6 +191,12 @@
       link.classList.toggle("active", active);
       if (active) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");
+    });
+    /* A group button (e.g. Master Data) is active while a page inside its
+       flyout is showing. */
+    document.querySelectorAll("[data-nav-group]").forEach(function group(button) {
+      const menu = button.closest(".nav-group");
+      button.classList.toggle("active", Boolean(menu && menu.querySelector('[data-view="' + view + '"]')));
     });
   }
 
@@ -259,8 +269,8 @@
     state.health = "checking"; state.databaseHealth = "checking";
     setHealthIndicator("checking");
     const results = await Promise.allSettled([Api.get("/api/health"), Api.get("/api/health/database")]);
-    state.health = results[0].status === "fulfilled" ? "ok" : "offline";
-    state.databaseHealth = results[1].status === "fulfilled" ? "ok" : "error";
+    state.health = results[0].status === "fulfilled" && results[0].value.payload.success !== false ? "ok" : "offline";
+    state.databaseHealth = results[1].status === "fulfilled" && results[1].value.payload.success !== false ? "ok" : "error";
     if (results[1].status === "fulfilled") {
       state.databaseName = results[1].value.payload.database || null;
       state.mysqlVersion = results[1].value.payload.mysql_version || null;
@@ -268,12 +278,45 @@
     setHealthIndicator(healthSummary());
   }
 
-  function metricCard(label, result) {
-    const card = Ui.element("article", { className: "metric-card" + (result.ok ? "" : " metric-unavailable") });
-    card.appendChild(Ui.element("p", { className: "metric-label", text: label }));
-    card.appendChild(Ui.element("p", { className: "metric-value", text: result.ok ? result.count : "Unavailable" }));
-    card.appendChild(Ui.element("p", { className: "metric-note", text: result.ok ? "Current records" : "Could not load this count" }));
+  function dashboardRows(results, key) {
+    const result = results[key];
+    return result && result.status === "fulfilled" && Array.isArray(result.value.data)
+      ? result.value.data : null;
+  }
+
+  function dashboardCount(rows, predicate) {
+    return rows === null ? null : (predicate ? rows.filter(predicate).length : rows.length);
+  }
+
+  function dashboardMetric(label, value, note, icon, ratio) {
+    const card = Ui.element("article", { className: "dashboard-kpi" + (value === null ? " dashboard-unavailable" : "") });
+    card.appendChild(Ui.element("span", { className: "dashboard-kpi-icon", text: icon, attributes: { "aria-hidden": "true" } }));
+    const copy = Ui.element("div", { className: "dashboard-kpi-copy" });
+    copy.appendChild(Ui.element("p", { className: "dashboard-kpi-label", text: label }));
+    const number = Ui.element("strong", { className: "dashboard-kpi-value", text: value === null ? "Unavailable" : "0" });
+    copy.appendChild(number);
+    copy.appendChild(Ui.element("p", { className: "dashboard-kpi-note", text: value === null ? "Data could not be loaded" : note }));
+    copy.appendChild(Ui.element("div", { className: "dashboard-kpi-track", children: [
+      Ui.element("span", { attributes: { style: "--progress:" + (ratio === null ? 0 : Math.round(ratio * 100)) + "%" } })
+    ] }));
+    card.appendChild(copy);
+    if (value !== null) animateNumber(number, value);
     return card;
+  }
+
+  function dashboardHeading(title, meta) {
+    return Ui.element("div", { className: "dashboard-panel-heading", children: [
+      Ui.element("h2", { text: title }),
+      Ui.element("span", { className: "dashboard-panel-meta", text: meta })
+    ] });
+  }
+
+  function dashboardUnavailable(message) {
+    return Ui.element("p", { className: "dashboard-empty", text: message || "Data unavailable. Refresh to try again." });
+  }
+
+  function dashboardBadge(value, category) {
+    return Ui.element("span", { className: "dashboard-badge dashboard-badge-" + category + "-" + String(value || "unknown").toLowerCase().replace(/\s+/g, "-"), text: value || "Unknown" });
   }
 
   function healthDetail(label, value) {
@@ -283,120 +326,517 @@
     return item;
   }
 
-  /* Builds the Mission Activity panel from state.missions, honouring the
-     current query. The KPI cards above it and the summary rail beside it are
-     built from the SAME full state.missions / vehicle list, so a search never
-     moves a headline number. */
+  /* Search replaces this panel only; counts always use the complete API response. */
   function buildMissionActivity() {
-    const config = Resources.byKey.missions;
     const all = state.missions;
-    const rows = filterRows(config, all, state.searchQuery);
+    const rows = filterRows(Resources.byKey.missions, all, state.searchQuery);
     const filtering = Boolean(normalizeText(state.searchQuery));
-
-    const activity = Ui.element("section", {
-      className: "activity-panel",
-      children: [Ui.element("div", {
-        className: "activity-heading",
-        children: [
-          Ui.element("h2", { text: "Mission Activity" }),
-          Ui.element("span", {
-            attributes: { role: "status", "aria-live": "polite" },
-            text: filtering
-              ? rows.length + " of " + all.length + " missions"
-              : all.length + " missions"
-          })
-        ]
-      })]
-    });
-
-    if (all.length && !rows.length) {
+    const activity = Ui.element("section", { className: "dashboard-panel dashboard-operations activity-panel" });
+    activity.appendChild(dashboardHeading("Active Operations",
+      state.missionsAvailable ? (filtering ? rows.length + " of " + all.length + " missions" : all.length + " missions") : "Unavailable"));
+    const list = Ui.element("div", { className: "dashboard-mission-list" });
+    if (!state.missionsAvailable) list.appendChild(dashboardUnavailable("Mission data unavailable. Refresh to try again."));
+    else if (!all.length) list.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No missions recorded." }));
+    else if (!rows.length) {
       const empty = Ui.element("div", { className: "activity-no-match" });
-      empty.appendChild(Ui.element("p", {
-        className: "mb-2", text: "No missions match “" + state.searchQuery + "”."
-      }));
-      const clear = Ui.element("button", {
-        className: "btn btn-outline-primary btn-sm", text: "Clear Search",
-        attributes: { type: "button" }
+      empty.appendChild(Ui.element("p", { text: "No missions match “" + state.searchQuery + "”." }));
+      const clear = Ui.element("button", { className: "btn btn-outline-primary btn-sm", text: "Clear Search", attributes: { type: "button" } });
+      clear.addEventListener("click", function () { clearSearch(true); searchInput().focus(); });
+      empty.appendChild(clear); list.appendChild(empty);
+    } else {
+      rows.forEach(function mission(row, index) {
+        const view = Ui.element("button", { className: "activity-action", text: "View",
+          attributes: { type: "button", "aria-label": "View mission " + row.mission_id } });
+        view.addEventListener("click", function () { showDetails(Resources.byKey.missions, row); });
+        const item = Ui.element("div", { className: "dashboard-mission-row" + (row.status === "In Progress" ? " dashboard-mission-active" : "") });
+        item.appendChild(Ui.element("span", { className: "dashboard-mission-index", text: "#" + (index + 1) }));
+        item.appendChild(Ui.element("div", { className: "dashboard-mission-name", children: [
+          Ui.element("strong", { text: Ui.nullableText(row.mission_type) }),
+          Ui.element("small", { text: Ui.nullableText(row.expedition_title, "Expedition unavailable") })
+        ] }));
+        item.appendChild(Ui.element("span", { className: "dashboard-mission-zone", text: Ui.nullableText(row.zone_name) }));
+        item.appendChild(Ui.element("time", { className: "dashboard-mission-time", text: Ui.formatDateTime(row.start_time) }));
+        item.appendChild(dashboardBadge(row.status, "mission"));
+        item.appendChild(view); list.appendChild(item);
       });
-      clear.addEventListener("click", function onClear() {
-        clearSearch(true);
-        const input = searchInput();
-        if (input) input.focus();
-      });
-      empty.appendChild(clear);
-      activity.appendChild(empty);
-      return activity;
     }
-
-    rows.slice(0, 8).forEach(function mission(row, index) {
-      const view = Ui.element("button", {
-        className: "activity-action", text: "View",
-        attributes: { type: "button", "aria-label": "View mission " + row.mission_id }
-      });
-      view.addEventListener("click", function () { showDetails(config, row); });
-      activity.appendChild(Ui.element("div", {
-        className: "activity-row",
-        children: [
-          Ui.element("span", { className: "activity-tile", text: String(index + 1).padStart(2, "0") }),
-          Ui.element("div", {
-            className: "activity-copy",
-            children: [
-              Ui.element("strong", { text: row.mission_type }),
-              Ui.element("small", { text: (row.expedition_title || "Expedition") + " · " + (row.zone_name || "Marine zone") })
-            ]
-          }),
-          Ui.statusBadge(row.status, "mission"),
-          Ui.element("span", { className: "activity-time", text: Ui.formatDateTime(row.start_time) }),
-          view
-        ]
-      }));
-    });
+    activity.appendChild(list);
     return activity;
   }
 
-  /* Swap only the activity panel, leaving the KPI cards untouched. */
   function renderMissionActivity() {
     const existing = document.querySelector(".activity-panel");
-    if (!existing || !existing.parentNode) return;
-    existing.parentNode.replaceChild(buildMissionActivity(), existing);
+    if (existing && existing.parentNode) existing.parentNode.replaceChild(buildMissionActivity(), existing);
+  }
+
+  function buildFleetPanel(vehicles) {
+    const fleet = Ui.element("section", { className: "dashboard-panel dashboard-fleet" });
+    fleet.appendChild(dashboardHeading("Fleet Availability", vehicles === null ? "Unavailable" :
+      Math.min(3, vehicles.length) + " of " + vehicles.length + " vehicles shown"));
+    if (vehicles === null) { fleet.appendChild(dashboardUnavailable("Vehicle data unavailable.")); return fleet; }
+    const total = vehicles.length;
+    const statuses = [["Available", "#64b8d5"], ["Deployed", "#4988ba"], ["Maintenance", "#cba56c"], ["Retired", "#becbd3"]];
+    const counts = statuses.map(function (entry) { return countBy(vehicles, "status", entry[0]); });
+    const percent = total ? Math.round(counts[0] / total * 100) : 0;
+    let offset = 0;
+    const stops = statuses.map(function (entry, index) {
+      const start = offset; offset += total ? counts[index] / total * 100 : 0;
+      return entry[1] + " " + start + "% " + offset + "%";
+    }).join(", ");
+    const visual = Ui.element("div", { className: "dashboard-fleet-visual" });
+    const ring = Ui.element("div", { className: "dashboard-donut", attributes: {
+      style: "--donut-colors:" + (total ? "conic-gradient(" + stops + ")" : "conic-gradient(#e3ebef 0 100%)"),
+      "aria-label": percent + "% of vehicles available"
+    }, children: [Ui.element("div", { children: [
+      Ui.element("strong", { text: percent + "%" }), Ui.element("small", { text: "available" })
+    ] })] });
+    visual.appendChild(ring);
+    const distribution = Ui.element("div", { className: "dashboard-distribution" });
+    const segments = Ui.element("div", { className: "dashboard-segments", attributes: { "aria-hidden": "true" } });
+    statuses.forEach(function (entry, index) {
+      if (counts[index]) segments.appendChild(Ui.element("span", { attributes: {
+        style: "width:" + (counts[index] / total * 100) + "%;background:" + entry[1]
+      } }));
+    });
+    distribution.appendChild(segments);
+    const legend = Ui.element("div", { className: "dashboard-fleet-legend" });
+    statuses.forEach(function (entry, index) {
+      legend.appendChild(Ui.element("div", { children: [
+        Ui.element("i", { attributes: { style: "background:" + entry[1], "aria-hidden": "true" } }),
+        Ui.element("span", { text: entry[0] }), Ui.element("b", { text: counts[index] })
+      ] }));
+    });
+    distribution.appendChild(legend); visual.appendChild(distribution); fleet.appendChild(visual);
+    const roster = Ui.element("div", { className: "dashboard-vehicle-list" });
+    vehicles.slice(0, 3).forEach(function (row) {
+      roster.appendChild(Ui.element("div", { className: "dashboard-vehicle-row", children: [
+        Ui.element("div", { children: [
+          Ui.element("strong", { text: Ui.nullableText(row.vehicle_name) }),
+          Ui.element("small", { text: [row.vehicle_type, row.model].filter(Boolean).join(" · ") || "Vehicle" })
+        ] }), dashboardBadge(row.status, "vehicle")
+      ] }));
+    });
+    if (!total) roster.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No vehicles recorded." }));
+    fleet.appendChild(roster); return fleet;
+  }
+
+  function buildExpeditionPanel(expeditions) {
+    const panel = Ui.element("section", { className: "dashboard-panel dashboard-expeditions" });
+    panel.appendChild(dashboardHeading("Expedition Programme", "Active and planned"));
+    if (expeditions === null) { panel.appendChild(dashboardUnavailable("Expedition data unavailable.")); return panel; }
+    const list = Ui.element("div", { className: "dashboard-expedition-list" });
+    const current = expeditions.filter(function (row) { return row.status === "Active" || row.status === "Planned"; });
+    current.forEach(function (row) {
+      const item = Ui.element("div", { className: "dashboard-expedition-row" });
+      item.appendChild(Ui.element("div", { className: "dashboard-expedition-name", children: [
+        Ui.element("strong", { text: Ui.nullableText(row.title) }),
+        Ui.element("small", { text: Ui.nullableText(row.vessel_name, "Vessel unavailable") })
+      ] }));
+      const timeline = Ui.element("div", { className: "dashboard-timeline" });
+      timeline.appendChild(Ui.element("div", { className: "dashboard-timeline-line", attributes: { "aria-hidden": "true" } }));
+      timeline.appendChild(Ui.element("div", { className: "dashboard-timeline-dates", children: [
+        Ui.element("time", { text: Ui.formatDate(row.start_date) }),
+        Ui.element("time", { text: Ui.formatDate(row.end_date) })
+      ] }));
+      item.appendChild(timeline);
+      item.appendChild(Ui.element("span", { className: "dashboard-expedition-count", text:
+        row.mission_count == null ? "— missions" : row.mission_count + " missions" }));
+      item.appendChild(dashboardBadge(row.status, "expedition"));
+      list.appendChild(item);
+    });
+    if (!current.length) list.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No active or planned expeditions." }));
+    panel.appendChild(list); return panel;
+  }
+
+  function buildAttentionPanel(data) {
+    const panel = Ui.element("section", { className: "dashboard-panel dashboard-attention" });
+    panel.appendChild(dashboardHeading("Operational Attention", "Recorded conditions"));
+    const groups = [
+      ["High / critical incidents", "Recorded incident severity", "!", data.incidents, row => ["high", "critical"].includes(normalizeText(row.severity)), "incident"],
+      ["Pending / active inspections", "Inspection workflow", "✓", data["inspection-tasks"], row => ["pending", "in progress"].includes(normalizeText(row.status)), "inspection"],
+      ["Vehicles in maintenance", "Current vehicle status", "⚙", data.vehicles, row => normalizeText(row.status) === "maintenance", "maintenance"],
+      ["Battery condition review", "Fair, poor or replace", "▣", data["battery-packs"], row => ["fair", "poor", "replace"].includes(normalizeText(row.health_status)), "battery"]
+    ];
+    const list = Ui.element("div", { className: "dashboard-attention-list" });
+    groups.forEach(function (group) {
+      const value = dashboardCount(group[3], group[4]);
+      list.appendChild(Ui.element("div", { className: "dashboard-attention-row dashboard-attention-" + group[5], children: [
+        Ui.element("span", { className: "dashboard-attention-icon", text: group[2], attributes: { "aria-hidden": "true" } }),
+        Ui.element("div", { children: [Ui.element("strong", { text: group[0] }), Ui.element("small", { text: group[1] })] }),
+        Ui.element("b", { text: value === null ? "—" : value, attributes: { "aria-label": value === null ? group[0] + " unavailable" : group[0] + ": " + value } })
+      ] }));
+    });
+    panel.appendChild(list);
+    const summary = Ui.element("div", { className: "dashboard-system-summary" });
+    const health = healthSummary();
+    summary.appendChild(Ui.element("span", { className: "dashboard-db dashboard-db-" + health,
+      text: health === "connected" ? "Database connected" : state.databaseHealth === "error" || health === "offline" ? "Database unavailable" : "Database degraded" }));
+    summary.appendChild(Ui.element("span", { className: "dashboard-db-name", text: state.databaseName || "AquaFleet database" }));
+    summary.appendChild(Ui.element("span", { text: "Recorded Incidents  " + (data.incidents === null ? "Unavailable" : data.incidents.length) }));
+    summary.appendChild(Ui.element("span", { text: "Scientific Samples  " + (data.samples === null ? "Unavailable" : data.samples.length) }));
+    panel.appendChild(summary); return panel;
   }
 
   async function renderDashboard(button) {
     const sequence = ++state.requestSequence;
     state.currentView = "dashboard"; state.currentResource = null; state.rows = []; state.loading = true;
+    document.body.classList.add("dashboard-view");
+    document.body.classList.remove("vessels-view"); setEyebrow();
     const search = searchInput(); if (search) search.disabled = false;
-    Ui.setPageHeader("Dashboard", "Read-only operational summary from existing AquaFleet APIs.");
+    Ui.setPageHeader("Dashboard", "Fleet, mission and expedition readiness from the current AquaFleet database state.");
     setSearchPlaceholder("Search missions");
     Ui.clearAlerts(); updateActiveNavigation("dashboard");
     const refresh = makeRefreshButton("Refresh Dashboard", renderDashboard);
-    const pendingButton = button || refresh;
-    setActions(refresh); Ui.setButtonPending(pendingButton, true, "Refreshing…");
-    Ui.renderLoading(document.getElementById("content-panel"), "Loading system health and operational counts…");
-
-    const work = [loadHealth()].concat(dashboardMetrics.map(function loadMetric(item) {
-      return Api.get(Resources.byKey[item[0]].path);
-    }));
+    setActions(refresh);
+    const refreshed = Ui.element("div", { className: "dashboard-refresh-meta", children: [
+      Ui.element("span", { text: "LAST REFRESHED" }),
+      Ui.element("strong", { className: "dashboard-refreshed", text: state.lastRefreshed ? state.lastRefreshed.toLocaleTimeString() : "—" })
+    ] });
+    document.getElementById("page-actions").prepend(refreshed);
+    Ui.setButtonPending(refresh, true, "Refreshing…");
+    Ui.renderLoading(document.getElementById("content-panel"), "Loading AquaFleet operations…");
+    const work = [loadHealth()].concat(dashboardMetrics.map(function (item) { return Api.get(Resources.byKey[item[0]].path); }));
     const results = await Promise.allSettled(work);
     if (sequence !== state.requestSequence || state.currentView !== "dashboard") return;
-
     state.loading = false; state.lastRefreshed = new Date();
-    const payloads = {}; dashboardMetrics.forEach(function map(item, index) { payloads[item[0]] = results[index + 1].status === "fulfilled" ? results[index + 1].value : { data: [], payload: { count: 0 } }; });
-    const missions = payloads.missions.data || [], vehicles = payloads.vehicles.data || [];
-    /* Stored so a keystroke can re-filter the activity list with no refetch. */
-    state.missions = missions;
-    const panel = document.getElementById("content-panel"); Ui.clearElement(panel); panel.setAttribute("aria-busy", "false");
-    const top = Ui.element("div", { className: "dashboard-top" });
-    const active = countBy(missions, "status", "In Progress");
-    const primary = Ui.element("article", { className: "operations-card", children: [Ui.element("p", { className: "card-kicker", text: "Active Marine Operations" }), Ui.element("strong", { className: "operations-value", text: "0" }), Ui.element("p", { className: "operations-caption", text: "Missions currently underway" }), Ui.element("div", { className: "wave-motif", attributes: { "aria-hidden": "true" } }), Ui.element("div", { className: "operations-breakdown", children: [Ui.element("span", { children: [Ui.element("small", { text: "Planned" }), Ui.element("b", { text: countBy(missions, "status", "Planned") })] }), Ui.element("span", { children: [Ui.element("small", { text: "Completed" }), Ui.element("b", { text: countBy(missions, "status", "Completed") })] }), Ui.element("span", { children: [Ui.element("small", { text: "Total" }), Ui.element("b", { text: missions.length })] })] })] });
-    animateNumber(primary.querySelector(".operations-value"), active); top.appendChild(primary);
-    const available = countBy(vehicles, "status", "Available"), deployed = countBy(vehicles, "status", "Deployed"), maintenance = countBy(vehicles, "status", "Maintenance"), retired = countBy(vehicles, "status", "Retired");
-    const readiness = vehicles.length ? Math.round(available / vehicles.length * 100) : 0;
-    const fleet = Ui.element("article", { className: "fleet-card", children: [Ui.element("div", { className: "card-heading", children: [Ui.element("div", { children: [Ui.element("p", { className: "card-kicker", text: "Fleet readiness" }), Ui.element("h2", { text: "Vehicle status" })] }), Ui.element("span", { text: "Live" })] }), Ui.element("div", { className: "fleet-body", children: [Ui.element("div", { className: "readiness-ring", attributes: { style: "--ready:" + readiness * 3.6 + "deg" }, children: [Ui.element("strong", { text: readiness + "%" }), Ui.element("small", { text: "available" })] }), Ui.element("div", { className: "fleet-legend", children: [["Available", available], ["Deployed", deployed], ["Maintenance", maintenance], ["Retired", retired]].map(function legend(item) { return Ui.element("div", { children: [Ui.element("i"), Ui.element("span", { text: item[0] }), Ui.element("b", { text: item[1] })] }); }) })] })] }); top.appendChild(fleet); panel.appendChild(top);
-    panel.appendChild(buildMissionActivity());
-    const rail = document.getElementById("context-rail"); Ui.clearElement(rail); rail.appendChild(Ui.element("div", { className: "rail-heading", children: [Ui.element("p", { text: "Operational pulse" }), Ui.element("h2", { text: "Live summary" })] }));
-    rail.appendChild(summaryCard("Open incidents", payloads.incidents.payload.count, "Reported records", "coral")); rail.appendChild(summaryCard("Inspection tasks", payloads["inspection-tasks"].payload.count, "Current workload", "yellow")); rail.appendChild(summaryCard("Samples collected", payloads.samples.payload.count, "Scientific records", "aqua")); rail.appendChild(summaryCard("Battery packs", payloads["battery-packs"] ? payloads["battery-packs"].payload.count : 0, "Fleet energy", "blue"));
-    rail.appendChild(Ui.element("article", { className: "rail-card connection-card", children: [Ui.element("span", { className: "health-dot" }), Ui.element("div", { children: [Ui.element("strong", { text: "Database connected" }), Ui.element("small", { text: state.databaseName || "AquaFleet DB" })] })] }));
-    Ui.setButtonPending(pendingButton, false);
+    const data = {};
+    dashboardMetrics.forEach(function (item, index) { data[item[0]] = dashboardRows(results, index + 1); });
+    state.missionsAvailable = data.missions !== null;
+    state.missions = data.missions || [];
+    const panel = document.getElementById("content-panel");
+    Ui.clearElement(panel); panel.setAttribute("aria-busy", "false");
+    const stamp = document.querySelector(".dashboard-refreshed");
+    if (stamp) stamp.textContent = state.lastRefreshed.toLocaleTimeString();
+    const kpis = Ui.element("div", { className: "dashboard-kpis" });
+    const ratio = function (count, total) { return count === null || total === null ? null : total ? count / total : 0; };
+    const vesselCount = dashboardCount(data.vessels);
+    const expeditionCount = dashboardCount(data.expeditions, row => normalizeText(row.status) === "active");
+    const missionCount = dashboardCount(data.missions, row => normalizeText(row.status) === "in progress");
+    const vehicleCount = dashboardCount(data.vehicles, row => normalizeText(row.status) === "available");
+    kpis.appendChild(dashboardMetric("Research Vessels", vesselCount, "Registered fleet platforms", "⚓", vesselCount === null ? null : 1));
+    kpis.appendChild(dashboardMetric("Active Expeditions", expeditionCount,
+      expeditionCount + " of " + data.expeditions?.length + " programmes active", "✧", ratio(expeditionCount, data.expeditions?.length ?? null)));
+    kpis.appendChild(dashboardMetric("Active Missions", missionCount,
+      missionCount + " of " + data.missions?.length + " missions in progress", "◎", ratio(missionCount, data.missions?.length ?? null)));
+    kpis.appendChild(dashboardMetric("Available Vehicles", vehicleCount,
+      "of " + data.vehicles?.length + " vehicles", "▣", ratio(vehicleCount, data.vehicles?.length ?? null)));
+    const grid = Ui.element("div", { className: "dashboard-grid", children: [
+      buildMissionActivity(), buildFleetPanel(data.vehicles),
+      buildExpeditionPanel(data.expeditions), buildAttentionPanel(data)
+    ] });
+    panel.append(kpis, grid);
+    Ui.clearElement(document.getElementById("context-rail"));
+    Ui.setButtonPending(refresh, false);
+  }
+
+  /* =====================================================================
+     Research Vessels workspace (approved Vessels design).
+     Data comes from the existing /api/vessels and /api/expeditions routes;
+     deployment status, KPIs and the detail panel are all derived from those
+     two responses. Search reuses the shared header field and filterRows().
+     ===================================================================== */
+
+  const VESSEL_PAGE_SIZE = 8;
+  const VESSEL_FILTERS = [["all", "All"], ["at-sea", "At Sea"], ["in-port", "In Port"], ["unassigned", "Unassigned"]];
+  const vesselState = { rows: [], expeditions: null, selectedId: null, filter: "all", page: 1 };
+
+  function resetVesselState() {
+    vesselState.rows = []; vesselState.expeditions = null;
+    vesselState.selectedId = null; vesselState.filter = "all"; vesselState.page = 1;
+  }
+
+  function setEyebrow(text) {
+    const node = document.querySelector(".page-eyebrow");
+    if (node) node.textContent = text || "AquaFleet Command";
+  }
+
+  function vesselExpeditions(vesselId) {
+    if (vesselState.expeditions === null) return null;
+    return vesselState.expeditions.filter(function match(row) { return Number(row.vessel_id) === Number(vesselId); });
+  }
+
+  /* Deployment is derived, never stored: an Active expedition means At Sea,
+     a Planned one means Scheduled, past-only history means In Port and no
+     expedition at all means Unassigned. */
+  function vesselDeployment(vessel) {
+    const list = vesselExpeditions(vessel.vessel_id);
+    if (list === null) return { label: "Unknown", group: null, tone: "unknown" };
+    if (list.some(function active(row) { return normalizeText(row.status) === "active"; })) return { label: "At Sea", group: "at-sea", tone: "sea" };
+    if (list.some(function planned(row) { return normalizeText(row.status) === "planned"; })) return { label: "Scheduled", group: "in-port", tone: "scheduled" };
+    if (list.length) return { label: "In Port", group: "in-port", tone: "port" };
+    return { label: "Unassigned", group: "unassigned", tone: "unassigned" };
+  }
+
+  function vesselIsDeepSea(vessel) { return /ocean|deep[\s-]?sea/i.test(String(vessel.vessel_type || "")); }
+  function vesselPad(id) { return String(id).padStart(2, "0"); }
+
+  function visibleVessels() {
+    const config = Resources.byKey.vessels;
+    return filterRows(config, vesselState.rows, state.searchQuery).filter(function inFilter(row) {
+      return vesselState.filter === "all" || vesselDeployment(row).group === vesselState.filter;
+    });
+  }
+
+  function vesselSelected() {
+    return vesselState.rows.find(function find(row) { return row.vessel_id === vesselState.selectedId; }) || null;
+  }
+
+  function selectVessel(id, scrollDetail) {
+    vesselState.selectedId = id;
+    renderVesselWorkspace();
+    if (scrollDetail && global.innerWidth < 1100) {
+      const detail = document.querySelector(".vessel-detail");
+      if (detail) detail.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+  }
+
+  function vesselPill(deployment) {
+    return Ui.element("span", { className: "vessel-pill vessel-pill-" + deployment.tone, text: deployment.label });
+  }
+
+  function vesselLink(label, tone, handler, aria) {
+    const button = Ui.element("button", { className: "vessel-link vessel-link-" + tone, text: label, attributes: { type: "button", "aria-label": aria } });
+    button.addEventListener("click", function onClick(event) { event.stopPropagation(); handler(); });
+    return button;
+  }
+
+  function buildVesselRegister(visible) {
+    const total = vesselState.rows.length;
+    const panel = Ui.element("section", { className: "dashboard-panel vessel-panel vessel-register" });
+    const tabs = Ui.element("div", { className: "vessel-tabs", attributes: { role: "group", "aria-label": "Filter vessels by deployment" } });
+    VESSEL_FILTERS.forEach(function tab(entry) {
+      const button = Ui.element("button", {
+        className: "vessel-tab" + (vesselState.filter === entry[0] ? " active" : ""), text: entry[1],
+        attributes: { type: "button", "aria-pressed": String(vesselState.filter === entry[0]) }
+      });
+      button.addEventListener("click", function onTab() {
+        vesselState.filter = entry[0]; vesselState.page = 1;
+        const next = visibleVessels();
+        if (next.length && !next.some(function has(row) { return row.vessel_id === vesselState.selectedId; })) vesselState.selectedId = next[0].vessel_id;
+        renderVesselWorkspace();
+      });
+      tabs.appendChild(button);
+    });
+    panel.appendChild(Ui.element("div", { className: "vessel-register-head", children: [
+      Ui.element("h2", { text: "Vessel Register" }), tabs,
+      Ui.element("span", { className: "dashboard-panel-meta", attributes: { role: "status", "aria-live": "polite" }, text: visible.length + " of " + total + " shown" })
+    ] }));
+
+    const scroll = Ui.element("div", { className: "vessel-table-scroll" });
+    if (!total) {
+      scroll.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No research vessels recorded." }));
+    } else if (!visible.length) {
+      const empty = Ui.element("div", { className: "activity-no-match" });
+      empty.appendChild(Ui.element("p", { text: normalizeText(state.searchQuery)
+        ? "No vessels match “" + state.searchQuery + "”." : "No vessels in this deployment group." }));
+      const clear = Ui.element("button", { className: "btn btn-outline-primary btn-sm", text: normalizeText(state.searchQuery) ? "Clear Search" : "Show All", attributes: { type: "button" } });
+      clear.addEventListener("click", function onClear() {
+        vesselState.filter = "all"; vesselState.page = 1; clearSearch(false); renderVesselWorkspace();
+        const input = searchInput(); if (input) input.focus();
+      });
+      empty.appendChild(clear); scroll.appendChild(empty);
+    } else {
+      const pages = Math.max(1, Math.ceil(visible.length / VESSEL_PAGE_SIZE));
+      vesselState.page = Math.min(Math.max(1, vesselState.page), pages);
+      const start = (vesselState.page - 1) * VESSEL_PAGE_SIZE;
+      const pageRows = visible.slice(start, start + VESSEL_PAGE_SIZE);
+      const table = Ui.element("table", { className: "vessel-table" });
+      table.appendChild(Ui.element("caption", { className: "visually-hidden", text: "Research vessels" }));
+      const headRow = Ui.element("tr");
+      [["ID", ""], ["Vessel", ""], ["Home Port", ""], ["Capacity", "num"], ["Deployment", ""], ["Actions", "act"]].forEach(function heading(entry) {
+        headRow.appendChild(Ui.element("th", { className: entry[1], text: entry[0], attributes: { scope: "col" } }));
+      });
+      table.appendChild(Ui.element("thead", { children: [headRow] }));
+      const body = Ui.element("tbody");
+      pageRows.forEach(function vessel(row) {
+        const selected = row.vessel_id === vesselState.selectedId;
+        const tr = Ui.element("tr", { className: selected ? "selected" : "", attributes: { tabindex: "0", "aria-selected": String(selected) } });
+        tr.addEventListener("click", function onRow() { selectVessel(row.vessel_id, false); });
+        tr.addEventListener("keydown", function onKey(event) {
+          if ((event.key === "Enter" || event.key === " ") && event.target === tr) { event.preventDefault(); selectVessel(row.vessel_id, false); }
+        });
+        tr.appendChild(Ui.element("td", { className: "vessel-id", text: vesselPad(row.vessel_id) }));
+        tr.appendChild(Ui.element("td", { children: [Ui.element("div", { className: "vessel-name", children: [
+          Ui.element("strong", { text: Ui.nullableText(row.vessel_name) }), Ui.element("small", { text: Ui.nullableText(row.vessel_type) })
+        ] })] }));
+        tr.appendChild(Ui.element("td", { className: "vessel-port", text: Ui.nullableText(row.home_port) }));
+        tr.appendChild(Ui.element("td", { className: "num", text: Ui.formatNumber(row.capacity) }));
+        tr.appendChild(Ui.element("td", { children: [vesselPill(vesselDeployment(row))] }));
+        const actions = Ui.element("td", { className: "act" });
+        const label = Master.label("vessels", row);
+        actions.appendChild(vesselLink("View", "view", function view() { selectVessel(row.vessel_id, true); }, "View " + label));
+        if (Master.can("vessels", "update")) actions.appendChild(vesselLink("Edit", "edit", function edit() { Master.openEdit("vessels", row); }, "Edit " + label));
+        if (Master.can("vessels", "delete")) actions.appendChild(vesselLink("Delete", "delete", function del() { Master.openDelete("vessels", row); }, "Delete " + label));
+        tr.appendChild(actions); body.appendChild(tr);
+      });
+      table.appendChild(body); scroll.appendChild(table);
+      panel.appendChild(scroll);
+
+      const pager = Ui.element("nav", { className: "vessel-pager", attributes: { "aria-label": "Vessel pages" } });
+      const step = function stepButton(text, label, target, disabled, current) {
+        const button = Ui.element("button", { className: "vessel-page-button" + (current ? " current" : ""), text: text, attributes: { type: "button", "aria-label": label } });
+        if (current) button.setAttribute("aria-current", "page");
+        button.disabled = disabled;
+        button.addEventListener("click", function onPage() { vesselState.page = target; renderVesselWorkspace(); });
+        return button;
+      };
+      const controls = Ui.element("div", { className: "vessel-page-controls" });
+      controls.appendChild(step("‹", "Previous page", vesselState.page - 1, vesselState.page <= 1, false));
+      for (let page = 1; page <= pages; page += 1) controls.appendChild(step(String(page), "Page " + page, page, false, page === vesselState.page));
+      controls.appendChild(step("›", "Next page", vesselState.page + 1, vesselState.page >= pages, false));
+      pager.append(Ui.element("span", { className: "dashboard-panel-meta", text:
+        "Showing " + (start + 1) + "–" + (start + pageRows.length) + " of " + visible.length + " records" }), controls);
+      panel.appendChild(pager);
+      return panel;
+    }
+    panel.appendChild(scroll);
+    return panel;
+  }
+
+  function buildVesselDetail(vessel) {
+    const panel = Ui.element("aside", { className: "dashboard-panel vessel-panel vessel-detail", attributes: { "aria-label": "Vessel detail" } });
+    panel.appendChild(Ui.element("div", { className: "vessel-detail-head", children: [
+      Ui.element("h2", { text: "Vessel Detail" }),
+      Ui.element("span", { className: "dashboard-panel-meta", text: vessel ? "#" + vesselPad(vessel.vessel_id) : "" })
+    ] }));
+    if (!vessel) {
+      panel.appendChild(Ui.element("p", { className: "dashboard-empty", text: "Select a vessel to see its details." }));
+      return panel;
+    }
+    const expeditions = vesselExpeditions(vessel.vessel_id);
+    panel.appendChild(Ui.element("h3", { className: "vessel-detail-name", text: Ui.nullableText(vessel.vessel_name) }));
+    panel.appendChild(Ui.element("p", { className: "vessel-detail-type", text: Ui.nullableText(vessel.vessel_type) }));
+    panel.appendChild(vesselPill(vesselDeployment(vessel)));
+    const fact = function factCard(label, value, wide) {
+      return Ui.element("div", { className: "vessel-fact" + (wide ? " vessel-fact-wide" : ""), children: [
+        Ui.element("span", { text: label }), Ui.element("strong", { text: value })
+      ] });
+    };
+    panel.appendChild(Ui.element("div", { className: "vessel-facts", children: [
+      fact("Capacity", Ui.formatNumber(vessel.capacity)),
+      fact("Expeditions", expeditions === null ? "—" : String(expeditions.length)),
+      fact("Home Port", Ui.nullableText(vessel.home_port), true)
+    ] }));
+    panel.appendChild(Ui.element("p", { className: "vessel-section-label", text: "Linked Expeditions" }));
+    const linked = Ui.element("div", { className: "vessel-linked" });
+    if (expeditions === null) {
+      linked.appendChild(Ui.element("p", { className: "dashboard-empty", text: "Expedition data unavailable." }));
+    } else if (!expeditions.length) {
+      linked.appendChild(Ui.element("div", { className: "vessel-linked-row", children: [Ui.element("div", { children: [
+        Ui.element("strong", { text: "No expeditions assigned" }), Ui.element("small", { text: "Vessel is free for scheduling" })
+      ] })] }));
+    } else {
+      expeditions.slice().sort(function newest(a, b) { return String(b.start_date).localeCompare(String(a.start_date)); }).forEach(function each(row) {
+        linked.appendChild(Ui.element("div", { className: "vessel-linked-row", children: [
+          Ui.element("div", { children: [
+            Ui.element("strong", { text: Ui.nullableText(row.title), attributes: { title: Ui.nullableText(row.title) } }),
+            Ui.element("small", { text: Ui.formatDate(row.start_date) + " – " + Ui.formatDate(row.end_date) })
+          ] }), dashboardBadge(row.status, "expedition")
+        ] }));
+      });
+    }
+    panel.appendChild(linked);
+    const actions = Ui.element("div", { className: "vessel-detail-actions" });
+    if (Master.can("vessels", "update")) {
+      const edit = Ui.element("button", { className: "vessel-edit-button", text: "Edit Vessel", attributes: { type: "button" } });
+      edit.addEventListener("click", function onEdit() { Master.openEdit("vessels", vessel); });
+      actions.appendChild(edit);
+    }
+    if (Master.can("vessels", "delete")) {
+      const del = Ui.element("button", { className: "vessel-delete-button", text: "Delete", attributes: { type: "button" } });
+      del.addEventListener("click", function onDelete() { Master.openDelete("vessels", vessel); });
+      actions.appendChild(del);
+    }
+    if (actions.children.length) panel.appendChild(actions);
+    panel.appendChild(Ui.element("p", { className: "vessel-note", text: "Vessels assigned to an expedition cannot be deleted." }));
+    return panel;
+  }
+
+  /* Rebuilds only the register + detail panels from data already in memory.
+     Search, filters, paging and selection never fetch and never re-run the
+     KPI count-up. */
+  function renderVesselWorkspace() {
+    const grid = document.querySelector(".vessels-grid");
+    if (!grid) return;
+    const visible = visibleVessels();
+    if (vesselState.selectedId === null || !vesselSelected()) {
+      vesselState.selectedId = vesselState.rows.length ? vesselState.rows[0].vessel_id : null;
+    }
+    const previous = grid.querySelector(".vessel-table-scroll");
+    const scrollTop = previous ? previous.scrollTop : 0;
+    Ui.clearElement(grid);
+    grid.append(buildVesselRegister(visible), buildVesselDetail(vesselSelected()));
+    const next = grid.querySelector(".vessel-table-scroll");
+    if (next) next.scrollTop = scrollTop;
+  }
+
+  function buildVesselKpis() {
+    const rows = vesselState.rows, total = rows.length;
+    const ports = new Set(rows.map(function port(row) { return normalizeText(row.home_port); }).filter(Boolean)).size;
+    const capacities = rows.map(function cap(row) { return Number(row.capacity) || 0; });
+    const capacity = capacities.reduce(function sum(a, b) { return a + b; }, 0);
+    const mean = total ? Math.round(capacity / total) : 0;
+    const largest = capacities.length ? Math.max.apply(null, capacities) : 0;
+    const deep = rows.filter(vesselIsDeepSea).length;
+    const committed = vesselState.expeditions === null ? null : rows.filter(function busy(row) {
+      const tone = vesselDeployment(row).tone; return tone === "sea" || tone === "scheduled";
+    }).length;
+    const kpis = Ui.element("div", { className: "dashboard-kpis" });
+    kpis.appendChild(dashboardMetric("Registered Vessels", total, "Across " + ports + " home " + (ports === 1 ? "port" : "ports"), "⚓", total ? 1 : 0));
+    kpis.appendChild(dashboardMetric("Assigned to Expeditions", committed,
+      committed + " of " + total + " vessels committed", "⌖", committed === null ? null : total ? committed / total : 0));
+    kpis.appendChild(dashboardMetric("Total Berth Capacity", capacity, "Mean " + mean + " berths per vessel", "◫", largest ? mean / largest : 0));
+    kpis.appendChild(dashboardMetric("Deep Sea Class", deep, "Ocean and deep-sea platforms", "▣", total ? deep / total : 0));
+    return kpis;
+  }
+
+  async function renderVessels() {
+    const config = Resources.byKey.vessels;
+    const sequence = ++state.requestSequence;
+    state.currentView = "vessels"; state.currentResource = "vessels"; state.rows = []; state.loading = true;
+    document.body.classList.add("dashboard-view", "vessels-view");
+    const search = searchInput(); if (search) search.disabled = false;
+    Ui.setPageHeader("Research Vessels", "Registered fleet platforms, berth capacity and home-port assignment from the AquaFleet database.");
+    setEyebrow("AquaFleet Command · Fleet");
+    setSearchPlaceholder("Search vessels or ports");
+    Ui.clearAlerts(); updateActiveNavigation("vessels");
+
+    const meta = Ui.element("div", { className: "vessels-record-meta", children: [
+      Ui.element("span", { text: "RECORDS" }), Ui.element("strong", { className: "vessels-record-count", text: "— VESSELS" })
+    ] });
+    const actions = document.getElementById("page-actions"); Ui.clearElement(actions);
+    actions.appendChild(meta);
+    /* Always present, as in the approved header. Creating is still governed by
+       the existing RBAC check inside Master.openCreate, so a role without the
+       permission gets a disabled control instead of a missing one. */
+    const canCreate = Master.can("vessels", "create");
+    const add = Ui.element("button", { className: "vessel-add-button", attributes: { type: "button" }, children: [
+      Ui.element("span", { text: "+", attributes: { "aria-hidden": "true" } }), Ui.element("span", { text: "Add Vessel" })
+    ] });
+    if (canCreate) add.addEventListener("click", function onAdd() { Master.openCreate("vessels"); });
+    else { add.disabled = true; add.title = "Your role cannot add vessels"; }
+    actions.appendChild(add);
+    const panel = document.getElementById("content-panel");
+    Ui.renderLoading(panel, "Loading research vessels…");
+
+    const results = await Promise.allSettled([Api.get(config.path), Api.get(Resources.byKey.expeditions.path)]);
+    if (sequence !== state.requestSequence || state.currentResource !== "vessels") return;
+    state.loading = false;
+    if (results[0].status !== "fulfilled") {
+      Ui.renderError(panel, "Unable to load " + config.title, normalizedError(results[0].reason));
+      return;
+    }
+    vesselState.rows = Array.isArray(results[0].value.data) ? results[0].value.data : [];
+    state.rows = vesselState.rows;
+    state.totalCount = results[0].value.payload.count ?? vesselState.rows.length;
+    vesselState.expeditions = results[1].status === "fulfilled" && Array.isArray(results[1].value.data) ? results[1].value.data : null;
+
+    const count = meta.querySelector(".vessels-record-count");
+    count.textContent = vesselState.rows.length + (vesselState.rows.length === 1 ? " VESSEL" : " VESSELS");
+    Ui.clearElement(panel); panel.setAttribute("aria-busy", "false");
+    Ui.clearElement(document.getElementById("context-rail"));
+    panel.append(buildVesselKpis(), Ui.element("div", { className: "vessels-grid" }));
+    renderVesselWorkspace();
   }
 
   function keyDisplay(config, row) {
@@ -510,8 +950,10 @@
   async function renderResource(key, button) {
     const config = Resources.byKey[key];
     if (!config) { renderDashboard(); return; }
+    if (key === "vessels") return renderVessels();
     const sequence = ++state.requestSequence;
     state.currentView = key; state.currentResource = key; state.rows = []; state.loading = true;
+    document.body.classList.remove("dashboard-view", "vessels-view"); setEyebrow();
     const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader(config.title, config.subtitle); Ui.clearAlerts(); updateActiveNavigation(key);
     /* Refresh and post-CRUD reloads land here with the query intact, so the
@@ -540,6 +982,7 @@
   function renderReports() {
     ++state.requestSequence;
     state.currentView = "reports"; state.currentResource = null; state.rows = []; state.loading = false;
+    document.body.classList.remove("dashboard-view", "vessels-view"); setEyebrow();
     Ui.setPageHeader("Reports", "Read-only database views expose joined and derived AquaFleet information.");
     Ui.clearAlerts(); updateActiveNavigation("reports"); setActions(null);
     clearSearch(false); setSearchPlaceholder("Report filters are shown below");
@@ -630,6 +1073,7 @@
       state.searchQuery = "";
       state.rows = [];
       state.missions = [];
+      resetVesselState();
       const input = searchInput();
       if (input) input.value = "";
       syncClearButton();

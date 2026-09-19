@@ -105,6 +105,121 @@ body.auth-gate-active .app-shell{display:none}
   .user-flyout{left:auto;right:0;bottom:auto;top:52px;transform:translateY(-8px)}
 }
 
+/* Final approved authenticated Dashboard. These rules are intentionally
+   contained under dashboard-view so resource pages and Reports retain their UI. */
+body.dashboard-view{background:#edf4f7;color:#203746;font-family:Manrope,ui-sans-serif,sans-serif}
+.dashboard-view .app-shell{grid-template-columns:96px minmax(0,1fr);background:#eaf1f5;overflow:visible}
+.dashboard-view .app-navbar{position:sticky;top:0;height:100vh;min-height:0;padding:24px 12px 20px;border-radius:0;background:#142b39}
+.dashboard-view .brand-mark{width:56px;height:56px;border:1px solid #4b6a79;border-radius:16px;background:#203e4d;color:#c0e5ee;transform:none;font-family:Sora,sans-serif}
+.dashboard-view .nav-link{width:54px;height:54px;border-radius:15px!important;color:#b0c4ce!important}
+.dashboard-view .nav-link:hover,.dashboard-view .nav-link:focus-visible{transform:none;color:#fff!important}
+.dashboard-view .nav-link.active,.dashboard-view .nav-group.flyout-open>.nav-link{background:#f8fbfd!important;color:#356d9b!important;box-shadow:none}
+.dashboard-view .nav-icon{font-family:Manrope,sans-serif;font-size:25px}
+.dashboard-view .user-trigger,.dashboard-view .health-indicator{width:52px;height:52px;border-color:#446170;border-radius:15px;background:#244354}
+.dashboard-view .workspace-shell{display:block;min-width:0;min-height:100vh}
+.dashboard-view .context-rail{display:none}
+.dashboard-view .app-main{height:100vh;min-height:700px;padding:0;background:#eaf1f5}
+.dashboard-view .page-header{position:relative;flex:0 0 162px;min-height:0;gap:22px;margin:0;padding:22px clamp(20px,2.5vw,36px);border-radius:0;background:linear-gradient(105deg,#376d9f 0%,#4a91b9 56%,#70bdd4 100%);color:#fff;overflow:hidden}
+.dashboard-view .page-header::before{position:absolute;right:22%;top:-170px;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;box-shadow:0 0 0 58px rgba(255,255,255,.035),0 0 0 110px rgba(255,255,255,.025);content:"";pointer-events:none}
+.dashboard-view .page-header>div{position:relative;z-index:1}
+.dashboard-view .page-eyebrow{color:#e8f4f9;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.15em}
+.dashboard-view #page-title{margin:2px 0 8px;color:#fff;font-family:Sora,sans-serif;font-size:clamp(28px,2.5vw,38px);font-weight:700;letter-spacing:-.045em}
+.dashboard-view #page-subtitle{max-width:680px;color:#eef8fb!important;font-size:12px;font-weight:600}
+.dashboard-view .header-tools{gap:14px;flex:0 1 auto}
+.dashboard-view .search-foundation{width:clamp(200px,20vw,390px);height:50px;padding:0 15px;border:0;border-radius:28px;box-shadow:0 10px 25px rgba(23,68,101,.08);color:#326d97}
+.dashboard-view .search-input{font-family:Manrope,sans-serif;font-size:13px}
+.dashboard-view .search-foundation:focus-within{box-shadow:0 0 0 3px #d9f3fa}
+.dashboard-view .page-actions{gap:14px}
+.dashboard-refresh-meta{display:flex;flex-direction:column;min-width:92px;color:#fff;font-family:"IBM Plex Mono",monospace;font-size:10px;white-space:nowrap}
+.dashboard-refresh-meta span{opacity:.8}
+.dashboard-refresh-meta strong{font-size:12px}
+.dashboard-view .refresh-button{height:48px;padding:0 17px;border:1px solid rgba(255,255,255,.7);border-radius:26px;background:rgba(255,255,255,.08);color:#fff;font-family:Manrope,sans-serif;font-size:12px;white-space:nowrap}
+.dashboard-view .refresh-button::before{margin-right:8px;content:"↻";font-size:18px;vertical-align:-1px}
+.dashboard-view .refresh-button:hover,.dashboard-view .refresh-button:focus-visible{background:rgba(255,255,255,.2);color:#fff;transform:none}
+.dashboard-view .refresh-button[aria-busy="true"]::before{display:inline-block;animation:dashboard-spin .7s linear infinite}
+.dashboard-view .alert-region{position:relative;z-index:5}
+.dashboard-view .content-card{min-height:0;padding:16px clamp(16px,2vw,30px) 20px}
+.dashboard-view .content-panel{min-height:0;gap:14px;font-family:Manrope,sans-serif}
+.dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;flex:0 0 112px}
+.dashboard-kpi,.dashboard-panel{min-width:0;border:1px solid #dde8ee;border-radius:17px;background:#fff;box-shadow:0 8px 25px rgba(32,67,91,.045);animation:dashboard-enter .38s ease both}
+.dashboard-kpi{display:flex;gap:14px;padding:16px}
+.dashboard-kpi:nth-child(2){animation-delay:.06s}.dashboard-kpi:nth-child(3){animation-delay:.12s}.dashboard-kpi:nth-child(4){animation-delay:.18s}
+.dashboard-kpi-icon{display:grid;width:44px;height:44px;flex:0 0 auto;place-items:center;border-radius:13px;background:#eaf5fa;color:#3975a4;font-size:21px}
+.dashboard-kpi:nth-child(2) .dashboard-kpi-icon{background:#eaf7f4;color:#4b998b}
+.dashboard-kpi-copy{display:flex;min-width:0;flex:1;flex-direction:column}
+.dashboard-kpi-label{margin:0;color:#627b89;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.dashboard-kpi-value{margin:2px 0 0;color:#213b4b;font-family:Sora,sans-serif;font-size:30px;font-weight:700;line-height:1.1}
+.dashboard-unavailable .dashboard-kpi-value{font-family:Manrope,sans-serif;font-size:16px;line-height:2}
+.dashboard-kpi-note{margin:2px 0 7px;color:#697f8b;font-size:11px;white-space:nowrap}
+.dashboard-kpi-track{height:5px;margin-top:auto;border-radius:5px;background:#e8eff3;overflow:hidden}
+.dashboard-kpi-track span{display:block;width:var(--progress);height:100%;border-radius:inherit;background:linear-gradient(90deg,#4385bb,#6bbcd6);animation:dashboard-progress .45s ease both}
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-rows:minmax(0,1.35fr) minmax(0,1fr);gap:14px;flex:1;min-height:0}
+.dashboard-panel{display:flex;min-height:0;flex-direction:column;padding:18px 20px}
+.dashboard-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;margin-bottom:10px}
+.dashboard-panel-heading h2{margin:0;color:#203746;font-family:Manrope,sans-serif;font-size:19px;font-weight:800;letter-spacing:-.03em}
+.dashboard-panel-meta{color:#6e8290;font-family:"IBM Plex Mono",monospace;font-size:10px;white-space:nowrap}
+.dashboard-mission-list,.dashboard-vehicle-list,.dashboard-expedition-list,.dashboard-attention-list{min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#ccdce5 transparent}
+.dashboard-mission-row{display:grid;grid-template-columns:24px minmax(120px,1.7fr) minmax(80px,1fr) 100px auto 34px;align-items:center;gap:10px;min-height:51px;padding:6px 5px;border-bottom:1px solid #e9f0f4;transition:background .18s}
+.dashboard-mission-row:last-child{border:0}
+.dashboard-mission-row:hover,.dashboard-mission-row:focus-within{background:#f6fbfd}
+.dashboard-mission-active{border-left:3px solid #60b8d5;border-radius:9px;background:#eef9fd}
+.dashboard-mission-index{color:#879aa5;font-family:"IBM Plex Mono",monospace;font-size:10px}
+.dashboard-mission-name,.dashboard-vehicle-row>div,.dashboard-expedition-name,.dashboard-attention-row>div{display:flex;min-width:0;flex-direction:column;gap:2px}
+.dashboard-mission-name strong,.dashboard-vehicle-row strong,.dashboard-expedition-name strong,.dashboard-attention-row strong{overflow:hidden;color:#2c4150;font-size:12px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-mission-name small,.dashboard-vehicle-row small,.dashboard-expedition-name small,.dashboard-attention-row small{overflow:hidden;color:#748797;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-mission-zone{overflow:hidden;color:#5d7381;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.dashboard-mission-time,.dashboard-timeline-dates,.dashboard-expedition-count{color:#768c9b;font-family:"IBM Plex Mono",monospace;font-size:9px;white-space:nowrap}
+.dashboard-badge{justify-self:start;padding:5px 9px;border-radius:20px;background:#eef3f6;color:#577184;font-size:10px;font-weight:700;white-space:nowrap}
+.dashboard-badge-mission-completed,.dashboard-badge-vehicle-available{background:#e9f7f1;color:#3d735f}
+.dashboard-badge-mission-in-progress,.dashboard-badge-vehicle-deployed,.dashboard-badge-expedition-active{background:#eaf5fd;color:#3b6a8d}
+.dashboard-badge-vehicle-maintenance{background:#fbf2e6;color:#886938}
+.dashboard-badge-vehicle-retired,.dashboard-badge-expedition-planned{background:#eff3f6;color:#647788}
+.dashboard-mission-active .dashboard-badge::before{display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#438fbd;content:"";animation:dashboard-pulse 2s ease-in-out infinite}
+.dashboard-view .activity-action{padding:4px 0;color:#41759a;font-family:Manrope,sans-serif;font-size:11px}
+.dashboard-view .activity-action:focus-visible{outline:2px solid #4e9fc5;outline-offset:2px}
+.dashboard-fleet-visual{display:flex;align-items:center;gap:17px;min-height:104px}
+.dashboard-donut{display:grid;width:98px;height:98px;flex:0 0 auto;place-items:center;border-radius:50%;background:var(--donut-colors);animation:dashboard-donut-in .5s ease both}
+.dashboard-donut>div{display:flex;width:69px;height:69px;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;background:#fff}
+.dashboard-donut strong{font-family:Sora,sans-serif;font-size:20px}.dashboard-donut small{color:#728795;font-size:9px}
+.dashboard-distribution{min-width:0;flex:1}.dashboard-segments{display:flex;height:8px;margin-bottom:12px;border-radius:8px;background:#e6eef2;overflow:hidden}
+.dashboard-segments span{height:100%;border-right:2px solid #fff}
+.dashboard-fleet-legend{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px}
+.dashboard-fleet-legend>div{display:grid;grid-template-columns:7px 1fr auto;align-items:center;gap:5px;color:#667c8b;font-size:10px}
+.dashboard-fleet-legend i{width:6px;height:6px;border-radius:50%}.dashboard-fleet-legend b{color:#314959}
+.dashboard-vehicle-list{flex:1}
+.dashboard-vehicle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:49px;padding:7px 0;border-bottom:1px solid #e8eff2}
+.dashboard-vehicle-row:last-child{border:0}
+.dashboard-expedition-row{display:grid;grid-template-columns:minmax(130px,1.5fr) minmax(120px,1fr) auto auto;align-items:center;gap:10px;min-height:60px;border-bottom:1px solid #e9f0f4}
+.dashboard-expedition-row:last-child{border:0}
+.dashboard-timeline-line{position:relative;height:3px;margin:0 6px 7px;background:linear-gradient(90deg,#4385ba,#6cbed6);transform-origin:left;animation:dashboard-timeline-draw .45s ease both}
+.dashboard-timeline-line::before,.dashboard-timeline-line::after{position:absolute;top:50%;width:7px;height:7px;border:2px solid #4587bb;border-radius:50%;background:#fff;content:"";transform:translate(-50%,-50%)}
+.dashboard-timeline-line::after{right:-8px;background:#4587bb}
+.dashboard-timeline-dates{display:flex;justify-content:space-between}
+.dashboard-attention-list{flex:1}
+.dashboard-attention-row{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:9px;min-height:43px;padding:5px 0;border-bottom:1px solid #e9f0f4}
+.dashboard-attention-row b{font-family:Sora,sans-serif;font-size:16px}
+.dashboard-attention-icon{display:grid;width:28px;height:28px;place-items:center;border-radius:9px;background:#edf4f8;color:#497a9b}
+.dashboard-attention-incident .dashboard-attention-icon{background:#fbeceb;color:#a35750}
+.dashboard-attention-inspection .dashboard-attention-icon{background:#fdf5e6;color:#98743d}
+.dashboard-attention-battery .dashboard-attention-icon{background:#f8f4e9;color:#977b45}
+.dashboard-system-summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 11px;padding-top:9px;border-top:1px solid #e9f0f4;color:#5c7280;font-size:10px}
+.dashboard-db::before{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:#c3a46b;content:""}
+.dashboard-db-connected::before{background:#69b99c}.dashboard-db-offline::before{background:#c97570}
+.dashboard-db-name{font-family:"IBM Plex Mono",monospace;font-size:9px}
+.dashboard-empty{margin:auto 0;padding:14px;color:#738a98;font-size:12px}
+.dashboard-view .activity-no-match{padding:14px}
+@keyframes dashboard-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes dashboard-progress{from{width:0}to{width:var(--progress)}}
+@keyframes dashboard-donut-in{from{opacity:.3}to{opacity:1}}
+@keyframes dashboard-timeline-draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes dashboard-pulse{50%{opacity:.4}}
+@keyframes dashboard-spin{to{transform:rotate(360deg)}}
+@media(max-width:1240px){.dashboard-view .page-header{padding-inline:20px}.dashboard-view .header-tools{gap:8px}.dashboard-view .search-foundation{width:200px}.dashboard-view .page-actions{gap:8px}.dashboard-view .refresh-button{padding-inline:11px}.dashboard-kpi{gap:8px;padding:12px}.dashboard-kpi-label{font-size:9px}.dashboard-panel{padding:14px}.dashboard-mission-row{grid-template-columns:20px minmax(100px,1.5fr) minmax(70px,1fr) 90px auto 30px;gap:5px}}
+@media(max-width:1100px){.dashboard-view .app-main{height:auto;min-height:100vh}.dashboard-view .page-header{flex-wrap:wrap;flex-basis:auto;min-height:150px}.dashboard-view .content-card{min-height:calc(100vh - 160px)}.dashboard-grid{grid-template-columns:1fr;grid-template-rows:none}.dashboard-panel{min-height:260px}.dashboard-operations{min-height:360px}.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));flex-basis:auto}}
+@media(max-width:767.98px){.dashboard-view .app-shell{display:block}.dashboard-view .app-navbar{position:sticky;height:64px;min-height:64px;padding:10px 14px;border-radius:0}.dashboard-view .navbar-collapse{height:auto}.dashboard-view .nav-link{width:100%;justify-content:flex-start}.dashboard-view .user-trigger,.dashboard-view .health-indicator{width:42px;height:42px}.dashboard-view .app-main{min-height:calc(100vh - 64px)}.dashboard-view .page-header{display:flex;flex-direction:column;align-items:stretch;min-height:200px;gap:14px;padding:20px 16px}.dashboard-view .header-tools{width:100%;flex-wrap:wrap}.dashboard-view .search-foundation{display:flex;min-width:190px;flex:1}.dashboard-view .page-actions{margin-left:0}.dashboard-view .content-card{padding:14px}.dashboard-kpis{gap:9px}.dashboard-kpi{min-height:105px}.dashboard-kpi-icon{width:34px;height:34px}.dashboard-kpi-label{white-space:normal}.dashboard-panel{padding:15px}.dashboard-mission-row{grid-template-columns:20px minmax(110px,1fr) auto;gap:7px}.dashboard-mission-zone,.dashboard-mission-time,.dashboard-mission-row>.dashboard-badge{display:none}.dashboard-expedition-row{grid-template-columns:minmax(110px,1fr) auto;gap:7px;padding:9px 0}.dashboard-timeline{grid-column:1/-1;grid-row:2}.dashboard-expedition-count{display:none}}
+@media(max-width:430px){.dashboard-kpis{grid-template-columns:1fr 1fr}.dashboard-kpi{padding:10px;gap:6px}.dashboard-kpi-icon{display:none}.dashboard-kpi-value{font-size:26px}.dashboard-view .refresh-button{height:40px}.dashboard-refresh-meta{min-width:80px}.dashboard-fleet-visual{gap:8px}.dashboard-donut{width:82px;height:82px}.dashboard-donut>div{width:58px;height:58px}.dashboard-fleet-legend{gap:4px}}
+@media(prefers-reduced-motion:reduce){.dashboard-view .dashboard-kpi,.dashboard-view .dashboard-panel,.dashboard-view .dashboard-kpi-track span,.dashboard-view .dashboard-donut,.dashboard-view .dashboard-timeline-line,.dashboard-view .dashboard-mission-active .dashboard-badge::before{animation:none!important;transform:none!important}}
+
 /* --- Header search -----------------------------------------------------------
    The .search-foundation box keeps its existing size, border and radius; only
    its contents change from decorative spans to a real input plus a clear
@@ -132,3 +247,135 @@ body.auth-gate-active .app-shell{display:none}
   .search-foundation{display:flex;width:auto;flex:1 1 auto;min-width:0;margin-right:8px}
   .page-actions{flex:0 0 auto;margin-left:0}
 }
+
+/* --- Research Vessels (approved Vessels design) ------------------------------
+   Reuses the Dashboard shell (body.dashboard-view). Everything below is scoped
+   to body.vessels-view or a .vessel* class so no other screen is affected. */
+.vessels-view .app-navbar .nav-link.active,.vessels-view .app-navbar .nav-group.flyout-open>.nav-link{width:calc(100% + 24px);height:80px;margin:0 -12px;border-radius:0!important}
+.vessels-view .app-navbar .nav-item{overflow:visible}
+.vessels-record-meta{display:flex;flex-direction:column;gap:2px;color:#fff;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+.vessels-record-meta span{font-size:10px;letter-spacing:.1em;opacity:.8}
+.vessels-record-meta strong{font-size:13px;letter-spacing:.04em}
+.vessel-add-button{display:inline-flex;height:52px;align-items:center;gap:12px;padding:0 24px;border:1px solid rgba(255,255,255,.7);border-radius:28px;background:rgba(255,255,255,.14);color:#fff;font-family:Manrope,sans-serif;font-size:14px;font-weight:800;white-space:nowrap;transition:background .15s}
+.vessel-add-button span:first-child{font-size:20px;font-weight:500;line-height:1}
+.vessel-add-button:hover,.vessel-add-button:focus-visible{background:rgba(255,255,255,.26);outline:0}
+.vessels-view .dashboard-kpi:nth-child(3) .dashboard-kpi-icon{background:#e9eff9;color:#3d6aa8}
+.vessels-view .dashboard-kpi:nth-child(4) .dashboard-kpi-icon{background:#e9f0f7;color:#3d7196}
+.vessels-view .dashboard-kpi:nth-child(2) .dashboard-kpi-track span{background:linear-gradient(90deg,#3f9a8b,#79c4b3)}
+.vessels-view .dashboard-kpi:nth-child(3) .dashboard-kpi-track span{background:linear-gradient(90deg,#2f65a8,#4d8ac2)}
+.vessels-grid{display:grid;grid-template-columns:minmax(0,2.17fr) minmax(300px,1fr);gap:20px;flex:1;min-height:0}
+.vessel-panel{padding:22px 26px 0}
+.vessel-register{padding-bottom:0}
+.vessel-register-head{display:flex;align-items:center;gap:18px;flex:0 0 auto;padding-bottom:16px}
+.vessel-register-head h2,.vessel-detail-head h2{margin:0;color:#203746;font-family:Manrope,sans-serif;font-size:23px;font-weight:800;letter-spacing:-.03em}
+.vessel-register-head h2{margin-right:auto}
+.vessel-tabs{display:flex;gap:2px;padding:4px;border-radius:14px;background:#eef3f6}
+.vessel-tab{height:34px;padding:0 17px;border:0;border-radius:11px;background:transparent;color:#4d6779;font-size:14px;font-weight:700;transition:background .15s,color .15s}
+.vessel-tab:hover{color:#203746}
+.vessel-tab.active{background:#fff;color:#203746;box-shadow:0 1px 4px rgba(32,67,91,.14)}
+.vessel-tab:focus-visible,.vessel-link:focus-visible,.vessel-page-button:focus-visible,.vessel-edit-button:focus-visible,.vessel-delete-button:focus-visible,.vessel-table tbody tr:focus-visible{outline:2px solid #4e9fc5;outline-offset:2px}
+.vessel-table-scroll{min-height:0;flex:1 1 auto;overflow:auto;scrollbar-width:thin;scrollbar-color:#ccdce5 transparent}
+.vessel-table{width:100%;min-width:620px;border-collapse:separate;border-spacing:0}
+.vessel-table thead th{position:sticky;z-index:1;top:0;padding:13px 10px;border-top:1px solid #e3ecf0;border-bottom:1px solid #e3ecf0;background:#fff;color:#627b89;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-align:left;text-transform:uppercase;white-space:nowrap}
+.vessel-table th.num,.vessel-table td.num{text-align:right}
+.vessel-table th.act,.vessel-table td.act{text-align:right;white-space:nowrap}
+.vessel-table th.num{padding-right:18px}
+.vessel-table td.num{padding-right:18px;color:#2c4150;font-size:15px}
+.vessel-table tbody td{height:62px;padding:8px 10px;border-bottom:1px solid #e6eef2;color:#2c4150;font-size:14px;vertical-align:middle}
+.vessel-table tbody tr{cursor:pointer;transition:background .15s}
+.vessel-table tbody tr:hover td{background:#f6fbfd}
+.vessel-table tbody tr.selected td{background:#eef7fb}
+.vessel-table tbody tr.selected td:first-child{border-radius:14px 0 0 14px;box-shadow:inset 3px 0 0 #63b8d4}
+.vessel-table tbody tr.selected td:last-child{border-radius:0 14px 14px 0}
+.vessel-id{width:64px;color:#8a9ca7!important;font-family:"IBM Plex Mono",monospace;font-size:12px!important}
+.vessel-name{display:flex;min-width:0;flex-direction:column;gap:3px}
+.vessel-name strong{color:#203746;font-size:16px;font-weight:700}
+.vessel-name small{color:#6b818c;font-size:13px}
+.vessel-port{color:#3f5766!important}
+.vessel-pill{display:inline-block;min-width:118px;padding:7px 15px;border-radius:20px;background:#eef3f6;color:#577184;font-size:13px;font-weight:700;white-space:nowrap}
+.vessel-detail .vessel-pill{min-width:0;padding:6px 14px;font-size:13px}
+.vessel-pill-port{background:#e7f5ed;color:#3d735f}
+.vessel-pill-sea{background:#e8f0fa;color:#3b6a8d}
+.vessel-pill-scheduled{background:#fbeee0;color:#8a6a3f}
+.vessel-pill-unassigned,.vessel-pill-unknown{background:#eef1f4;color:#5d7381}
+.vessel-link{padding:4px 6px;border:0;background:transparent;font-size:14px;font-weight:700}
+.vessel-link-view,.vessel-link-edit{color:#2f65a8}
+.vessel-link-delete{color:#a5483f}
+.vessel-link:hover{text-decoration:underline}
+.vessel-pager{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:12px;margin:0 -26px;padding:16px 26px;border-top:1px solid #e3ecf0}
+.vessel-page-controls{display:flex;gap:8px}
+.vessel-page-button{display:grid;min-width:42px;height:42px;place-items:center;padding:0 6px;border:1px solid #dde8ee;border-radius:12px;background:#fff;color:#4d6779;font-size:15px;font-weight:700}
+.vessel-page-button.current{border-color:#dcecf3;background:#e8f3f8;color:#2f65a8}
+.vessel-page-button:disabled{opacity:.45}
+.vessel-detail{overflow:auto;padding-bottom:22px;scrollbar-width:thin;scrollbar-color:#ccdce5 transparent}
+.vessel-detail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.vessel-detail-name{margin:0 0 4px;color:#203746;font-size:21px;font-weight:800;letter-spacing:-.02em}
+.vessel-detail-type{margin:0 0 14px;color:#5d7381;font-size:14px}
+.vessel-facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.vessel-fact{display:flex;flex-direction:column;gap:6px;padding:15px 18px;border-radius:14px;background:#f5f8fa}
+.vessel-fact span,.vessel-section-label{color:#627b89;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+.vessel-fact strong{color:#203746;font-size:20px;font-weight:800}
+.vessel-fact-wide{grid-column:1/-1}
+.vessel-fact-wide strong{font-size:16px;font-weight:700}
+.vessel-section-label{margin:26px 0 10px}
+.vessel-linked-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid #e6eef2}
+.vessel-linked-row:last-child{border-bottom:0}
+.vessel-linked-row>div{display:flex;min-width:0;flex-direction:column;gap:4px}
+.vessel-linked-row strong{color:#203746;font-size:15px;font-weight:600}
+.vessel-linked-row small{color:#6b818c;font-family:"IBM Plex Mono",monospace;font-size:11px}
+.vessel-detail-actions{display:flex;gap:12px;margin-top:22px;padding-top:22px;border-top:1px solid #e3ecf0}
+.vessel-edit-button,.vessel-delete-button{height:54px;border-radius:14px;font-size:16px;font-weight:800;transition:filter .15s,background .15s}
+.vessel-edit-button{flex:1;border:0;background:#2f65a8;color:#fff}
+.vessel-edit-button:hover{filter:brightness(1.1)}
+.vessel-delete-button{padding:0 30px;border:1px solid #dde8ee;background:#fff;color:#a5483f}
+.vessel-delete-button:hover{background:#fdf5f4}
+.vessel-note{margin:12px 0 0;color:#6b818c;font-size:13px}
+@media(max-width:1240px){.vessels-grid{grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px}.vessel-panel{padding-inline:18px}.vessel-pager{margin-inline:-18px;padding-inline:18px}.vessel-register-head{flex-wrap:wrap}.vessel-add-button{height:46px;padding:0 16px}}
+@media(max-width:1100px){.vessels-grid{grid-template-columns:1fr;flex:0 0 auto}.vessel-register{min-height:420px}.vessel-detail{overflow:visible}}
+@media(max-width:767.98px){.vessels-view .app-navbar .nav-link.active{width:100%;height:44px;margin:0;border-radius:15px!important}.vessel-register-head h2{width:100%}.vessel-tabs{overflow:auto}.vessel-add-button{height:40px;font-size:0;gap:0;padding:0 14px}.vessel-add-button span:first-child{font-size:20px}.vessels-record-meta{display:none}.vessel-detail-actions{flex-direction:column}}
+.vessel-add-button:disabled{opacity:.55;cursor:not-allowed}
+.vessels-view .page-header>div:first-child{min-width:0}
+.vessels-view .header-tools{flex-shrink:0}
+.vessels-view .page-header{flex-basis:136px;padding-block:16px}
+.vessels-view .page-header .search-foundation{width:clamp(200px,21.6vw,420px)}
+.vessels-view .vessel-add-button{height:50px;padding:0 20px}
+.vessel-table thead th,.vessel-table tbody td{padding-inline:8px}
+.vessel-table th:nth-child(2){width:31%}
+.vessel-table th:nth-child(3){width:24%}
+.vessel-pill{min-width:104px;padding:7px 13px}
+.vessel-link{padding:4px 5px}
+.vessel-table th:nth-child(1){width:56px}
+.vessel-table th:nth-child(1),.vessel-table td.vessel-id{padding-right:26px}
+/* Detail panel: actions never scroll away. Only the linked-expeditions list
+   gives way (and scrolls) when the panel is short. */
+@media(min-width:1101px){
+  .vessel-detail{overflow:hidden}
+  .vessel-linked{flex:0 1 auto;min-height:56px;overflow:auto;scrollbar-width:thin;scrollbar-color:#ccdce5 transparent}
+  .vessel-detail-actions,.vessel-note,.vessel-section-label,.vessel-facts,.vessel-detail-head{flex:0 0 auto}
+}
+@media(min-width:1101px) and (max-height:940px){
+  .vessel-detail{padding-top:16px;padding-bottom:14px}
+  .vessel-detail-head{margin-bottom:8px}
+  .vessel-detail-name{font-size:19px;margin-bottom:2px}
+  .vessel-detail-type{margin-bottom:8px;font-size:13px}
+  .vessel-detail .vessel-pill{padding:4px 12px;font-size:12px}
+  .vessel-facts{gap:8px;margin-top:12px}
+  .vessel-fact{gap:3px;padding:9px 14px}
+  .vessel-fact strong{font-size:18px}
+  .vessel-fact-wide strong{font-size:15px}
+  .vessel-section-label{margin:14px 0 4px}
+  .vessel-linked-row{padding:8px 4px}
+  .vessel-detail-actions{margin-top:10px;padding-top:12px}
+  .vessel-edit-button,.vessel-delete-button{height:46px;font-size:15px}
+  .vessel-note{margin-top:8px;font-size:12px}
+}
+@media(min-width:1101px) and (max-height:940px){
+  .vessel-detail-head{margin-bottom:6px}
+  .vessel-detail-type{margin-bottom:6px}
+  .vessel-facts{margin-top:10px}
+  .vessel-fact{gap:2px;padding:7px 14px}
+  .vessel-linked{min-height:62px}
+  .vessel-edit-button,.vessel-delete-button{height:44px}
+  .vessel-detail-actions{padding-top:10px}
+}
+.vessel-linked-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
