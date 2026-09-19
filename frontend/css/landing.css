@@ -1,0 +1,656 @@
+/* ===========================================================================
+   AquaFleet landing / login presentation
+   ---------------------------------------------------------------------------
+   Scope contract: every rule in this file is scoped to `.auth-screen.landing`
+   (or to `@keyframes` / `@font-face`-style at-rules, which are inert until a
+   scoped rule references them). Nothing here can reach the authenticated
+   dashboard, and style.css is not modified: this file is loaded AFTER
+   style.css in index.html, so equal-specificity rules resolve in our favour
+   and the legacy `.auth-screen` / `.auth-aside` / `.auth-card` rules are
+   overridden rather than edited.
+
+   Typography (locked):
+     Sora            -> wordmark, display headings, authentication heading
+     Manrope         -> interface copy, inputs, buttons, descriptive text
+     IBM Plex Mono   -> HUD, instrumentation, metadata, technical labels
+
+   Motion follows the philosophy in docs/landing-design/animation.md
+   (slow, deliberate, atmospheric, restrained; ocean -> vessel -> wake ->
+   radar -> HUD -> UI entrance). That document sets no numeric timings; the
+   values below are the approved prototype's, signed off in chat. Full
+   entrance runs 0 -> 2.66s, CSS-only, so the choreography does not depend
+   on landing.js. `prefers-reduced-motion: reduce` disables all of it.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------- tokens -- */
+.auth-screen.landing{
+  --afl-ink:#dfeef2;
+  --afl-ink-strong:#f2fafc;
+  --afl-cyan:#6ecbe6;
+  --afl-cyan-soft:rgba(163,220,235,.66);
+  --afl-hairline:rgba(122,196,216,.28);
+  --afl-panel-top:rgba(8,33,45,.86);
+  --afl-panel-bottom:rgba(4,20,30,.9);
+  --afl-field:rgba(4,20,29,.85);
+  --afl-ease:cubic-bezier(.16,.84,.28,1);
+  --afl-gutter:48px;
+}
+
+/* ------------------------------------------------------------------ shell -- */
+/* Overrides the legacy two-column grid from style.css without editing it. */
+.auth-screen.landing{
+  display:block;
+  grid-template-columns:none;
+  position:fixed;
+  inset:0;
+  z-index:1080;
+  overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 38%,#0b3243 0%,#072331 38%,#041724 68%,#020e16 100%);
+  color:var(--afl-ink);
+  font-family:Manrope,"Helvetica Neue",Helvetica,sans-serif;
+}
+.auth-screen.landing *,
+.auth-screen.landing *::before,
+.auth-screen.landing *::after{box-sizing:border-box;}
+
+.auth-screen.landing .af-landing{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:100%;
+  min-height:620px;
+}
+
+.auth-screen.landing a{color:var(--afl-cyan);text-decoration:none;}
+.auth-screen.landing a:hover{color:#bdeaf3;}
+
+/* ------------------------------------------------------------- scene layer -- */
+/* Populated by landing.js. Empty and harmless if that file never loads. */
+.auth-screen.landing .af-scene{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.auth-screen.landing .af-ocean{position:absolute;inset:-6%;}
+.auth-screen.landing .af-ocean svg{
+  position:absolute;inset:0;width:100%;height:100%;
+  animation:af-fade 2300ms ease both;
+}
+.auth-screen.landing .af-ocean-scrim-x{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(2,13,20,.9) 0%,rgba(2,13,20,.46) 24%,rgba(2,13,20,.06) 40%,transparent 52%,rgba(2,13,20,.22) 68%,rgba(2,13,20,.82) 88%,rgba(2,13,20,.93) 100%);
+}
+.auth-screen.landing .af-ocean-scrim-y{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(2,13,20,.55) 0%,transparent 22%,transparent 74%,rgba(1,10,16,.72) 100%);
+}
+
+/* ----------------------------------------------------------------- vessel -- */
+.auth-screen.landing .af-vessel{
+  position:absolute;
+  left:50%;
+  top:54%;
+  transform:translate(-50%,-50%);
+  height:96%;
+  aspect-ratio:.457;
+  pointer-events:none;
+}
+.auth-screen.landing .af-vessel img{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  filter:saturate(.88) contrast(1.06) drop-shadow(0 26px 46px rgba(1,10,17,.55));
+  /* settle, then hand over to the ambient idle loop */
+  animation:af-vessel-in 1700ms cubic-bezier(.22,.7,.16,1) 540ms both,
+            af-drift 13s ease-in-out 2350ms infinite;
+}
+
+/* -------------------------------------------------------------------- HUD -- */
+.auth-screen.landing .af-hud{
+  position:absolute;inset:0;pointer-events:none;
+  animation:af-fade 1250ms ease 780ms both;
+}
+.auth-screen.landing .af-hud svg{position:absolute;inset:0;width:100%;height:100%;}
+
+/* Square radar layer centred on the VESSEL, not on the viewport, so the
+   rings stay concentric with the hull at every aspect ratio. */
+.auth-screen.landing .af-radar{
+  position:absolute;
+  left:50%;
+  top:54%;
+  transform:translate(-50%,-50%);
+  width:min(94vh,94vw);
+  aspect-ratio:1;
+  pointer-events:none;
+  animation:af-fade 1250ms ease 780ms both;
+}
+.auth-screen.landing .af-radar svg{width:100%;height:100%;display:block;overflow:visible;}
+.auth-screen.landing .af-ring{transform-box:fill-box;transform-origin:50% 50%;animation:af-ring 1150ms var(--afl-ease) both;}
+.auth-screen.landing .af-ring-1{animation-delay:960ms;}
+.auth-screen.landing .af-ring-2{animation-delay:1140ms;}
+.auth-screen.landing .af-ring-3{animation-delay:1320ms;}
+.auth-screen.landing .af-hud-cross{animation:af-fade 1000ms ease 1440ms both;}
+.auth-screen.landing .af-sweep{transform-box:view-box;transform-origin:50% 50%;animation:af-sweep 18s linear infinite;}
+.auth-screen.landing .af-hud-ticks{animation:af-tick 9s ease-in-out infinite;}
+
+.auth-screen.landing .af-readout{
+  position:absolute;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:10px;
+  letter-spacing:1.6px;
+  line-height:1.9;
+  color:var(--afl-cyan-soft);
+}
+.auth-screen.landing .af-readout b{display:block;font-weight:400;color:rgba(163,220,235,.42);}
+.auth-screen.landing .af-readout-platform{left:33%;top:58%;animation:af-fade 900ms ease 1700ms both;}
+.auth-screen.landing .af-readout-scan{right:29%;top:17%;text-align:right;animation:af-fade 900ms ease 1860ms both;}
+
+/* --------------------------------------------------------------- brandbar -- */
+.auth-screen.landing .af-brandbar{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:22px var(--afl-gutter);
+  flex:0 0 auto;
+}
+.auth-screen.landing .af-brand{
+  display:flex;align-items:center;gap:12px;
+  animation:af-up 760ms var(--afl-ease) 120ms both;
+}
+.auth-screen.landing .af-brand-name{
+  font-family:Sora,Manrope,sans-serif;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-.035em;
+  color:#eaf6f9;
+}
+.auth-screen.landing .af-brandbar-meta{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:10px;
+  letter-spacing:2.2px;
+  color:rgba(163,220,235,.6);
+  animation:af-fade 780ms ease 300ms both;
+}
+
+/* ------------------------------------------------------------------- grid -- */
+.auth-screen.landing .af-grid{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(300px,1fr) 1fr minmax(360px,400px);
+  align-items:center;
+  column-gap:40px;
+  padding:0 var(--afl-gutter);
+  flex:1 1 auto;
+  min-height:0;
+}
+
+/* ------------------------------------------------------------------- hero -- */
+.auth-screen.landing .af-hero{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  max-width:470px;
+}
+.auth-screen.landing .af-eyebrow{
+  margin:0;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:10px;
+  letter-spacing:3px;
+  line-height:1.9;
+  color:rgba(163,220,235,.7);
+  animation:af-up-sm 720ms var(--afl-ease) 430ms both;
+}
+.auth-screen.landing .af-wordmark{
+  margin:20px 0 0;
+  font-family:Sora,Manrope,sans-serif;
+  font-size:72px;
+  line-height:.98;
+  font-weight:700;
+  letter-spacing:-.035em;
+  color:var(--afl-ink-strong);
+  overflow:hidden;            /* the reveal mask */
+  padding-bottom:.17em;       /* descender headroom inside the mask */
+}
+.auth-screen.landing .af-wordmark > span{
+  display:block;
+  animation:af-reveal 1080ms cubic-bezier(.19,.86,.24,1) 560ms both;
+}
+.auth-screen.landing .af-wordmark em{font-style:normal;color:var(--afl-cyan);}
+.auth-screen.landing .af-tagline{
+  margin:20px 0 0;
+  font-family:Sora,Manrope,sans-serif;
+  font-size:24px;
+  line-height:1.2;
+  font-weight:600;
+  letter-spacing:-.025em;
+  color:#cfe5ec;
+  text-wrap:pretty;
+  animation:af-up 860ms var(--afl-ease) 790ms both;
+}
+.auth-screen.landing .af-hero-copy{
+  margin:16px 0 0;
+  max-width:390px;
+  font-size:14.5px;
+  line-height:1.65;
+  color:rgba(200,224,232,.72);
+  text-wrap:pretty;
+  animation:af-up 740ms var(--afl-ease) 960ms both;
+}
+.auth-screen.landing .af-rule{
+  width:56px;height:2px;margin:26px 0 0;
+  background:rgba(110,203,230,.7);
+  animation:af-rule 820ms var(--afl-ease) 1130ms both;
+}
+.auth-screen.landing .af-capabilities{
+  display:flex;
+  gap:30px;
+  margin-top:22px;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:10px;
+  letter-spacing:1.7px;
+  line-height:1.8;
+  color:rgba(186,215,224,.78);
+  animation:af-up 760ms var(--afl-ease) 1260ms both;
+}
+
+/* ------------------------------------------------------------- auth panel -- */
+.auth-screen.landing .af-panel{
+  animation:af-in-right 1150ms var(--afl-ease) 1180ms both;
+}
+
+/* Override the legacy .auth-card block from style.css (white surface,
+   centred flex column) without touching that file. */
+.auth-screen.landing .auth-card{
+  display:block;
+  padding:0;
+  gap:0;
+  background:transparent;
+}
+
+.auth-screen.landing .auth-form{
+  position:relative;
+  display:block;
+  max-width:none;
+  padding:32px 30px 28px;
+  border:1px solid rgba(132,202,220,.2);
+  border-radius:6px;
+  background:linear-gradient(180deg,var(--afl-panel-top) 0%,var(--afl-panel-bottom) 100%);
+  backdrop-filter:blur(18px) saturate(120%);
+  -webkit-backdrop-filter:blur(18px) saturate(120%);
+  box-shadow:0 30px 80px rgba(0,0,0,.58),inset 0 1px 0 rgba(190,232,242,.1);
+}
+.auth-screen.landing .auth-form::before{
+  content:"";
+  position:absolute;top:-1px;left:22px;
+  width:52px;height:2px;
+  background:var(--afl-cyan);
+}
+
+.auth-screen.landing .auth-title{
+  margin:0;
+  font-family:Sora,Manrope,sans-serif;
+  font-size:23px;
+  font-weight:600;
+  letter-spacing:-.028em;
+  color:#f0fafc;
+  animation:af-up-sm 600ms var(--afl-ease) 1480ms both;
+}
+.auth-screen.landing .auth-subtitle{
+  margin:8px 0 26px;
+  font-size:13.5px;
+  line-height:1.55;
+  color:rgba(197,222,231,.78);
+  animation:af-up-sm 580ms var(--afl-ease) 1580ms both;
+}
+
+.auth-screen.landing .auth-field{display:block;margin:0;}
+.auth-screen.landing .auth-label{
+  display:block;
+  margin-bottom:8px;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:10px;
+  font-weight:400;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  color:rgba(174,214,226,.85);
+}
+
+/* .auth-input also carries Bootstrap's .form-control, so these need to beat
+   the framework's specificity — the compound selector below does it without
+   !important and without editing Bootstrap. */
+.auth-screen.landing .auth-form .auth-input,
+.auth-screen.landing .auth-form input.form-control{
+  width:100%;
+  height:46px;
+  min-height:46px;
+  padding:0 14px;
+  font-family:Manrope,sans-serif;
+  font-size:15px;
+  color:#e8f4f7;
+  background:var(--afl-field);
+  border:1px solid var(--afl-hairline);
+  border-radius:4px;
+  outline:none;
+  box-shadow:none;
+  transition:border-color 160ms ease,box-shadow 160ms ease;
+}
+.auth-screen.landing .auth-form .auth-input:hover{border-color:rgba(122,196,216,.5);}
+.auth-screen.landing .auth-form .auth-input:focus{
+  border-color:var(--afl-cyan);
+  box-shadow:0 0 0 3px rgba(110,203,230,.22);
+  background:var(--afl-field);
+  color:#e8f4f7;
+}
+.auth-screen.landing .auth-form .auth-input::placeholder{color:rgba(174,214,226,.45);}
+.auth-screen.landing .auth-form .auth-input:-webkit-autofill{
+  -webkit-text-fill-color:#e8f4f7;
+  -webkit-box-shadow:0 0 0 1000px #0b2734 inset;
+}
+
+.auth-screen.landing .auth-password-wrap{position:relative;display:block;}
+.auth-screen.landing .auth-password-wrap .auth-input{padding-right:84px;}
+.auth-screen.landing .auth-reveal{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  height:30px;
+  min-width:52px;
+  padding:0 9px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:9px;
+  font-weight:500;
+  line-height:1;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:rgba(174,214,226,.9);
+  background:transparent;
+  border:1px solid rgba(122,196,216,.25);
+  border-radius:3px;
+  cursor:pointer;
+}
+.auth-screen.landing .auth-reveal:hover{color:#dff3f8;border-color:rgba(122,196,216,.6);}
+.auth-screen.landing .auth-reveal:focus-visible{outline:2px solid var(--afl-cyan);outline-offset:2px;}
+
+/* Field stagger. Applied to the wrappers so the inputs themselves keep their
+   own transition rules for focus. */
+.auth-screen.landing .af-stagger-1{animation:af-up-sm 540ms var(--afl-ease) 1680ms both;}
+.auth-screen.landing .af-stagger-2{animation:af-up-sm 540ms var(--afl-ease) 1830ms both;}
+
+/* The error region is deliberately OUTSIDE the entrance stagger: a message
+   from handleUnauthorized or a failed submit must be visible immediately,
+   whenever it arrives. Only its reserved height is styled here; visibility
+   still belongs to .auth-error-visible, which auth.js owns. */
+.auth-screen.landing .auth-error{
+  display:none;
+  margin:14px 0 0;
+  padding:10px 12px;
+  border:1px solid rgba(232,128,140,.35);
+  border-radius:4px;
+  background:rgba(70,20,28,.5);
+  color:#ffd2d7;
+  font-family:Manrope,sans-serif;
+  font-size:12.5px;
+  font-weight:500;
+  line-height:1.45;
+  animation:none;
+}
+.auth-screen.landing .auth-error.auth-error-visible{display:block;}
+
+.auth-screen.landing .auth-form .auth-submit,
+.auth-screen.landing .auth-form .btn.auth-submit{
+  width:100%;
+  height:48px;
+  margin-top:18px;
+  padding:0;
+  font-family:Manrope,sans-serif;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:.2px;
+  color:#03202b;
+  background:var(--afl-cyan);
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  transform:none;
+  box-shadow:none;
+  transition:background 160ms ease,transform 120ms ease;
+  animation:af-up-sm 560ms var(--afl-ease) 1990ms both;
+}
+.auth-screen.landing .auth-form .auth-submit:hover:not(:disabled){
+  background:#8ddcf0;
+  transform:none;
+}
+.auth-screen.landing .auth-form .auth-submit:active:not(:disabled){transform:translateY(1px);}
+.auth-screen.landing .auth-form .auth-submit:focus-visible{outline:2px solid #bdeaf3;outline-offset:3px;}
+.auth-screen.landing .auth-form .auth-submit:disabled{opacity:.72;cursor:progress;}
+
+.auth-screen.landing .af-support{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid rgba(122,196,216,.16);
+  font-size:12.5px;
+  color:rgba(197,222,231,.7);
+  animation:af-fade 620ms ease 2100ms both;
+}
+.auth-screen.landing .af-support strong{font-weight:500;color:rgba(214,235,241,.9);}
+
+.auth-screen.landing .af-panel-note{
+  margin-top:12px;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:9.5px;
+  letter-spacing:1.5px;
+  color:rgba(150,190,202,.5);
+  text-align:right;
+  animation:af-fade 620ms ease 2160ms both;
+}
+
+/* ----------------------------------------------------------------- footer -- */
+.auth-screen.landing .af-footer{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:0 var(--afl-gutter) 26px;
+  flex:0 0 auto;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:9.5px;
+  letter-spacing:1.8px;
+  color:rgba(150,190,202,.5);
+  animation:af-fade 800ms ease 2060ms both;
+}
+
+/* ------------------------------------------------- returning to the screen -- */
+/* renderLogin() is also called on logout and on session expiry. landing.js
+   marks those mounts so the 2.66s entrance does not replay and the error is
+   readable at once. */
+/* Suppress ONLY the entrance animations. The ambient loops (.af-ocean g,
+   .af-sweep, .af-hud-ticks, and the vessel's idle drift) must keep running:
+   a returning login screen is still a living scene. Blanket-zeroing `*`
+   here would freeze them, and `revert` cannot restore an author value. */
+.auth-screen.landing.af-no-entrance .af-brand,
+.auth-screen.landing.af-no-entrance .af-brandbar-meta,
+.auth-screen.landing.af-no-entrance .af-eyebrow,
+.auth-screen.landing.af-no-entrance .af-wordmark > span,
+.auth-screen.landing.af-no-entrance .af-tagline,
+.auth-screen.landing.af-no-entrance .af-hero-copy,
+.auth-screen.landing.af-no-entrance .af-rule,
+.auth-screen.landing.af-no-entrance .af-capabilities,
+.auth-screen.landing.af-no-entrance .af-panel,
+.auth-screen.landing.af-no-entrance .auth-title,
+.auth-screen.landing.af-no-entrance .auth-subtitle,
+.auth-screen.landing.af-no-entrance .af-stagger-1,
+.auth-screen.landing.af-no-entrance .af-stagger-2,
+.auth-screen.landing.af-no-entrance .auth-form .auth-submit,
+.auth-screen.landing.af-no-entrance .af-support,
+.auth-screen.landing.af-no-entrance .af-panel-note,
+.auth-screen.landing.af-no-entrance .af-footer,
+.auth-screen.landing.af-no-entrance .af-hud,
+.auth-screen.landing.af-no-entrance .af-radar,
+.auth-screen.landing.af-no-entrance .af-ocean svg,
+.auth-screen.landing.af-no-entrance .af-ring,
+.auth-screen.landing.af-no-entrance .af-hud-cross,
+.auth-screen.landing.af-no-entrance .af-readout{
+  animation:none !important;
+}
+/* The vessel carries entrance + idle in one shorthand, so it needs the
+   ambient half re-declared rather than removed. */
+.auth-screen.landing.af-no-entrance .af-vessel img{
+  animation:af-drift 13s ease-in-out 0ms infinite !important;
+}
+
+/* --------------------------------------------------------- checking state -- */
+.auth-screen.landing.auth-screen-checking{
+  display:grid;
+  grid-template-columns:1fr;
+  place-items:center;
+}
+.auth-screen.landing .auth-checking{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:rgba(163,220,235,.7);
+  animation:af-fade 600ms ease both;
+}
+.auth-screen.landing .auth-checking .spinner-border{
+  width:26px;
+  height:26px;
+  border-width:2px;
+  color:var(--afl-cyan) !important;
+}
+
+/* ------------------------------------------------------------- keyframes -- */
+@keyframes af-swell{from{transform:translate3d(-4%,-8%,0) rotate(.001deg);}to{transform:translate3d(-4%,8%,0) rotate(.001deg);}}
+@keyframes af-swell2{from{transform:translate3d(3%,6%,0);}to{transform:translate3d(-3%,-6%,0);}}
+@keyframes af-caustic{0%{opacity:.16;transform:scale(1);}50%{opacity:.3;transform:scale(1.06);}100%{opacity:.16;transform:scale(1);}}
+@keyframes af-sweep{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+/* Vertical settle only — no rotation, so the vessel always reads as heading
+   straight north. Even a fraction of a degree looks tilted. */
+@keyframes af-drift{0%{transform:translate3d(0,0,0);}50%{transform:translate3d(0,-10px,0);}100%{transform:translate3d(0,0,0);}}
+@keyframes af-fade{from{opacity:0;}to{opacity:1;}}
+@keyframes af-tick{0%,88%{opacity:.5;}92%{opacity:1;}100%{opacity:.5;}}
+@keyframes af-up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@keyframes af-up-sm{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes af-in-right{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+@keyframes af-reveal{from{opacity:0;transform:translateY(105%);}to{opacity:1;transform:translateY(0);}}
+@keyframes af-rule{from{opacity:0;width:0;}to{opacity:1;width:56px;}}
+@keyframes af-ring{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+@keyframes af-vessel-in{from{opacity:0;transform:translateY(54px) scale(1.03);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+/* ----------------------------------------------------------- breakpoints -- */
+/* 1440x900 and 1920x1080 use the base rules above. */
+
+/* 1366x768 / 1280x720 — the critical pair. Narrower hero, smaller wordmark,
+   vessel nudged left of the panel, decorative readouts dropped. */
+@media (max-width:1440px){
+  .auth-screen.landing .af-wordmark{font-size:64px;}
+  .auth-screen.landing .af-tagline{font-size:22px;}
+}
+@media (max-width:1180px),(max-height:780px){
+  .auth-screen.landing{--afl-gutter:36px;}
+  .auth-screen.landing .af-grid{
+    grid-template-columns:1fr 352px;
+    column-gap:28px;
+  }
+  .auth-screen.landing .af-spacer{display:none;}
+  .auth-screen.landing .af-hero{max-width:400px;}
+  .auth-screen.landing .af-wordmark{font-size:56px;}
+  .auth-screen.landing .af-tagline{font-size:21px;}
+  .auth-screen.landing .af-hero-copy{font-size:13.5px;}
+  .auth-screen.landing .af-vessel{
+    top:56%;
+    height:86%;
+    opacity:.82;
+  }
+  .auth-screen.landing .af-radar{top:56%;width:min(86vh,86vw);}
+  .auth-screen.landing .af-readout,
+  .auth-screen.landing .af-hud-extra{display:none;}
+  .auth-screen.landing .auth-form{padding:26px 24px 24px;}
+  .auth-screen.landing .af-brandbar{padding:16px var(--afl-gutter);}
+  .auth-screen.landing .af-footer{padding:0 var(--afl-gutter) 18px;}
+}
+
+/* Short viewports: let the screen scroll rather than clip the panel. */
+@media (max-height:700px),(max-width:840px){
+  .auth-screen.landing{overflow:auto;}
+  .auth-screen.landing .af-landing{height:auto;min-height:100%;}
+  .auth-screen.landing .af-grid{
+    min-height:0;
+    padding-top:12px;
+    padding-bottom:24px;
+  }
+}
+
+/* Tablet / 768px */
+@media (max-width:840px){
+  .auth-screen.landing .af-grid{
+    grid-template-columns:1fr;
+    row-gap:26px;
+    justify-items:center;
+    padding:24px 28px 32px;
+  }
+  .auth-screen.landing .af-hero{
+    max-width:560px;
+    align-items:center;
+    text-align:center;
+  }
+  .auth-screen.landing .af-capabilities{justify-content:center;}
+  .auth-screen.landing .af-panel{
+    width:100%;
+    max-width:440px;
+    justify-self:center;
+  }
+  .auth-screen.landing .af-vessel{opacity:.28;transform:translate(-50%,-50%) scale(1.1);}
+  .auth-screen.landing .af-hud,
+  .auth-screen.landing .af-radar{opacity:.5;}
+  .auth-screen.landing .af-footer{padding:14px 28px 20px;}
+}
+
+/* Phone / 375px */
+@media (max-width:520px){
+  .auth-screen.landing{--afl-gutter:18px;}
+  .auth-screen.landing .af-wordmark{font-size:46px;letter-spacing:-.03em;}
+  .auth-screen.landing .af-tagline{font-size:19px;}
+  .auth-screen.landing .af-hud,
+  .auth-screen.landing .af-radar{display:none;}
+  .auth-screen.landing .af-vessel{opacity:.2;}
+  .auth-screen.landing .af-grid{padding:18px 18px 26px;}
+  .auth-screen.landing .af-brandbar{padding:14px 18px;}
+  .auth-screen.landing .af-brandbar-meta{display:none;}
+  .auth-screen.landing .af-capabilities{gap:14px;}
+  .auth-screen.landing .af-footer{display:none;}
+}
+
+/* -------------------------------------------------------- reduced motion -- */
+/* style.css already ships a global reduced-motion rule that shortens
+   durations; this one removes landing motion outright, including the
+   infinite ambient loops. */
+@media (prefers-reduced-motion:reduce){
+  .auth-screen.landing *,
+  .auth-screen.landing *::before,
+  .auth-screen.landing *::after{
+    animation:none !important;
+    transition:none !important;
+  }
+  .auth-screen.landing .af-rule{width:56px;}
+}

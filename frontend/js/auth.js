@@ -51,12 +51,20 @@
     }));
     panel.appendChild(Ui.element("p", { className: "mb-0", text: "Checking your session…" }));
 
+    /* Presentation only: the landing ocean sits behind the boot state so the
+       gate does not flash a white panel before the login screen arrives.
+       landing.js fills this node; it stays empty if that file is absent. */
+    const scene = Ui.element("div", {
+      className: "af-scene", attributes: { "aria-hidden": "true" }
+    });
+
     const screen = Ui.element("div", {
-      className: "auth-screen auth-screen-checking",
+      className: "auth-screen landing auth-screen-checking",
       attributes: { id: "auth-screen" },
-      children: [panel]
+      children: [scene, panel]
     });
     document.body.appendChild(screen);
+    if (global.AquaFleetLanding) global.AquaFleetLanding.mountChecking(screen);
   }
 
   /* ===================================================================
@@ -90,27 +98,57 @@
     region.classList.add("auth-error-visible");
   }
 
+  /* The brand mark is an inline SVG so it inherits the landing palette and
+     needs no extra asset request. Decorative only. */
+  function brandMark() {
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("width", "30");
+    svg.setAttribute("height", "30");
+    svg.setAttribute("viewBox", "0 0 32 32");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    const ring = document.createElementNS(NS, "circle");
+    ring.setAttribute("cx", "16"); ring.setAttribute("cy", "16"); ring.setAttribute("r", "15");
+    ring.setAttribute("fill", "none");
+    ring.setAttribute("stroke", "rgba(140,214,232,0.45)");
+    ring.setAttribute("stroke-width", "1");
+    svg.appendChild(ring);
+    [["M6 19c3.2 0 3.2-4 6.4-4s3.2 4 6.4 4 3.2-4 6.4-4", "#7fd4e8"],
+     ["M6 13c3.2 0 3.2-4 6.4-4s3.2 4 6.4 4 3.2-4 6.4-4", "rgba(226,244,249,0.85)"]]
+      .forEach(function addWave(wave) {
+        const path = document.createElementNS(NS, "path");
+        path.setAttribute("d", wave[0]);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", wave[1]);
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-linecap", "round");
+        svg.appendChild(path);
+      });
+    return svg;
+  }
+
+  /* A block of instrumentation text: a dim caption above a value. */
+  function capability(first, second) {
+    return Ui.element("div", {
+      children: [
+        Ui.element("span", { text: first }),
+        Ui.element("br"),
+        Ui.element("span", { text: second })
+      ]
+    });
+  }
+
   function renderLogin(initialMessage) {
     hideApplication();
     const existing = document.getElementById("auth-screen");
     if (existing) existing.remove();
 
-    const brand = Ui.element("div", {
-      className: "auth-brand",
-      children: [
-        Ui.element("span", { className: "auth-mark", text: "≈", attributes: { "aria-hidden": "true" } }),
-        Ui.element("div", {
-          children: [
-            Ui.element("strong", { text: "AquaFleet" }),
-            Ui.element("small", { text: "Marine Operations Database" })
-          ]
-        })
-      ]
-    });
-
     const username = fieldGroup("auth-username", "Username", "text", "username");
+    username.group.className = "auth-field af-stagger-1";
 
     const password = fieldGroup("auth-password", "Password", "password", "current-password");
+    password.group.className = "auth-field af-stagger-2";
     const reveal = Ui.element("button", {
       className: "auth-reveal", text: "Show",
       attributes: { type: "button", "aria-label": "Show password", "aria-pressed": "false" }
@@ -145,10 +183,18 @@
       className: "auth-form",
       attributes: { id: "auth-form", novalidate: "novalidate" },
       children: [
-        Ui.element("h1", { className: "auth-title", text: "Sign in" }),
+        /* h2, not h1: the landing wordmark is the page's h1. */
+        Ui.element("h2", { className: "auth-title", text: "Welcome to AquaFleet" }),
         Ui.element("p", { className: "auth-subtitle",
-          text: "Enter your AquaFleet credentials to continue." }),
-        username.group, password.group, errorRegion, submit
+          text: "Access your marine research operations workspace." }),
+        username.group, password.group, errorRegion, submit,
+        Ui.element("div", {
+          className: "af-support",
+          children: [
+            Ui.element("strong", { text: "Need access?" }),
+            Ui.element("span", { text: "Contact your administrator." })
+          ]
+        })
       ]
     });
     form.addEventListener("submit", function onSubmit(event) {
@@ -156,24 +202,100 @@
       submitLogin(username.input, password.input, submit);
     });
 
-    const card = Ui.element("div", { className: "auth-card", children: [brand, form] });
-    const aside = Ui.element("div", {
-      className: "auth-aside", attributes: { "aria-hidden": "true" },
+    const card = Ui.element("div", { className: "auth-card", children: [form] });
+
+    const panel = Ui.element("div", {
+      className: "af-panel",
       children: [
-        Ui.element("p", { className: "auth-aside-kicker", text: "AquaFleet Command" }),
-        Ui.element("h2", { className: "auth-aside-title",
-          text: "Autonomous underwater expedition and offshore inspection database" }),
-        Ui.element("p", { className: "auth-aside-note",
-          text: "Research vessels · AUV/ROV fleet · marine sample lineage" }),
-        Ui.element("div", { className: "auth-aside-wave" })
+        card,
+        Ui.element("div", {
+          className: "af-panel-note", attributes: { "aria-hidden": "true" },
+          text: "INSTRUMENTATION SHOWN IS ILLUSTRATIVE / NON-LIVE"
+        })
+      ]
+    });
+
+    const wordmark = Ui.element("h1", { className: "af-wordmark" });
+    const wordmarkInner = Ui.element("span");
+    wordmarkInner.appendChild(document.createTextNode("Aqua"));
+    wordmarkInner.appendChild(Ui.element("em", { text: "Fleet" }));
+    wordmark.appendChild(wordmarkInner);
+
+    const hero = Ui.element("div", {
+      className: "af-hero",
+      children: [
+        Ui.element("p", {
+          className: "af-eyebrow",
+          children: [
+            Ui.element("span", { text: "OCEAN INTELLIGENCE" }),
+            Ui.element("br"),
+            Ui.element("span", { text: "FOR MARINE RESEARCH" })
+          ]
+        }),
+        wordmark,
+        Ui.element("p", {
+          className: "af-tagline",
+          children: [
+            Ui.element("span", { text: "Marine Research Fleet" }),
+            Ui.element("br"),
+            Ui.element("span", { text: "Management Platform" })
+          ]
+        }),
+        Ui.element("p", { className: "af-hero-copy",
+          text: "Vessels, missions, expeditions and marine zones — coordinated in one operational workspace." }),
+        Ui.element("div", { className: "af-rule", attributes: { "aria-hidden": "true" } }),
+        Ui.element("div", {
+          className: "af-capabilities", attributes: { "aria-hidden": "true" },
+          children: [
+            capability("FLEET", "MANAGEMENT"),
+            capability("MISSION", "PLANNING"),
+            capability("EXPEDITION", "OPERATIONS")
+          ]
+        })
+      ]
+    });
+
+    const brandbar = Ui.element("div", {
+      className: "af-brandbar",
+      children: [
+        Ui.element("div", {
+          className: "af-brand",
+          children: [brandMark(), Ui.element("span", { className: "af-brand-name", text: "AquaFleet" })]
+        }),
+        Ui.element("div", { className: "af-brandbar-meta", text: "MARINE RESEARCH OPERATIONS" })
+      ]
+    });
+
+    const landing = Ui.element("div", {
+      className: "af-landing",
+      children: [
+        brandbar,
+        Ui.element("div", {
+          className: "af-grid",
+          children: [hero, Ui.element("div", { className: "af-spacer" }), panel]
+        }),
+        Ui.element("div", {
+          className: "af-footer", attributes: { "aria-hidden": "true" },
+          children: [
+            Ui.element("span", { text: "AQUAFLEET / MARINE RESEARCH FLEET MANAGEMENT" }),
+            Ui.element("span", { text: "INTERNAL OPERATIONS ACCESS ONLY" })
+          ]
+        })
       ]
     });
 
     const screen = Ui.element("div", {
-      className: "auth-screen", attributes: { id: "auth-screen" },
-      children: [aside, card]
+      className: "auth-screen landing", attributes: { id: "auth-screen" },
+      children: [
+        Ui.element("div", { className: "af-scene", attributes: { "aria-hidden": "true" } }),
+        landing
+      ]
     });
     document.body.appendChild(screen);
+
+    /* Decorative scene + parallax. Guarded: if landing.js is missing or
+       failed to parse, the form above is already complete and usable. */
+    if (global.AquaFleetLanding) global.AquaFleetLanding.mount(screen);
 
     if (initialMessage) setFormError(initialMessage);
     username.input.focus();
