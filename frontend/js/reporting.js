@@ -103,11 +103,6 @@
     const result = panel.querySelector(".report-result");
     Ui.clearElement(result);
     result.setAttribute("aria-busy", state === "loading" ? "true" : "false");
-    const header = node("div", "report-result-head");
-    const copy = node("div", "report-result-copy");
-    copy.append(node("h2", "", report.title), node("p", "", report.description));
-    header.append(copy, node("span", "report-view-name", report.view));
-    result.appendChild(header);
     if (state === "loading") {
       const loading = node("div", "report-state", "Querying " + report.view + "…");
       loading.setAttribute("role", "status"); result.appendChild(loading);
@@ -127,7 +122,9 @@
   }
   function renderControls(report) {
     if (!panel) return;
-    panel.querySelector(".report-source-name").textContent = report.view;
+    panel.querySelector(".report-title").textContent = report.title;
+    panel.querySelector(".report-description").textContent = report.description;
+    document.querySelector(".report-source-name").textContent = report.view;
     const tabs = panel.querySelector(".report-tabs");
     tabs.querySelectorAll("button").forEach((button) => {
       const selected = button.dataset.report === report.key;
@@ -152,7 +149,7 @@
       });
     }
     panel.querySelector(".report-filter-label").textContent = spec?.label || "Report results";
-    panel.querySelector(".report-refresh").onclick = () => load(report);
+    document.querySelector(".report-refresh").onclick = () => load(report);
     panel.querySelector(".report-export").onclick = () => {
       if (canExport(state, rows)) Csv.download(report, rows);
     };
@@ -183,16 +180,22 @@
     query = value || "";
     if (state === "success") renderResult(reportByKey(activeKey));
   }
-  function leave() { ++requestVersion; panel = null; rows = null; state = "loading"; query = ""; filterValue = ""; }
+  function leave() {
+    ++requestVersion; panel = null; rows = null; state = "loading"; query = ""; filterValue = "";
+    const rail = document.getElementById("context-rail");
+    const parent = document.querySelector(".workspace-shell");
+    if (rail && parent && rail.parentElement !== parent) parent.appendChild(rail);
+  }
   function render(container) {
     leave();
     panel = container;
     Ui.clearElement(container);
-    const shell = node("div", "report-workspace");
-    const top = node("div", "report-top");
-    top.append(node("span", "report-source-label", "SQL VIEW"), node("span", "report-source-name", reportByKey(activeKey).view));
+    const actions = document.getElementById("page-actions");
+    const source = node("div", "report-header-source");
+    source.append(node("span", "report-source-label", "SQL VIEW"), node("strong", "report-source-name", reportByKey(activeKey).view));
     const refresh = node("button", "report-refresh", "↻  Refresh Report", { type: "button" });
-    top.appendChild(refresh);
+    actions.append(source, refresh);
+    const shell = node("div", "report-workspace");
     const tabs = node("div", "report-tabs", undefined, { role: "tablist", "aria-label": "AquaFleet reports" });
     reports.forEach((report) => {
       const button = node("button", "report-tab", report.title,
@@ -201,13 +204,19 @@
       tabs.appendChild(button);
     });
     const result = node("section", "report-result", undefined, { "aria-label": "Report results" });
+    const heading = node("div", "report-result-head");
+    heading.append(node("h2", "report-title"), node("p", "report-description"));
     const filterRow = node("div", "report-filter-row");
     filterRow.append(node("span", "report-filter-label"), node("div", "report-filters", undefined, { role: "group" }));
     const footer = node("div", "report-footer");
     footer.append(node("span", "", "CSV exports every row returned by the selected report request."),
       node("button", "report-export", "Export CSV", { type: "button" }));
-    shell.append(top, tabs, filterRow, result, footer);
-    container.appendChild(shell);
+    shell.append(heading, filterRow, result, footer);
+    const main = node("div", "report-main");
+    main.append(tabs, shell);
+    const layout = node("div", "report-layout");
+    layout.append(main, document.getElementById("context-rail"));
+    container.appendChild(layout);
     select(activeKey);
   }
   global.AquaFleetReports = Object.freeze({

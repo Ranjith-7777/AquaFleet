@@ -22,8 +22,8 @@ class Element {
     this.attributes[name] = String(value);
     if (name.startsWith("data-")) this.dataset[name.slice(5)] = String(value);
   }
-  append(...nodes) { this.children.push(...nodes); }
-  appendChild(node) { this.children.push(node); return node; }
+  append(...nodes) { nodes.forEach((node) => { if (node.parentElement) node.parentElement.children = node.parentElement.children.filter((child) => child !== node); node.parentElement = this; this.children.push(node); }); }
+  appendChild(node) { this.append(node); return node; }
   addEventListener(name, callback) { this.listeners[name] = callback; }
   descendants() { return this.children.flatMap((child) => [child, ...child.descendants()]); }
   querySelector(selector) { return this.descendants().find((child) => selector.startsWith(".") && child.className.split(" ").includes(selector.slice(1))); }
@@ -33,6 +33,10 @@ const root = path.join(__dirname, "..");
 let mode = "success";
 const pending = [];
 const rail = new Element("aside");
+const actions = new Element("div");
+const workspace = new Element("div", { className: "workspace-shell" });
+workspace.append(rail, actions);
+let activeHost;
 const window = {
   AquaFleetApi: { async get() {
     if (mode === "race") return new Promise((resolve) => pending.push(resolve));
@@ -41,7 +45,7 @@ const window = {
   } },
   AquaFleetUi: {
     element: (tag, options) => new Element(tag, options),
-    clearElement: (node) => { node.children = []; node.ownText = ""; },
+    clearElement: (node) => { node.children.forEach((child) => { child.parentElement = null; }); node.children = []; node.ownText = ""; },
     statusBadge: (value) => new Element("span", { text: value }),
     formatDate: (value) => value || "—",
     formatDateTime: (value) => value || "—",
@@ -50,7 +54,10 @@ const window = {
   },
   AquaFleetReportCsv: { download() {} }
 };
-const document = { getElementById: (id) => id === "context-rail" ? rail : null };
+const document = {
+  getElementById: (id) => ({ "context-rail": rail, "page-actions": actions })[id],
+  querySelector: (selector) => selector === ".workspace-shell" ? workspace : actions.querySelector(selector) || activeHost?.querySelector(selector)
+};
 const context = vm.createContext({ window, document });
 vm.runInContext(fs.readFileSync(path.join(root, "js", "reporting.js"), "utf8"), context);
 const R = window.AquaFleetReports;
@@ -58,6 +65,7 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
 
 (async () => {
   let host = new Element("main");
+  activeHost = host;
   R.render(host); await settle();
   assert.equal(host.querySelector(".report-table").querySelectorAll("tr").length, 2);
   assert.match(host.textContent, /<b>Literal report<\/b>/);
@@ -70,12 +78,14 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
   assert.equal(host.querySelector(".report-export").disabled, false);
 
   mode = "empty"; host = new Element("main");
+  activeHost = host; actions.children = [];
   R.render(host); await settle();
   assert.match(host.textContent, /No report rows/);
   assert.match(host.textContent, /Showing 0 of 0 returned rows/);
   assert.equal(host.querySelector(".report-export").disabled, true);
 
   mode = "error"; host = new Element("main");
+  activeHost = host; actions.children = [];
   R.render(host); await settle();
   assert.match(host.textContent, /Unable to load report/);
   assert.match(host.textContent, /Report API failed/);
@@ -83,6 +93,7 @@ const settle = () => new Promise((resolve) => setImmediate(resolve));
   assert.equal(host.querySelector(".report-export").disabled, true);
 
   mode = "race"; host = new Element("main");
+  activeHost = host; actions.children = [];
   R.render(host);
   host.querySelector(".report-tabs").querySelectorAll("button")[1].listeners.click();
   pending[1]({ data: [{ mission_id: 55, mission_type: "New mission", status: "Planned" }] });

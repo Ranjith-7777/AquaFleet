@@ -482,7 +482,7 @@
   async function renderDashboard(button) {
     const sequence = ++state.requestSequence;
     state.currentView = "dashboard"; state.currentResource = null; state.rows = []; state.loading = true;
-    document.body.classList.add("dashboard-view");
+    document.body.classList.add("af-auth-shell", "dashboard-view");
     document.body.classList.remove("vessels-view"); setEyebrow();
     const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader("Dashboard", "Fleet, mission and expedition readiness from the current AquaFleet database state.");
@@ -1022,6 +1022,7 @@
   }
 
   function navigate(view) {
+    document.body.classList.add("af-auth-shell");
     if (state.currentView === "reports" && view !== "reports") Reports.leave();
     if (view !== "reports") document.body.classList.remove("reports-view");
     if (Workspace.has(state.currentView) && view !== state.currentView) Workspace.leave();
@@ -1031,6 +1032,8 @@
        into missions. Refresh and post-CRUD reloads do NOT come through here,
        which is exactly why they keep the query. */
     clearSearch(false);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.querySelector(".app-main").scrollTop = 0;
     if (view === "dashboard") renderDashboard();
     else if (view === "reports") renderReports();
     else renderResource(view);

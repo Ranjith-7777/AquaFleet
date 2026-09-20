@@ -1,0 +1,76 @@
+/* One authenticated shell. Values follow the frozen AquaFleet design system. */
+body.af-auth-shell{
+  --af-sidebar-width:100px;
+  --af-header-height:126px;
+  --af-header-blue:linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%);
+  --af-page-padding-x:24px;
+  --af-page-padding-top:14px;
+  --af-content-gap:14px;
+  --af-card-radius:16px;
+  --af-card-border:#eef2f5;
+  --af-card-shadow:0 8px 22px rgba(23,53,68,.07);
+  background:#e9eff5;color:#173544;font-family:Manrope,ui-sans-serif,sans-serif;
+}
+body.af-auth-shell .app-shell{grid-template-columns:var(--af-sidebar-width) minmax(0,1fr);background:#e9eff5;overflow:visible}
+body.af-auth-shell .workspace-shell{display:block;min-width:0}
+body.af-auth-shell .app-navbar{position:sticky;top:0;z-index:20;height:100vh;min-height:0;padding:clamp(12px,2.4vh,26px) 12px clamp(12px,2.2vh,24px);border-radius:0;background:linear-gradient(180deg,#071d2c,#0b2b3a);box-shadow:10px 0 30px rgba(8,39,57,.16)}
+body.af-auth-shell .brand-mark{width:52px;height:52px;border:1px solid rgba(123,203,222,.38);border-radius:16px;background:#0c3545;color:#a8e2ed;font-family:Sora,sans-serif;transform:none}
+body.af-auth-shell .app-navbar .nav-link{width:56px;height:50px;border-radius:12px!important;color:#8eb3c0!important;transform:none}
+body.af-auth-shell .app-navbar .nav-link:hover,body.af-auth-shell .app-navbar .nav-link:focus-visible{color:#e9f8fa!important;transform:none}
+body.af-auth-shell .app-navbar .nav-link.active,body.af-auth-shell .app-navbar .nav-group.flyout-open>.nav-link{width:var(--af-sidebar-width);height:56px;margin-left:-12px;border-radius:0!important;background:#fff!important;color:#12637f!important;box-shadow:inset 4px 0 0 #54c3e0}
+body.af-auth-shell .app-navbar .nav-icon{font-family:Manrope,sans-serif;font-size:24px}
+body.af-auth-shell .user-trigger,body.af-auth-shell .health-indicator{width:46px;height:46px;border:1px solid #446170;border-radius:15px;background:#124257}
+body.af-auth-shell .app-main{height:100vh;min-height:0;padding:0;background:#e9eff5}
+body.af-auth-shell .page-header{position:relative;height:var(--af-header-height);flex:0 0 var(--af-header-height);min-height:var(--af-header-height);gap:24px;margin:0;padding:18px 30px;border-radius:0;background:var(--af-header-blue);box-shadow:0 12px 30px rgba(17,91,135,.22);color:#fff;overflow:hidden}
+body.af-auth-shell .page-header::before{position:absolute;top:-104px;right:26%;width:240px;height:240px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03);content:"";pointer-events:none}
+body.af-auth-shell .page-header>div{position:relative;z-index:1;min-width:0}
+body.af-auth-shell .page-eyebrow{margin:0 0 2px;color:#d4eef3;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.11em}
+body.af-auth-shell #page-title{margin:0;color:#fff;font-family:Sora,sans-serif;font-size:36px;font-weight:700;letter-spacing:-.045em;line-height:1.05}
+body.af-auth-shell #page-subtitle{max-width:none;margin:6px 0 0;color:#e2f4f8!important;font-family:Manrope,sans-serif;font-size:12.5px;font-weight:500}
+body.af-auth-shell .header-tools{gap:16px;flex:0 1 auto}
+body.af-auth-shell .page-actions{gap:16px}
+body.af-auth-shell .search-foundation{display:flex;width:300px;height:48px;flex:0 0 300px;align-items:center;gap:8px;padding:0 18px;border:0;border-radius:999px;background:#fff;box-shadow:0 8px 20px rgba(6,48,76,.18);color:#327f97}
+body.af-auth-shell .search-input{font-family:Manrope,sans-serif;font-size:13px;font-weight:500}
+body.af-auth-shell .search-foundation:focus-within{box-shadow:0 0 0 3px rgba(43,143,199,.22),0 8px 20px rgba(6,48,76,.18)}
+body.af-auth-shell .content-card{min-width:0;min-height:0;padding:var(--af-page-padding-top) var(--af-page-padding-x) 20px}
+body.af-auth-shell .content-panel{min-width:0;min-height:0;gap:var(--af-content-gap);font-family:Manrope,sans-serif}
+body.af-auth-shell .dashboard-kpis,body.af-auth-shell .ws-kpis{gap:var(--af-content-gap)}
+body.af-auth-shell .dashboard-kpi,body.af-auth-shell .ws-kpi{min-height:112px;gap:14px;padding:16px 18px;border:0;border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(23,53,68,.06)}
+body.af-auth-shell .dashboard-kpi-label,body.af-auth-shell .ws-kpi-label{color:#5f7f8c;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em}
+body.af-auth-shell .dashboard-kpi-value,body.af-auth-shell .ws-kpi-value{color:#123a4c;font-family:Sora,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05}
+body.af-auth-shell .dashboard-kpi-note,body.af-auth-shell .ws-kpi-note{color:#718a95;font-family:Manrope,sans-serif;font-size:10.5px;font-weight:500}
+body.af-auth-shell .dashboard-kpi-track,body.af-auth-shell .ws-kpi-track{height:6px;border-radius:99px;background:#e8eff3}
+body.af-auth-shell .dashboard-panel,body.af-auth-shell .vessel-panel,body.af-auth-shell .ws-card,body.af-auth-shell .report-workspace{border:0;border-radius:var(--af-card-radius);background:#fff;box-shadow:var(--af-card-shadow)}
+body.af-auth-shell .dashboard-panel-heading h2,body.af-auth-shell .vessel-register-head h2,body.af-auth-shell .vessel-detail-head h2,body.af-auth-shell .ws-register-top h2,body.af-auth-shell .ws-detail-head h2{color:#12394a;font-family:Sora,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em}
+body.af-auth-shell .ws-filters,body.af-auth-shell .report-filters,body.af-auth-shell .vessel-tabs{gap:5px;padding:3px;border-radius:10px;background:#f1f5f8}
+body.af-auth-shell .ws-filter,body.af-auth-shell .report-filter,body.af-auth-shell .vessel-tab{height:auto;padding:6px 12px;border:0;border-radius:8px;background:transparent;color:#5f7f8c;font-family:Manrope,sans-serif;font-size:11px;font-weight:700}
+body.af-auth-shell .ws-filter.active,body.af-auth-shell .report-filter.active,body.af-auth-shell .vessel-tab.active{background:#fff;color:#12637f;box-shadow:0 2px 6px rgba(23,53,68,.1)}
+body.af-auth-shell .vessel-table thead th,body.af-auth-shell .report-table th{padding-block:8px;border-color:var(--af-card-border);background:#fafcfd;color:#5f7f8c;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em}
+body.af-auth-shell .vessel-table tbody td,body.af-auth-shell .report-table td{border-color:var(--af-card-border);color:#486774;font-family:Manrope,sans-serif;font-size:11.5px}
+body.af-auth-shell .vessel-table tbody td{height:62px}
+body.af-auth-shell .vessel-table tbody tr:hover td,body.af-auth-shell .report-table tbody tr:hover{background:#f3f8fb}
+body.af-auth-shell .vessel-table tbody tr.selected td{background:#f1f9fc}
+body.af-auth-shell .vessel-table tbody tr.selected td:first-child{box-shadow:inset 3px 0 0 #54c3e0}
+body.af-auth-shell .vessel-pill,body.af-auth-shell .ws-pill,body.af-auth-shell .status-badge{min-width:0;padding:5px 11px;border-radius:999px;font-family:Manrope,sans-serif;font-size:10px;font-weight:700}
+body.af-auth-shell .ws-add-button,body.af-auth-shell .vessel-add-button,body.af-auth-shell .refresh-button,body.af-auth-shell .report-refresh{display:inline-flex;height:48px;align-items:center;gap:8px;padding:0 20px;border:1px solid rgba(255,255,255,.67);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;white-space:nowrap}
+body.af-auth-shell .ws-add-button:hover,body.af-auth-shell .vessel-add-button:hover,body.af-auth-shell .refresh-button:hover,body.af-auth-shell .report-refresh:hover{border-color:#fff;background:#f0fbfd;color:#0c526f;transform:translateY(-2px)}
+@media(max-width:1200px){
+  html{scrollbar-gutter:stable}
+  body.af-auth-shell{--af-header-height:190px}
+  body.af-auth-shell .app-main{height:auto;min-height:100vh}
+  body.af-auth-shell .page-header{flex-wrap:wrap;gap:16px}
+  body.af-auth-shell .header-tools{width:auto;flex-wrap:wrap}
+  body.af-auth-shell .search-foundation{width:240px;flex-basis:240px}
+}
+@media(max-width:767.98px){
+  body.af-auth-shell{--af-header-height:190px;--af-page-padding-x:14px}
+  body.af-auth-shell .app-shell{display:block}
+  body.af-auth-shell .app-navbar{position:sticky;height:64px;min-height:64px;padding:10px 14px}
+  body.af-auth-shell .app-navbar .nav-link.active,body.af-auth-shell .app-navbar .nav-group.flyout-open>.nav-link{width:100%;height:44px;margin:0;border-radius:12px!important}
+  body.af-auth-shell .app-main{min-height:calc(100vh - 64px)}
+  body.af-auth-shell .page-header{min-height:var(--af-header-height);padding:18px 16px}
+  body.af-auth-shell #page-title{font-size:30px}
+  body.af-auth-shell .header-tools{width:100%}
+  body.af-auth-shell .search-foundation{min-width:180px;flex:1}
+  body.af-auth-shell .content-card{padding:14px var(--af-page-padding-x)}
+}

@@ -105,31 +105,8 @@ body.auth-gate-active .app-shell{display:none}
   .user-flyout{left:auto;right:0;bottom:auto;top:52px;transform:translateY(-8px)}
 }
 
-/* Final approved authenticated Dashboard. These rules are intentionally
-   contained under dashboard-view so resource pages and Reports retain their UI. */
-body.dashboard-view{background:#edf4f7;color:#203746;font-family:Manrope,ui-sans-serif,sans-serif}
-.dashboard-view .app-shell{grid-template-columns:96px minmax(0,1fr);background:#eaf1f5;overflow:visible}
-.dashboard-view .app-navbar{position:sticky;top:0;height:100vh;min-height:0;padding:24px 12px 20px;border-radius:0;background:#142b39}
-.dashboard-view .brand-mark{width:56px;height:56px;border:1px solid #4b6a79;border-radius:16px;background:#203e4d;color:#c0e5ee;transform:none;font-family:Sora,sans-serif}
-.dashboard-view .nav-link{width:54px;height:54px;border-radius:15px!important;color:#b0c4ce!important}
-.dashboard-view .nav-link:hover,.dashboard-view .nav-link:focus-visible{transform:none;color:#fff!important}
-.dashboard-view .nav-link.active,.dashboard-view .nav-group.flyout-open>.nav-link{background:#f8fbfd!important;color:#356d9b!important;box-shadow:none}
-.dashboard-view .nav-icon{font-family:Manrope,sans-serif;font-size:25px}
-.dashboard-view .user-trigger,.dashboard-view .health-indicator{width:52px;height:52px;border-color:#446170;border-radius:15px;background:#244354}
-.dashboard-view .workspace-shell{display:block;min-width:0;min-height:100vh}
+/* Dashboard content styles. The authenticated shell lives in auth-shell.css. */
 .dashboard-view .context-rail{display:none}
-.dashboard-view .app-main{height:100vh;min-height:700px;padding:0;background:#eaf1f5}
-.dashboard-view .page-header{position:relative;flex:0 0 162px;min-height:0;gap:22px;margin:0;padding:22px clamp(20px,2.5vw,36px);border-radius:0;background:linear-gradient(105deg,#376d9f 0%,#4a91b9 56%,#70bdd4 100%);color:#fff;overflow:hidden}
-.dashboard-view .page-header::before{position:absolute;right:22%;top:-170px;width:360px;height:360px;border:1px solid rgba(255,255,255,.12);border-radius:50%;box-shadow:0 0 0 58px rgba(255,255,255,.035),0 0 0 110px rgba(255,255,255,.025);content:"";pointer-events:none}
-.dashboard-view .page-header>div{position:relative;z-index:1}
-.dashboard-view .page-eyebrow{color:#e8f4f9;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.15em}
-.dashboard-view #page-title{margin:2px 0 8px;color:#fff;font-family:Sora,sans-serif;font-size:clamp(28px,2.5vw,38px);font-weight:700;letter-spacing:-.045em}
-.dashboard-view #page-subtitle{max-width:680px;color:#eef8fb!important;font-size:12px;font-weight:600}
-.dashboard-view .header-tools{gap:14px;flex:0 1 auto}
-.dashboard-view .search-foundation{width:clamp(200px,20vw,390px);height:50px;padding:0 15px;border:0;border-radius:28px;box-shadow:0 10px 25px rgba(23,68,101,.08);color:#326d97}
-.dashboard-view .search-input{font-family:Manrope,sans-serif;font-size:13px}
-.dashboard-view .search-foundation:focus-within{box-shadow:0 0 0 3px #d9f3fa}
-.dashboard-view .page-actions{gap:14px}
 .dashboard-refresh-meta{display:flex;flex-direction:column;min-width:92px;color:#fff;font-family:"IBM Plex Mono",monospace;font-size:10px;white-space:nowrap}
 .dashboard-refresh-meta span{opacity:.8}
 .dashboard-refresh-meta strong{font-size:12px}
@@ -138,8 +115,6 @@ body.dashboard-view{background:#edf4f7;color:#203746;font-family:Manrope,ui-sans
 .dashboard-view .refresh-button:hover,.dashboard-view .refresh-button:focus-visible{background:rgba(255,255,255,.2);color:#fff;transform:none}
 .dashboard-view .refresh-button[aria-busy="true"]::before{display:inline-block;animation:dashboard-spin .7s linear infinite}
 .dashboard-view .alert-region{position:relative;z-index:5}
-.dashboard-view .content-card{min-height:0;padding:16px clamp(16px,2vw,30px) 20px}
-.dashboard-view .content-panel{min-height:0;gap:14px;font-family:Manrope,sans-serif}
 .dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;flex:0 0 112px}
 .dashboard-kpi,.dashboard-panel{min-width:0;border:1px solid #dde8ee;border-radius:17px;background:#fff;box-shadow:0 8px 25px rgba(32,67,91,.045);animation:dashboard-enter .38s ease both}
 .dashboard-kpi{display:flex;gap:14px;padding:16px}
@@ -214,9 +189,9 @@ body.dashboard-view{background:#edf4f7;color:#203746;font-family:Manrope,ui-sans
 @keyframes dashboard-timeline-draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes dashboard-pulse{50%{opacity:.4}}
 @keyframes dashboard-spin{to{transform:rotate(360deg)}}
-@media(max-width:1240px){.dashboard-view .page-header{padding-inline:20px}.dashboard-view .header-tools{gap:8px}.dashboard-view .search-foundation{width:200px}.dashboard-view .page-actions{gap:8px}.dashboard-view .refresh-button{padding-inline:11px}.dashboard-kpi{gap:8px;padding:12px}.dashboard-kpi-label{font-size:9px}.dashboard-panel{padding:14px}.dashboard-mission-row{grid-template-columns:20px minmax(100px,1.5fr) minmax(70px,1fr) 90px auto 30px;gap:5px}}
-@media(max-width:1100px){.dashboard-view .app-main{height:auto;min-height:100vh}.dashboard-view .page-header{flex-wrap:wrap;flex-basis:auto;min-height:150px}.dashboard-view .content-card{min-height:calc(100vh - 160px)}.dashboard-grid{grid-template-columns:1fr;grid-template-rows:none}.dashboard-panel{min-height:260px}.dashboard-operations{min-height:360px}.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));flex-basis:auto}}
-@media(max-width:767.98px){.dashboard-view .app-shell{display:block}.dashboard-view .app-navbar{position:sticky;height:64px;min-height:64px;padding:10px 14px;border-radius:0}.dashboard-view .navbar-collapse{height:auto}.dashboard-view .nav-link{width:100%;justify-content:flex-start}.dashboard-view .user-trigger,.dashboard-view .health-indicator{width:42px;height:42px}.dashboard-view .app-main{min-height:calc(100vh - 64px)}.dashboard-view .page-header{display:flex;flex-direction:column;align-items:stretch;min-height:200px;gap:14px;padding:20px 16px}.dashboard-view .header-tools{width:100%;flex-wrap:wrap}.dashboard-view .search-foundation{display:flex;min-width:190px;flex:1}.dashboard-view .page-actions{margin-left:0}.dashboard-view .content-card{padding:14px}.dashboard-kpis{gap:9px}.dashboard-kpi{min-height:105px}.dashboard-kpi-icon{width:34px;height:34px}.dashboard-kpi-label{white-space:normal}.dashboard-panel{padding:15px}.dashboard-mission-row{grid-template-columns:20px minmax(110px,1fr) auto;gap:7px}.dashboard-mission-zone,.dashboard-mission-time,.dashboard-mission-row>.dashboard-badge{display:none}.dashboard-expedition-row{grid-template-columns:minmax(110px,1fr) auto;gap:7px;padding:9px 0}.dashboard-timeline{grid-column:1/-1;grid-row:2}.dashboard-expedition-count{display:none}}
+@media(max-width:1240px){.dashboard-view .refresh-button{padding-inline:11px}.dashboard-kpi{gap:8px;padding:12px}.dashboard-kpi-label{font-size:9px}.dashboard-panel{padding:14px}.dashboard-mission-row{grid-template-columns:20px minmax(100px,1.5fr) minmax(70px,1fr) 90px auto 30px;gap:5px}}
+@media(max-width:1100px){.dashboard-grid{grid-template-columns:1fr;grid-template-rows:none}.dashboard-panel{min-height:260px}.dashboard-operations{min-height:360px}.dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr));flex-basis:auto}}
+@media(max-width:767.98px){.dashboard-view .navbar-collapse{height:auto}.dashboard-view .nav-link{width:100%;justify-content:flex-start}.dashboard-view .user-trigger,.dashboard-view .health-indicator{width:42px;height:42px}.dashboard-kpis{gap:9px}.dashboard-kpi{min-height:105px}.dashboard-kpi-icon{width:34px;height:34px}.dashboard-kpi-label{white-space:normal}.dashboard-panel{padding:15px}.dashboard-mission-row{grid-template-columns:20px minmax(110px,1fr) auto;gap:7px}.dashboard-mission-zone,.dashboard-mission-time,.dashboard-mission-row>.dashboard-badge{display:none}.dashboard-expedition-row{grid-template-columns:minmax(110px,1fr) auto;gap:7px;padding:9px 0}.dashboard-timeline{grid-column:1/-1;grid-row:2}.dashboard-expedition-count{display:none}}
 @media(max-width:430px){.dashboard-kpis{grid-template-columns:1fr 1fr}.dashboard-kpi{padding:10px;gap:6px}.dashboard-kpi-icon{display:none}.dashboard-kpi-value{font-size:26px}.dashboard-view .refresh-button{height:40px}.dashboard-refresh-meta{min-width:80px}.dashboard-fleet-visual{gap:8px}.dashboard-donut{width:82px;height:82px}.dashboard-donut>div{width:58px;height:58px}.dashboard-fleet-legend{gap:4px}}
 @media(prefers-reduced-motion:reduce){.dashboard-view .dashboard-kpi,.dashboard-view .dashboard-panel,.dashboard-view .dashboard-kpi-track span,.dashboard-view .dashboard-donut,.dashboard-view .dashboard-timeline-line,.dashboard-view .dashboard-mission-active .dashboard-badge::before{animation:none!important;transform:none!important}}
 
@@ -248,11 +223,7 @@ body.dashboard-view{background:#edf4f7;color:#203746;font-family:Manrope,ui-sans
   .page-actions{flex:0 0 auto;margin-left:0}
 }
 
-/* --- Research Vessels (approved Vessels design) ------------------------------
-   Reuses the Dashboard shell (body.dashboard-view). Everything below is scoped
-   to body.vessels-view or a .vessel* class so no other screen is affected. */
-.vessels-view .app-navbar .nav-link.active,.vessels-view .app-navbar .nav-group.flyout-open>.nav-link{width:calc(100% + 24px);height:80px;margin:0 -12px;border-radius:0!important}
-.vessels-view .app-navbar .nav-item{overflow:visible}
+/* --- Research Vessels content (approved Vessels design) ---------------------- */
 .vessels-record-meta{display:flex;flex-direction:column;gap:2px;color:#fff;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
 .vessels-record-meta span{font-size:10px;letter-spacing:.1em;opacity:.8}
 .vessels-record-meta strong{font-size:13px;letter-spacing:.04em}
@@ -332,13 +303,8 @@ body.dashboard-view{background:#edf4f7;color:#203746;font-family:Manrope,ui-sans
 .vessel-note{margin:12px 0 0;color:#6b818c;font-size:13px}
 @media(max-width:1240px){.vessels-grid{grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:14px}.vessel-panel{padding-inline:18px}.vessel-pager{margin-inline:-18px;padding-inline:18px}.vessel-register-head{flex-wrap:wrap}.vessel-add-button{height:46px;padding:0 16px}}
 @media(max-width:1100px){.vessels-grid{grid-template-columns:1fr;flex:0 0 auto}.vessel-register{min-height:420px}.vessel-detail{overflow:visible}}
-@media(max-width:767.98px){.vessels-view .app-navbar .nav-link.active{width:100%;height:44px;margin:0;border-radius:15px!important}.vessel-register-head h2{width:100%}.vessel-tabs{overflow:auto}.vessel-add-button{height:40px;font-size:0;gap:0;padding:0 14px}.vessel-add-button span:first-child{font-size:20px}.vessels-record-meta{display:none}.vessel-detail-actions{flex-direction:column}}
+@media(max-width:767.98px){.vessel-register-head h2{width:100%}.vessel-tabs{overflow:auto}.vessel-add-button{height:40px;font-size:0;gap:0;padding:0 14px}.vessel-add-button span:first-child{font-size:20px}.vessels-record-meta{display:none}.vessel-detail-actions{flex-direction:column}}
 .vessel-add-button:disabled{opacity:.55;cursor:not-allowed}
-.vessels-view .page-header>div:first-child{min-width:0}
-.vessels-view .header-tools{flex-shrink:0}
-.vessels-view .page-header{flex-basis:136px;padding-block:16px}
-.vessels-view .page-header .search-foundation{width:clamp(200px,21.6vw,420px)}
-.vessels-view .vessel-add-button{height:50px;padding:0 20px}
 .vessel-table thead th,.vessel-table tbody td{padding-inline:8px}
 .vessel-table th:nth-child(2){width:31%}
 .vessel-table th:nth-child(3){width:24%}

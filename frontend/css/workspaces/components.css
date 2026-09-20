@@ -1,28 +1,9 @@
 /* Shared register workspace language, introduced for Marine Zones. */
-.workspace-view{background:#e9eff5;color:#173544}
-.workspace-view .app-shell{grid-template-columns:100px minmax(0,1fr);background:#e9eff5}
-.workspace-view .app-navbar{z-index:3;padding:clamp(12px,2.4vh,26px) 12px clamp(12px,2.2vh,24px);border-radius:0;background:linear-gradient(180deg,#071d2c,#0b2b3a);box-shadow:10px 0 30px rgba(8,39,57,.16)}
-.workspace-view .brand-mark{width:52px;height:52px;border-color:rgba(123,203,222,.38);border-radius:16px;background:#0c3545;color:#a8e2ed}
-.workspace-view .app-navbar .nav-link{width:56px;height:50px;border-radius:12px!important;color:#8eb3c0!important}
-.workspace-view .app-navbar .nav-link.active,.workspace-view .app-navbar .nav-group.flyout-open>.nav-link{width:100px;height:56px;margin-left:-12px;border-radius:0!important;background:#fff!important;color:#12637f!important;box-shadow:inset 4px 0 0 #54c3e0}
-.workspace-view .app-navbar .nav-icon{font-size:24px}
-.workspace-view .app-main{height:100vh;min-height:0;padding:0;background:#e9eff5}
-.workspace-view .page-header{flex:0 0 126px;min-height:126px;gap:24px;padding:18px 30px;background:linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%);box-shadow:0 12px 30px rgba(17,91,135,.22)}
-.workspace-view .page-header::before{top:-104px;right:26%;width:240px;height:240px;border-color:rgba(255,255,255,.18);box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03)}
-.workspace-view .page-eyebrow{margin:0 0 2px!important;color:#d4eef3;letter-spacing:.11em}
-.workspace-view #page-title{margin:0!important;font-size:36px;line-height:1.05}
-.workspace-view #page-subtitle{max-width:none;margin:6px 0 0!important;color:#e2f4f8!important;font-size:12.5px;font-weight:500}
-.workspace-view .header-tools{gap:16px}
-.workspace-view .search-foundation{width:300px;height:48px;padding:0 18px;border-radius:999px;box-shadow:0 8px 20px rgba(6,48,76,.18)}
-.workspace-view .search-input{font-size:13px;font-weight:500}
-.workspace-view .page-actions{gap:16px}
 .ws-record-meta{display:flex;flex-direction:column;gap:2px;color:#cde8ef;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;line-height:1.2;white-space:nowrap}
 .ws-record-meta strong{color:#fff;font-size:11px;letter-spacing:.02em}
 .ws-add-button{display:inline-flex;height:48px;align-items:center;gap:8px;padding:0 20px;border:1px solid rgba(255,255,255,.67);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:12px;font-weight:700;white-space:nowrap;transition:background .17s,color .17s,transform .17s}
 .ws-add-button span:first-child{font-size:16px;font-weight:500}
 .ws-add-button:hover{border-color:#fff;background:#f0fbfd;color:#0c526f;transform:translateY(-2px)}
-.workspace-view .content-card{min-height:0;padding:14px 24px 20px}
-.workspace-view .content-panel{gap:14px;min-height:0}
 .ws-tabs{display:flex;flex:0 0 auto;align-items:center;gap:18px;padding:0 4px 2px;border-bottom:1px solid #dde6ec}
 .ws-tab{padding:0 0 9px;border:0;background:transparent;color:#65818e;font-size:12px;font-weight:600;white-space:nowrap}
 .ws-tab:hover{color:#12637f}.ws-tab.active{color:#12637f;font-weight:700;box-shadow:inset 0 -2px 0 #2b8fc7}
