@@ -11,6 +11,7 @@
   function register(config) { pages[config.key] = config; }
   function has(key) { return Boolean(pages[key]); }
   function describe(key) { return pages[key]; }
+  function identity(config, row) { return String(config.identity ? config.identity(row) : row[config.idField]); }
   function active() { return Boolean(pages[view.key]); }
   function isCurrent(key) { return view.key === key && global.AquaFleetApp.getState().currentResource === key; }
   function filtered(config, context) {
@@ -21,7 +22,7 @@
     });
   }
   function choose(rows, config) {
-    if (rows.length && !rows.some(function selected(row) { return String(row[config.idField]) === String(view.selectedId); })) view.selectedId = rows[0][config.idField];
+    if (rows.length && !rows.some(function selected(row) { return identity(config, row) === view.selectedId; })) view.selectedId = identity(config, rows[0]);
     if (!rows.length) view.selectedId = null;
   }
   function select(id, scroll) {
@@ -37,7 +38,8 @@
       const tab = C.button(label, "ws-filter" + (view.filter === label ? " active" : ""), function () { view.filter = label; view.page = 1; render(); });
       tab.setAttribute("aria-pressed", String(view.filter === label)); filters.appendChild(tab);
     });
-    head.append(filters, C.el("span", "ws-shown", list.length + " of " + view.rows.length + " shown")); card.appendChild(head);
+    if (config.filters.length > 1) head.appendChild(filters);
+    head.appendChild(C.el("span", "ws-shown", list.length + " of " + view.rows.length + " shown")); card.appendChild(head);
     const scroller = C.el("div", "ws-register-scroll");
     const grid = C.el("div", "ws-table"); grid.setAttribute("role", "table");
     grid.style.setProperty("--ws-columns", config.columnsTemplate);
@@ -55,10 +57,11 @@
         global.AquaFleetApp.clearCurrentSearch(); render();
       }));
     } else pageData.rows.forEach(function row(item) {
-      const row = C.el("div", "ws-table-row" + (String(item[config.idField]) === String(view.selectedId) ? " selected" : ""));
-      row.setAttribute("role", "row"); row.setAttribute("tabindex", "0"); row.setAttribute("aria-selected", String(String(item[config.idField]) === String(view.selectedId)));
-      row.addEventListener("click", function () { select(item[config.idField], false); });
-      row.addEventListener("keydown", function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(item[config.idField], false); } });
+      const rowId = identity(config, item);
+      const row = C.el("div", "ws-table-row" + (rowId === view.selectedId ? " selected" : ""));
+      row.setAttribute("role", "row"); row.setAttribute("tabindex", "0"); row.setAttribute("aria-selected", String(rowId === view.selectedId));
+      row.addEventListener("click", function () { select(rowId, false); });
+      row.addEventListener("keydown", function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(rowId, false); } });
       config.columns.forEach(function column(col) {
         const cell = C.el("span", "ws-cell ws-col-" + col.type); cell.setAttribute("role", "cell");
         if (col.type === "primary") cell.append(C.el("strong", "", col.value ? col.value(item, context) : item[col.field]), C.el("small", "", col.subValue ? col.subValue(item, context) : item[col.subField]));
@@ -68,7 +71,7 @@
       });
       const actions = C.el("span", "ws-row-actions"); actions.setAttribute("role", "cell");
       function addAction(label, tone, handler) { const node = C.action(label, tone, function (event) { event.stopPropagation(); handler(); }); actions.appendChild(node); }
-      addAction("View", "view", function () { select(item[config.idField], true); });
+      addAction("View", "view", function () { select(rowId, true); });
       if (Master.can(config.key, "update")) addAction("Edit", "view", function () { Master.openEdit(config.key, item); });
       if (Master.can(config.key, "delete")) addAction("Delete", "delete", function () { Master.openDelete(config.key, item); });
       row.appendChild(actions); body.appendChild(row);
@@ -94,7 +97,7 @@
     });
     const metrics = C.el("section", "ws-kpis"); metrics.setAttribute("aria-label", "Summary"); config.metrics(view.rows, context).forEach(function (item) { metrics.appendChild(C.metric(item)); });
     const layout = C.el("section", "ws-layout"); layout.appendChild(renderTable(config, list, pageData, context));
-    const selected = view.rows.find(function (row) { return String(row[config.idField]) === String(view.selectedId); });
+    const selected = view.rows.find(function (row) { return identity(config, row) === view.selectedId; });
     layout.appendChild(config.detail(selected, context, select)); panel().append(tabs, metrics, layout);
   }
   async function fetch(config) {
