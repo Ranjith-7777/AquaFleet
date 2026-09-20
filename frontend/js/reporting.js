@@ -1,21 +1,216 @@
-/* Table-first reporting UI backed by the Phase 2 SQL views. */
+/* Read-only reporting workspace over the five existing SQL-view endpoints. */
 (function exposeAquaFleetReports(global) {
   "use strict";
-  const Api=global.AquaFleetApi,Ui=global.AquaFleetUi;
-  const choices=values=>values.map(value=>({value,label:value}));
-  const reports=[
-    {key:"expeditions",title:"Expedition Summary",view:"vw_expedition_summary",path:"/api/reports/expeditions",description:"Vessels, budgets, campaign dates and derived mission totals.",filter:{name:"status",label:"Expedition status",choices:choices(["Planned","Active","Completed","Cancelled"])},columns:[["expedition_id","ID","number"],["title","Expedition"],["vessel_name","Vessel"],["start_date","Start","date"],["end_date","End","date"],["status","Status","badge","expedition"],["budget","Budget","number"],["mission_count","Missions","number"]]},
-    {key:"missions",title:"Mission Operations",view:"vw_mission_operations",path:"/api/reports/missions",description:"Expedition and zone context with derived duration and assignment counts.",filter:{name:"status",label:"Mission status",choices:choices(["Planned","In Progress","Completed","Aborted"])},columns:[["mission_id","ID","number"],["mission_type","Mission"],["expedition_title","Expedition"],["zone_name","Zone"],["duration_minutes","Minutes","number"],["vehicle_count","Vehicles","number"],["operator_count","Operators","number"],["status","Status","badge","mission"]]},
-    {key:"vehicle-readiness",title:"Vehicle Readiness",view:"vw_vehicle_readiness",path:"/api/reports/vehicle-readiness",description:"Configuration counts and maintenance dates without storing derived readiness data.",filter:{name:"status",label:"Vehicle status",choices:choices(["Available","Deployed","Maintenance","Retired"])},columns:[["vehicle_id","ID","number"],["vehicle_name","Vehicle"],["vehicle_type","Type"],["status","Status","badge","vehicle"],["sensor_count","Sensors","number"],["open_battery_assignment_count","Open batteries","number"],["last_maintenance_date","Last maintenance","date"],["next_maintenance_due","Next due","date"]]},
-    {key:"sample-lineage",title:"Sample Lineage",view:"vw_sample_lineage",path:"/api/reports/sample-lineage",description:"Traceability from expedition and mission through samples to aliquots.",columns:[["expedition_title","Expedition"],["mission_type","Mission"],["sample_id","Sample ID","number"],["sample_type","Sample"],["collected_at","Collected","datetime"],["chain_of_custody_status","Custody","badge","custody"],["aliquot_no","Aliquot","number"],["volume_ml","Volume (ml)","number"]]},
-    {key:"incidents",title:"Incident Overview",view:"vw_incident_overview",path:"/api/reports/incidents",description:"Incident severity with mission, expedition and zone context.",filter:{name:"severity",label:"Severity",choices:choices(["Low","Moderate","High","Critical"])},columns:[["incident_id","ID","number"],["incident_type","Incident"],["severity","Severity","badge","severity"],["mission_type","Mission"],["expedition_title","Expedition"],["zone_name","Zone"],["time_reported","Reported","datetime"]]}
+  const Api = global.AquaFleetApi, Ui = global.AquaFleetUi, Csv = global.AquaFleetReportCsv;
+  const choice = (values) => values.map((value) => ({ value, label: value }));
+  const reports = [
+    { key: "expeditions", title: "Expedition Summary", view: "vw_expedition_summary", path: "/api/reports/expeditions",
+      description: "Vessels, budgets, campaign dates and derived mission totals.",
+      filter: { name: "status", label: "Expedition status", choices: choice(["Planned", "Active", "Completed", "Cancelled"]) },
+      columns: [["expedition_id", "ID", "number"], ["title", "Expedition"], ["vessel_name", "Vessel"], ["start_date", "Start", "date"], ["end_date", "End", "date"], ["status", "Status", "badge", "expedition"], ["budget", "Budget", "number"], ["mission_count", "Missions", "number"]] },
+    { key: "missions", title: "Mission Operations", view: "vw_mission_operations", path: "/api/reports/missions",
+      description: "Expedition and zone context with derived duration and assignment counts.",
+      filter: { name: "status", label: "Mission status", choices: choice(["Planned", "In Progress", "Completed", "Aborted"]) },
+      columns: [["mission_id", "ID", "number"], ["mission_type", "Mission"], ["expedition_title", "Expedition"], ["zone_name", "Zone"], ["duration_minutes", "Minutes", "number"], ["vehicle_count", "Vehicles", "number"], ["operator_count", "Operators", "number"], ["status", "Status", "badge", "mission"]] },
+    { key: "vehicle-readiness", title: "Vehicle Readiness", view: "vw_vehicle_readiness", path: "/api/reports/vehicle-readiness",
+      description: "Configuration counts and maintenance dates without storing derived readiness data.",
+      filter: { name: "status", label: "Vehicle status", choices: choice(["Available", "Deployed", "Maintenance", "Retired"]) },
+      columns: [["vehicle_id", "ID", "number"], ["vehicle_name", "Vehicle"], ["vehicle_type", "Type"], ["status", "Status", "badge", "vehicle"], ["sensor_count", "Sensors", "number"], ["open_battery_assignment_count", "Open batteries", "number"], ["last_maintenance_date", "Last maintenance", "date"], ["next_maintenance_due", "Next due", "date"]] },
+    { key: "sample-lineage", title: "Sample Lineage", view: "vw_sample_lineage", path: "/api/reports/sample-lineage",
+      description: "Traceability from expedition and mission through samples to aliquots.",
+      localFilter: { name: "chain_of_custody_status", label: "Custody state", choices: choice(["Collected", "Sealed", "In Transit", "Received", "Stored", "Released", "Disposed"]) },
+      columns: [["expedition_title", "Expedition"], ["mission_type", "Mission"], ["sample_id", "Sample ID", "number"], ["sample_type", "Sample"], ["collected_at", "Collected", "datetime"], ["chain_of_custody_status", "Custody", "badge", "custody"], ["aliquot_no", "Aliquot", "number"], ["volume_ml", "Volume (ml)", "number"]] },
+    { key: "incidents", title: "Incident Overview", view: "vw_incident_overview", path: "/api/reports/incidents",
+      description: "Incident severity with mission, expedition and zone context.",
+      filter: { name: "severity", label: "Severity", choices: choice(["Low", "Moderate", "High", "Critical"]) },
+      columns: [["incident_id", "ID", "number"], ["incident_type", "Incident"], ["severity", "Severity", "badge", "severity"], ["mission_type", "Mission"], ["expedition_title", "Expedition"], ["zone_name", "Zone"], ["time_reported", "Reported", "datetime"]] }
   ];
-  let activeKey="expeditions",requestVersion=0;
-  function format(value,type,category){if(type==="badge")return Ui.statusBadge(value,category);let text;if(type==="date")text=Ui.formatDate(value);else if(type==="datetime")text=Ui.formatDateTime(value);else if(type==="number")text=Ui.formatNumber(value);else text=Ui.nullableText(value);return Ui.element("span",{text});}
-  function reportByKey(key){return reports.find(report=>report.key===key)||reports[0];}
-  function renderTable(target,config,rows){Ui.clearElement(target);target.appendChild(Ui.element("div",{className:"report-meta",children:[Ui.element("div",{children:[Ui.element("strong",{text:config.title}),Ui.element("p",{text:config.description})]}),Ui.element("span",{className:"report-view-name",text:config.view}),Ui.element("span",{className:"report-count",text:rows.length+" row"+(rows.length===1?"":"s")})]}));if(!rows.length){Ui.renderEmpty(target,"No report rows","The selected database view and filters returned no records.");return;}const wrapper=Ui.element("div",{className:"table-responsive resource-table-wrapper"}),table=Ui.element("table",{className:"table resource-table align-middle mb-0"}),head=Ui.element("thead"),headRow=Ui.element("tr");config.columns.forEach(column=>headRow.appendChild(Ui.element("th",{text:column[1],attributes:{scope:"col"}})));head.appendChild(headRow);table.appendChild(head);const body=Ui.element("tbody");rows.forEach(row=>{const tr=Ui.element("tr");config.columns.forEach(column=>{const td=Ui.element("td");td.appendChild(format(row[column[0]],column[2],column[3]));tr.appendChild(td);});body.appendChild(tr);});table.appendChild(body);wrapper.appendChild(table);target.appendChild(wrapper);}
-  function renderRail(config,rows){const rail=document.getElementById("context-rail");Ui.clearElement(rail);rail.appendChild(Ui.element("div",{className:"rail-heading",children:[Ui.element("p",{text:"Database reporting"}),Ui.element("h2",{text:config.title})]}));rail.appendChild(Ui.element("article",{className:"rail-card",children:[Ui.element("p",{className:"rail-label",text:"Rows returned"}),Ui.element("strong",{className:"rail-value",text:String(rows.length)}),Ui.element("p",{className:"rail-note",text:"Read-only report result"})]}));rail.appendChild(Ui.element("article",{className:"rail-card rail-guidance",children:[Ui.element("p",{className:"rail-label",text:"SQL source"}),Ui.element("p",{text:config.view+" derives this report from normalized AquaFleet tables."})]}));}
-  async function load(config,result,filter){const version=++requestVersion,params={};if(filter&&filter.value)params[config.filter.name]=filter.value;Ui.renderLoading(result,"Querying "+config.view+"…");try{const response=await Api.get(config.path,params);if(version!==requestVersion)return;const rows=Array.isArray(response.data)?response.data:[];renderTable(result,config,rows);renderRail(config,rows);}catch(error){if(version!==requestVersion)return;Ui.renderError(result,"Unable to load report",error.message||"The reporting query failed.");}}
-  function render(container){Ui.clearElement(container);const tabs=Ui.element("div",{className:"report-tabs",attributes:{role:"tablist","aria-label":"AquaFleet reports"}}),toolbar=Ui.element("div",{className:"report-toolbar"}),result=Ui.element("div",{className:"report-result"});container.append(tabs,toolbar,result);function select(key){activeKey=key;const config=reportByKey(key);tabs.querySelectorAll("button").forEach(button=>button.classList.toggle("active",button.dataset.report===key));Ui.clearElement(toolbar);let filter=null;if(config.filter){const label=Ui.element("label",{className:"form-label mb-0",text:config.filter.label}),selectNode=Ui.element("select",{className:"form-select form-select-sm",attributes:{"aria-label":config.filter.label}});selectNode.appendChild(Ui.element("option",{text:"All",attributes:{value:""}}));config.filter.choices.forEach(option=>selectNode.appendChild(Ui.element("option",{text:option.label,attributes:{value:option.value}})));selectNode.addEventListener("change",()=>load(config,result,selectNode));toolbar.append(label,selectNode);filter=selectNode;}const refresh=Ui.element("button",{className:"btn btn-outline-primary btn-sm",text:"Refresh report",attributes:{type:"button"}});refresh.addEventListener("click",()=>load(config,result,filter));toolbar.appendChild(refresh);load(config,result,filter);}reports.forEach(config=>{const button=Ui.element("button",{className:"btn btn-sm report-tab",text:config.title,attributes:{type:"button",role:"tab","data-report":config.key}});button.addEventListener("click",()=>select(config.key));tabs.appendChild(button);});select(activeKey);}
-  global.AquaFleetReports=Object.freeze({all:Object.freeze(reports),render});
+  let activeKey = "expeditions", requestVersion = 0, query = "", filterValue = "", rows = null, state = "loading", errorMessage = "";
+  let panel = null;
+
+  function reportByKey(key) { return reports.find((report) => report.key === key) || reports[0]; }
+  function visibleRows(report, source, search, localValue) {
+    const needle = search.trim().toLocaleLowerCase();
+    return source.filter((row) => {
+      if (report.localFilter && localValue && row[report.localFilter.name] !== localValue) return false;
+      return !needle || report.columns.some((column) => String(row[column[0]] ?? "").toLocaleLowerCase().includes(needle));
+    });
+  }
+  function canExport(currentState, currentRows) {
+    return currentState === "success" && Array.isArray(currentRows) && currentRows.length > 0;
+  }
+  function node(tag, className, text, attributes) {
+    return Ui.element(tag, { className, text, attributes });
+  }
+  function format(value, type, category) {
+    if (type === "badge") return Ui.statusBadge(value, category);
+    const output = type === "date" ? Ui.formatDate(value)
+      : type === "datetime" ? Ui.formatDateTime(value)
+      : type === "number" ? Ui.formatNumber(value) : Ui.nullableText(value);
+    return node("span", type === "number" ? "report-number" : "", output);
+  }
+  function setRail(report) {
+    const rail = document.getElementById("context-rail");
+    Ui.clearElement(rail);
+    const heading = node("div", "rail-heading");
+    heading.append(node("p", "", "Report Context"), node("h2", "", report.title));
+    const count = node("article", "rail-card");
+    count.append(node("p", "rail-label", "Rows returned"),
+      node("strong", "rail-value", state === "loading" ? "Loading" : state === "error" ? "Unavailable" : String(rows.length)),
+      node("p", "rail-note", state === "loading" ? "Querying report" : state === "error" ? "Report request unavailable" : "Read-only result set"));
+    const source = node("article", "rail-card rail-guidance");
+    source.append(node("p", "rail-label", "SQL source"), node("p", "", report.view + " derives this report from normalized AquaFleet tables."));
+    const available = node("article", "rail-card report-available");
+    available.appendChild(node("p", "rail-label", "Available reports"));
+    reports.forEach((entry) => {
+      const button = node("button", "report-rail-link" + (entry.key === report.key ? " active" : ""), entry.title,
+        { type: "button", "aria-label": "Open " + entry.title });
+      button.addEventListener("click", () => select(entry.key));
+      available.appendChild(button);
+    });
+    rail.append(heading, count, source, available, node("p", "report-rail-note", "Reports are read-only. Records are edited in their own workspaces."));
+  }
+  function renderRows(report, source) {
+    const shown = visibleRows(report, source, query, filterValue);
+    const summary = node("p", "report-shown", "Showing " + shown.length + " of " + source.length + " returned rows");
+    const scroll = node("div", "report-scroll");
+    scroll.setAttribute("role", "region");
+    scroll.setAttribute("aria-label", report.title + " results");
+    scroll.tabIndex = 0;
+    const table = node("table", "report-table");
+    const head = node("thead"), headRow = node("tr");
+    report.columns.forEach((column) => headRow.appendChild(node("th", "", column[1], { scope: "col" })));
+    head.appendChild(headRow); table.appendChild(head);
+    const body = node("tbody");
+    shown.forEach((row) => {
+      const tr = node("tr");
+      report.columns.forEach((column) => {
+        const td = node("td");
+        td.appendChild(format(row[column[0]], column[2], column[3]));
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    table.appendChild(body); scroll.appendChild(table);
+    if (shown.length) return [scroll, summary];
+    const empty = node("div", "report-state");
+    empty.append(node("strong", "", source.length ? "No matching rows" : "No report rows"),
+      node("p", "", source.length ? "Adjust search or the selected filter." : "The selected view and filters returned no records."));
+    return [empty, summary];
+  }
+  function renderResult(report) {
+    if (!panel) return;
+    const result = panel.querySelector(".report-result");
+    Ui.clearElement(result);
+    result.setAttribute("aria-busy", state === "loading" ? "true" : "false");
+    const header = node("div", "report-result-head");
+    const copy = node("div", "report-result-copy");
+    copy.append(node("h2", "", report.title), node("p", "", report.description));
+    header.append(copy, node("span", "report-view-name", report.view));
+    result.appendChild(header);
+    if (state === "loading") {
+      const loading = node("div", "report-state", "Querying " + report.view + "…");
+      loading.setAttribute("role", "status"); result.appendChild(loading);
+    } else if (state === "error") {
+      const failure = node("div", "report-state report-state-error");
+      failure.append(node("strong", "", "Unable to load report"), node("p", "", errorMessage || "The report request failed."));
+      const retry = node("button", "report-retry", "Retry", { type: "button" });
+      retry.addEventListener("click", () => load(report));
+      failure.appendChild(retry); result.appendChild(failure);
+    } else {
+      const parts = renderRows(report, rows);
+      parts.forEach((part) => result.appendChild(part));
+    }
+    const exportButton = panel.querySelector(".report-export");
+    exportButton.disabled = !canExport(state, rows);
+    setRail(report);
+  }
+  function renderControls(report) {
+    if (!panel) return;
+    panel.querySelector(".report-source-name").textContent = report.view;
+    const tabs = panel.querySelector(".report-tabs");
+    tabs.querySelectorAll("button").forEach((button) => {
+      const selected = button.dataset.report === report.key;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-selected", String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
+    const filters = panel.querySelector(".report-filters");
+    Ui.clearElement(filters);
+    const spec = report.filter || report.localFilter;
+    if (spec) {
+      filters.setAttribute("aria-label", spec.label);
+      [{ value: "", label: "All" }, ...spec.choices].forEach((entry) => {
+        const button = node("button", "report-filter" + (filterValue === entry.value ? " active" : ""), entry.label,
+          { type: "button", "aria-pressed": String(filterValue === entry.value) });
+        button.addEventListener("click", () => {
+          filterValue = entry.value;
+          renderControls(report);
+          if (report.filter) load(report); else renderResult(report);
+        });
+        filters.appendChild(button);
+      });
+    }
+    panel.querySelector(".report-filter-label").textContent = spec?.label || "Report results";
+    panel.querySelector(".report-refresh").onclick = () => load(report);
+    panel.querySelector(".report-export").onclick = () => {
+      if (canExport(state, rows)) Csv.download(report, rows);
+    };
+  }
+  async function load(report) {
+    const version = ++requestVersion;
+    state = "loading"; rows = null; errorMessage = ""; renderResult(report);
+    try {
+      const params = report.filter && filterValue ? { [report.filter.name]: filterValue } : {};
+      const response = await Api.get(report.path, params);
+      if (version !== requestVersion || activeKey !== report.key) return;
+      if (!Array.isArray(response.data)) throw new Error("The report response did not contain rows.");
+      rows = response.data; state = "success";
+    } catch (error) {
+      if (version !== requestVersion || activeKey !== report.key) return;
+      rows = null; state = "error"; errorMessage = error.message || "The reporting query failed.";
+    }
+    renderResult(report);
+  }
+  function select(key) {
+    activeKey = reportByKey(key).key;
+    filterValue = "";
+    const report = reportByKey(activeKey);
+    renderControls(report);
+    load(report);
+  }
+  function setQuery(value) {
+    query = value || "";
+    if (state === "success") renderResult(reportByKey(activeKey));
+  }
+  function leave() { ++requestVersion; panel = null; rows = null; state = "loading"; query = ""; filterValue = ""; }
+  function render(container) {
+    leave();
+    panel = container;
+    Ui.clearElement(container);
+    const shell = node("div", "report-workspace");
+    const top = node("div", "report-top");
+    top.append(node("span", "report-source-label", "SQL VIEW"), node("span", "report-source-name", reportByKey(activeKey).view));
+    const refresh = node("button", "report-refresh", "↻  Refresh Report", { type: "button" });
+    top.appendChild(refresh);
+    const tabs = node("div", "report-tabs", undefined, { role: "tablist", "aria-label": "AquaFleet reports" });
+    reports.forEach((report) => {
+      const button = node("button", "report-tab", report.title,
+        { type: "button", role: "tab", "data-report": report.key });
+      button.addEventListener("click", () => select(report.key));
+      tabs.appendChild(button);
+    });
+    const result = node("section", "report-result", undefined, { "aria-label": "Report results" });
+    const filterRow = node("div", "report-filter-row");
+    filterRow.append(node("span", "report-filter-label"), node("div", "report-filters", undefined, { role: "group" }));
+    const footer = node("div", "report-footer");
+    footer.append(node("span", "", "CSV exports every row returned by the selected report request."),
+      node("button", "report-export", "Export CSV", { type: "button" }));
+    shell.append(top, tabs, filterRow, result, footer);
+    container.appendChild(shell);
+    select(activeKey);
+  }
+  global.AquaFleetReports = Object.freeze({
+    all: Object.freeze(reports), render, setQuery, leave, reportByKey, visibleRows, canExport
+  });
 })(window);

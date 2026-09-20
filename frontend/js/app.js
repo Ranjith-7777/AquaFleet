@@ -123,7 +123,7 @@
   /* Re-render the current screen from data already in state. Never fetches. */
   function reapplySearch() {
     if (state.currentView === "dashboard") { renderMissionActivity(); return; }
-    if (state.currentView === "reports") return;
+    if (state.currentView === "reports") { Reports.setQuery(state.searchQuery); return; }
     if (Workspace.has(state.currentView)) { Workspace.setQuery(state.searchQuery); return; }
     if (state.currentView === "vessels") {
       if (!state.loading) { vesselState.page = 1; renderVesselWorkspace(); }
@@ -1011,15 +1011,19 @@
   function renderReports() {
     ++state.requestSequence;
     state.currentView = "reports"; state.currentResource = null; state.rows = []; state.loading = false;
-    document.body.classList.remove("dashboard-view", "vessels-view"); setEyebrow();
-    Ui.setPageHeader("Reports", "Read-only database views expose joined and derived AquaFleet information.");
+    document.body.classList.add("workspace-view", "reports-view");
+    document.body.classList.remove("dashboard-view", "vessels-view");
+    setEyebrow("AquaFleet Command · Reporting");
+    Ui.setPageHeader("Reports", "Read-only results from the AquaFleet SQL reporting views. No derived data is stored.");
     Ui.clearAlerts(); updateActiveNavigation("reports"); setActions(null);
-    clearSearch(false); setSearchPlaceholder("Report filters are shown below");
-    const search = searchInput(); if (search) search.disabled = true;
+    clearSearch(false); setSearchPlaceholder("Search returned report rows");
+    const search = searchInput(); if (search) search.disabled = false;
     Reports.render(document.getElementById("content-panel"));
   }
 
   function navigate(view) {
+    if (state.currentView === "reports" && view !== "reports") Reports.leave();
+    if (view !== "reports") document.body.classList.remove("reports-view");
     if (Workspace.has(state.currentView) && view !== state.currentView) Workspace.leave();
     if (!Workspace.has(view)) { document.body.classList.remove("workspace-view"); document.body.removeAttribute("data-workspace"); }
     closeMobileNavigation();
