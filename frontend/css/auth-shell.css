@@ -2,58 +2,76 @@
 body.af-auth-shell{
   --af-sidebar-width:100px;
   --af-header-height:126px;
-  --af-header-blue:linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%);
+  --af-header-blue:linear-gradient(100deg,#0f72cf 0%,#2a9be6 52%,#46cbf0 100%);
   --af-page-padding-x:24px;
   --af-page-padding-top:14px;
   --af-content-gap:14px;
   --af-card-radius:16px;
-  --af-card-border:#eef2f5;
-  --af-card-shadow:0 8px 22px rgba(23,53,68,.07);
-  background:#e9eff5;color:#173544;font-family:Manrope,ui-sans-serif,sans-serif;
+  --af-card-border:#d2dfe8;
+  --af-card-shadow:0 1px 2px rgba(18,48,63,.06),0 6px 16px rgba(18,48,63,.07);
+  /* Typography: three families, one role each. */
+  --af-font-display:Sora,ui-sans-serif,sans-serif;   /* titles, KPI values, display numbers */
+  --af-font-body:Manrope,ui-sans-serif,sans-serif;   /* everything readable: tables, labels, buttons, forms */
+  --af-font-mono:"IBM Plex Mono",ui-monospace,monospace; /* IDs, technical values, timestamps only */
+  /* Text: four levels.  Primary/secondary/tertiary all pass WCAG AA (>=4.5:1) on white and on the page. */
+  --af-text:#12303f;            /* primary   */
+  --af-text-2:#34505f;          /* secondary */
+  --af-muted:#526d7c;           /* tertiary  */
+  --af-text-disabled:#8aa0ab;   /* disabled  */
+  --af-link:#0b63b3;--af-danger:#9f3b32;
+  /* Sizes */
+  --af-fs-section:19px;--af-fs-card:16px;--af-fs-body:14px;--af-fs-th:12.5px;--af-fs-td:14px;
+  --af-fs-label:12.5px;--af-fs-value:14.5px;--af-fs-control:14px;--af-fs-kpi-label:13px;
+  --af-fs-kpi-value:30px;--af-fs-pill:12.5px;--af-fs-helper:12.5px;--af-fs-mono:13px;
+  /* Surfaces */
+  --af-surface-page:#e1e9f0;--af-surface-card:#fff;--af-surface-head:#eef4f8;--af-surface-inset:#f2f6fa;
+  --af-border-row:#e1e9ef;--af-card-pad:22px;--af-control-h:48px;
+  background:var(--af-surface-page);color:var(--af-text);font-family:var(--af-font-body);
 }
-body.af-auth-shell .app-shell{grid-template-columns:var(--af-sidebar-width) minmax(0,1fr);background:#e9eff5;overflow:visible}
+body.af-auth-shell .app-shell{grid-template-columns:var(--af-sidebar-width) minmax(0,1fr);background:var(--af-surface-page);overflow:visible}
 body.af-auth-shell .workspace-shell{display:block;min-width:0}
 body.af-auth-shell .app-navbar{position:sticky;top:0;z-index:20;height:100vh;min-height:0;padding:clamp(12px,2.4vh,26px) 12px clamp(12px,2.2vh,24px);border-radius:0;background:linear-gradient(180deg,#071d2c,#0b2b3a);box-shadow:10px 0 30px rgba(8,39,57,.16)}
 body.af-auth-shell .brand-mark{width:52px;height:52px;border:1px solid rgba(123,203,222,.38);border-radius:16px;background:#0c3545;color:#a8e2ed;font-family:Sora,sans-serif;transform:none}
 body.af-auth-shell .app-navbar .nav-link{width:56px;height:50px;border-radius:12px!important;color:#8eb3c0!important;transform:none}
 body.af-auth-shell .app-navbar .nav-link:hover,body.af-auth-shell .app-navbar .nav-link:focus-visible{color:#e9f8fa!important;transform:none}
-body.af-auth-shell .app-navbar .nav-link.active,body.af-auth-shell .app-navbar .nav-group.flyout-open>.nav-link{width:var(--af-sidebar-width);height:56px;margin-left:-12px;border-radius:0!important;background:#fff!important;color:#12637f!important;box-shadow:inset 4px 0 0 #54c3e0}
+body.af-auth-shell .app-navbar .nav-link.active,body.af-auth-shell .app-navbar .nav-group.flyout-open>.nav-link{width:var(--af-sidebar-width);height:56px;margin-left:-12px;border-radius:0!important;background:#fff!important;color:#0f6fc6!important;box-shadow:inset 4px 0 0 #46cbf0}
 body.af-auth-shell .app-navbar .nav-icon{font-family:Manrope,sans-serif;font-size:24px}
 body.af-auth-shell .user-trigger,body.af-auth-shell .health-indicator{width:46px;height:46px;border:1px solid #446170;border-radius:15px;background:#124257}
-body.af-auth-shell .app-main{height:100vh;min-height:0;padding:0;background:#e9eff5}
+body.af-auth-shell .app-main{height:100vh;min-height:0;padding:0;background:var(--af-surface-page)}
 body.af-auth-shell .page-header{position:relative;height:var(--af-header-height);flex:0 0 var(--af-header-height);min-height:var(--af-header-height);gap:24px;margin:0;padding:18px 30px;border-radius:0;background:var(--af-header-blue);box-shadow:0 12px 30px rgba(17,91,135,.22);color:#fff;overflow:hidden}
 body.af-auth-shell .page-header::before{position:absolute;top:-104px;right:26%;width:240px;height:240px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03);content:"";pointer-events:none}
 body.af-auth-shell .page-header>div{position:relative;z-index:1;min-width:0}
-body.af-auth-shell .page-eyebrow{margin:0 0 2px;color:#d4eef3;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.11em}
+body.af-auth-shell .page-eyebrow{margin:0 0 2px;color:#e3f4f9;font-family:var(--af-font-mono);font-size:12px;font-weight:500;letter-spacing:.09em;text-shadow:0 1px 2px rgba(6,48,76,.28)}
 body.af-auth-shell #page-title{margin:0;color:#fff;font-family:Sora,sans-serif;font-size:36px;font-weight:700;letter-spacing:-.045em;line-height:1.05}
-body.af-auth-shell #page-subtitle{max-width:none;margin:6px 0 0;color:#e2f4f8!important;font-family:Manrope,sans-serif;font-size:12.5px;font-weight:500}
+body.af-auth-shell #page-subtitle{max-width:none;margin:6px 0 0;line-height:1.35;color:#f0fafd!important;font-family:var(--af-font-body);font-size:14px;font-weight:500;text-shadow:0 1px 2px rgba(6,48,76,.28)}
 body.af-auth-shell .header-tools{gap:16px;flex:0 1 auto}
 body.af-auth-shell .page-actions{gap:16px}
-body.af-auth-shell .search-foundation{display:flex;width:300px;height:48px;flex:0 0 300px;align-items:center;gap:8px;padding:0 18px;border:0;border-radius:999px;background:#fff;box-shadow:0 8px 20px rgba(6,48,76,.18);color:#327f97}
-body.af-auth-shell .search-input{font-family:Manrope,sans-serif;font-size:13px;font-weight:500}
+body.af-auth-shell .search-foundation{display:flex;width:300px;height:var(--af-control-h);flex:0 0 300px;align-items:center;gap:9px;padding:0 18px;border:0;border-radius:999px;background:#fff;box-shadow:0 8px 20px rgba(6,48,76,.18);color:#327f97}
+body.af-auth-shell .search-input{font-family:var(--af-font-body);font-size:var(--af-fs-control);font-weight:500;color:var(--af-text)}
+body.af-auth-shell .search-input::placeholder{color:var(--af-muted);opacity:1}
+body.af-auth-shell .search-icon{font-size:17px;color:#2f7ea3}
+body.af-auth-shell .search-clear{width:26px;height:26px;color:var(--af-text-2);font-size:18px}
 body.af-auth-shell .search-foundation:focus-within{box-shadow:0 0 0 3px rgba(43,143,199,.22),0 8px 20px rgba(6,48,76,.18)}
 body.af-auth-shell .content-card{min-width:0;min-height:0;padding:var(--af-page-padding-top) var(--af-page-padding-x) 20px}
 body.af-auth-shell .content-panel{min-width:0;min-height:0;gap:var(--af-content-gap);font-family:Manrope,sans-serif}
 body.af-auth-shell .dashboard-kpis,body.af-auth-shell .ws-kpis{gap:var(--af-content-gap)}
-body.af-auth-shell .dashboard-kpi,body.af-auth-shell .ws-kpi{min-height:112px;gap:14px;padding:16px 18px;border:0;border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(23,53,68,.06)}
-body.af-auth-shell .dashboard-kpi-label,body.af-auth-shell .ws-kpi-label{color:#5f7f8c;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em}
-body.af-auth-shell .dashboard-kpi-value,body.af-auth-shell .ws-kpi-value{color:#123a4c;font-family:Sora,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05}
-body.af-auth-shell .dashboard-kpi-note,body.af-auth-shell .ws-kpi-note{color:#718a95;font-family:Manrope,sans-serif;font-size:10.5px;font-weight:500}
-body.af-auth-shell .dashboard-kpi-track,body.af-auth-shell .ws-kpi-track{height:6px;border-radius:99px;background:#e8eff3}
-body.af-auth-shell .dashboard-panel,body.af-auth-shell .vessel-panel,body.af-auth-shell .ws-card,body.af-auth-shell .report-workspace{border:0;border-radius:var(--af-card-radius);background:#fff;box-shadow:var(--af-card-shadow)}
-body.af-auth-shell .dashboard-panel-heading h2,body.af-auth-shell .vessel-register-head h2,body.af-auth-shell .vessel-detail-head h2,body.af-auth-shell .ws-register-top h2,body.af-auth-shell .ws-detail-head h2{color:#12394a;font-family:Sora,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em}
-body.af-auth-shell .ws-filters,body.af-auth-shell .report-filters,body.af-auth-shell .vessel-tabs{gap:5px;padding:3px;border-radius:10px;background:#f1f5f8}
-body.af-auth-shell .ws-filter,body.af-auth-shell .report-filter,body.af-auth-shell .vessel-tab{height:auto;padding:6px 12px;border:0;border-radius:8px;background:transparent;color:#5f7f8c;font-family:Manrope,sans-serif;font-size:11px;font-weight:700}
-body.af-auth-shell .ws-filter.active,body.af-auth-shell .report-filter.active,body.af-auth-shell .vessel-tab.active{background:#fff;color:#12637f;box-shadow:0 2px 6px rgba(23,53,68,.1)}
-body.af-auth-shell .vessel-table thead th,body.af-auth-shell .report-table th{padding-block:8px;border-color:var(--af-card-border);background:#fafcfd;color:#5f7f8c;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em}
-body.af-auth-shell .vessel-table tbody td,body.af-auth-shell .report-table td{border-color:var(--af-card-border);color:#486774;font-family:Manrope,sans-serif;font-size:11.5px}
-body.af-auth-shell .vessel-table tbody td{height:62px}
-body.af-auth-shell .vessel-table tbody tr:hover td,body.af-auth-shell .report-table tbody tr:hover{background:#f3f8fb}
-body.af-auth-shell .vessel-table tbody tr.selected td{background:#f1f9fc}
-body.af-auth-shell .vessel-table tbody tr.selected td:first-child{box-shadow:inset 3px 0 0 #54c3e0}
-body.af-auth-shell .vessel-pill,body.af-auth-shell .ws-pill,body.af-auth-shell .status-badge{min-width:0;padding:5px 11px;border-radius:999px;font-family:Manrope,sans-serif;font-size:10px;font-weight:700}
-body.af-auth-shell .ws-add-button,body.af-auth-shell .vessel-add-button,body.af-auth-shell .refresh-button,body.af-auth-shell .report-refresh{display:inline-flex;height:48px;align-items:center;gap:8px;padding:0 20px;border:1px solid rgba(255,255,255,.67);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;white-space:nowrap}
-body.af-auth-shell .ws-add-button:hover,body.af-auth-shell .vessel-add-button:hover,body.af-auth-shell .refresh-button:hover,body.af-auth-shell .report-refresh:hover{border-color:#fff;background:#f0fbfd;color:#0c526f;transform:translateY(-2px)}
+body.af-auth-shell .dashboard-kpi,body.af-auth-shell .ws-kpi{min-height:118px;gap:14px;padding:16px 18px;border:1px solid var(--af-card-border);border-radius:var(--af-card-radius);background:var(--af-surface-card);box-shadow:var(--af-card-shadow)}
+body.af-auth-shell .dashboard-kpi-label,body.af-auth-shell .ws-kpi-label{color:var(--af-text-2);font-family:var(--af-font-body);font-size:var(--af-fs-kpi-label);font-weight:650;letter-spacing:.005em;text-transform:none}
+body.af-auth-shell .dashboard-kpi-value,body.af-auth-shell .ws-kpi-value{color:var(--af-text);font-family:var(--af-font-display);font-size:var(--af-fs-kpi-value);font-weight:700;letter-spacing:-.035em;line-height:1.1}
+body.af-auth-shell .dashboard-kpi-note,body.af-auth-shell .ws-kpi-note{min-height:17px;margin:0 0 5px;color:var(--af-muted);font-family:var(--af-font-body);font-size:var(--af-fs-helper);font-weight:500}
+body.af-auth-shell .dashboard-kpi-value{margin:3px 0 1px}
+body.af-auth-shell .dashboard-kpi-track,body.af-auth-shell .ws-kpi-track{height:6px;border-radius:99px;background:#dbe6ee}
+body.af-auth-shell .dashboard-panel,body.af-auth-shell .ws-card,body.af-auth-shell .report-workspace{border:1px solid var(--af-card-border);border-radius:var(--af-card-radius);background:var(--af-surface-card);box-shadow:var(--af-card-shadow)}
+body.af-auth-shell .dashboard-panel-heading h2,body.af-auth-shell .ws-register-top h2,body.af-auth-shell .ws-detail-head h2{color:var(--af-text);font-family:var(--af-font-display);font-size:var(--af-fs-section);font-weight:700;letter-spacing:-.03em}
+body.af-auth-shell .ws-filters,body.af-auth-shell .report-filters{gap:4px;padding:4px;border:1px solid #d5e2eb;border-radius:12px;background:#e8f0f5}
+body.af-auth-shell .ws-filter,body.af-auth-shell .report-filter{height:auto;padding:7px 14px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--af-text-2);font-family:var(--af-font-body);font-size:13.5px;font-weight:650}
+body.af-auth-shell .ws-filter.active,body.af-auth-shell .report-filter.active{border-color:#8fbfe6;background:#fff;color:var(--af-link);font-weight:700;box-shadow:0 2px 6px rgba(23,53,68,.14)}
+body.af-auth-shell .report-table th{padding-block:11px;border-color:var(--af-border-row);background:var(--af-surface-head);color:var(--af-text-2);font-family:var(--af-font-body);font-size:var(--af-fs-th);font-weight:700;letter-spacing:.05em}
+body.af-auth-shell .report-table td{border-color:var(--af-border-row);color:var(--af-text-2);font-family:var(--af-font-body);font-size:var(--af-fs-td)}
+body.af-auth-shell .report-table tbody tr:hover{background:#eef6fb}
+body.af-auth-shell .ws-pill,body.af-auth-shell .status-badge{min-width:0;padding:4px 12px;border-radius:999px;font-family:var(--af-font-body);font-size:var(--af-fs-pill);font-weight:700;line-height:1.35}
+body.af-auth-shell .ws-add-button,body.af-auth-shell .refresh-button,body.af-auth-shell .report-refresh{display:inline-flex;height:var(--af-control-h);align-items:center;gap:9px;padding:0 22px;border:1px solid #fff;border-radius:999px;background:#fff;color:#0b5fb0;font-family:var(--af-font-body);font-size:var(--af-fs-control);font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(6,48,76,.2)}
+body.af-auth-shell .ws-add-button:hover,body.af-auth-shell .refresh-button:hover,body.af-auth-shell .report-refresh:hover{border-color:#fff;background:#eaf6fd;color:#0a4f96;transform:translateY(-1px)}
 @media(max-width:1200px){
   html{scrollbar-gutter:stable}
   body.af-auth-shell{--af-header-height:190px}
@@ -74,3 +92,42 @@ body.af-auth-shell .ws-add-button:hover,body.af-auth-shell .vessel-add-button:ho
   body.af-auth-shell .search-foundation{min-width:180px;flex:1}
   body.af-auth-shell .content-card{padding:14px var(--af-page-padding-x)}
 }
+
+/* Short desktop viewports: tighten the sidebar so every item, the account
+   control and the health indicator stay visible and separated. */
+@media(min-width:768px) and (max-height:640px){
+  body.af-auth-shell .app-navbar{padding-block:10px}
+  body.af-auth-shell .brand-mark{width:42px;height:42px;font-size:26px}
+  body.af-auth-shell .navbar-nav{gap:4px}
+  body.af-auth-shell .app-navbar .nav-link{height:42px}
+  body.af-auth-shell .app-navbar .nav-link.active,body.af-auth-shell .app-navbar .nav-group.flyout-open>.nav-link{height:48px}
+  body.af-auth-shell .app-navbar .nav-icon{font-size:21px}
+  body.af-auth-shell .user-trigger,body.af-auth-shell .health-indicator{width:40px;height:40px}
+  body.af-auth-shell .user-control{margin-bottom:6px}
+}
+
+/* Short desktop screens (1366x768): the Dashboard keeps every panel whole by dropping only the
+   repeated helper line under each Operational Attention title. */
+@media(min-width:1201px) and (max-height:820px){
+  body.af-auth-shell .dashboard-attention-row{min-height:36px}
+  body.af-auth-shell .dashboard-attention-row small{display:none}
+}
+
+/* Reports (and any legacy table) render statuses as Bootstrap "text-bg-*" badges.  Map them onto the
+   same soft pill palette the registers use, so a status looks identical everywhere. */
+body.af-auth-shell .status-badge.text-bg-success   { background-color: #dff3e8 !important; color: #1d6b4d !important; }
+body.af-auth-shell .status-badge.text-bg-primary,
+body.af-auth-shell .status-badge.text-bg-info      { background-color: #dcedf9 !important; color: #0d5fae !important; }
+body.af-auth-shell .status-badge.text-bg-warning   { background-color: #fbecd0 !important; color: #7d5316 !important; }
+body.af-auth-shell .status-badge.text-bg-danger    { background-color: #fbe1de !important; color: #9a3a31 !important; }
+body.af-auth-shell .status-badge.text-bg-secondary { background-color: #e5ecf1 !important; color: #44606f !important; }
+body.af-auth-shell .status-badge.text-bg-dark      { background-color: #d9e2e8 !important; color: #23404f !important; }
+
+/* Sidebar menu and account flyout: same readable scale as the pages. */
+body.af-auth-shell .flyout-title{font-size:12px;color:var(--af-muted)}
+body.af-auth-shell .nav-flyout .dropdown-item{font-size:14px;font-weight:600;color:var(--af-text)}
+body.af-auth-shell .user-details strong{font-size:14.5px;color:var(--af-text)}
+body.af-auth-shell .user-details small{font-size:12.5px;color:var(--af-muted)}
+body.af-auth-shell .user-role{font-size:11.5px;color:var(--af-link)}
+body.af-auth-shell .user-logout{font-size:var(--af-fs-control);font-weight:700}
+body.af-auth-shell .mobile-brand small,body.af-auth-shell .mobile-nav-heading{font-size:12px}

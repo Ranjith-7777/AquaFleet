@@ -59,7 +59,7 @@
     const active = info.duties === null || info.missions === null ? null : rows.filter(function (row) { return operatorStatus(row, info) === "In-Progress Mission"; }).length;
     const expert = rows.filter(function (row) { return /\bexpert\b/i.test(row.certification_level || ""); }).length;
     const contacts = rows.reduce(function (sum, row) { return sum + (Array.isArray(row.contact_numbers) ? row.contact_numbers.length : 0); }, 0);
-    return [metric("Registered Operators", rows.length, "Personnel records", "◈", "blue", 100), metric("Assigned To In-Progress Missions", active, "Distinct operators by parent mission status", "⌖", "teal", percent(active, rows.length)), metric("Certification Mentions Expert", expert, "Literal certification text", "▽", "navy", percent(expert, rows.length)), metric("Contact Numbers", contacts, "Recorded contact rows", "!", "grey", 100)];
+    return [metric("Registered Operators", rows.length, "Personnel records", "◈", "blue", 100), metric("On In-Progress Missions", active, "Distinct operators assigned", "⌖", "teal", percent(active, rows.length)), metric("Certification Mentions Expert", expert, "Literal certification text", "▽", "navy", percent(expert, rows.length)), metric("Contact Numbers", contacts, "Recorded contact rows", "!", "grey", 100)];
   }
   const operatorTone = function (value) { return value === "In-Progress Mission" ? "blue" : value === "Assigned" ? "green" : "grey"; };
   global.AquaFleetWorkspace.register(base("operators", "Operators", "Personnel register, certification levels, contact records and mission duty assignments.", "Search operators or roles", "Add Operator", "Personnel Register", "operator_id",

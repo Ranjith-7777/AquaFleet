@@ -9,12 +9,14 @@
     if (handler) node.addEventListener("click", handler);
     return node;
   }
-  function pill(value, tone) { return el("span", "ws-pill ws-pill-" + (tone || "grey"), value == null ? "—" : String(value)); }
+  function pill(value, tone) { const node = el("span", "ws-pill ws-pill-" + (tone || "grey"), value == null ? "—" : String(value)); node.title = node.textContent; return node; }
   function metric(item) {
     const card = el("article", "ws-kpi ws-kpi-" + item.tone);
     card.appendChild(el("span", "ws-kpi-icon", item.icon));
     const content = el("div", "ws-kpi-content");
-    content.append(el("p", "ws-kpi-label", item.label), el("strong", "ws-kpi-value", item.value), el("p", "ws-kpi-note", item.note));
+    const label = el("p", "ws-kpi-label", item.label), note = el("p", "ws-kpi-note", item.note);
+    label.title = String(item.label); note.title = String(item.note == null ? "" : item.note);
+    content.append(label, el("strong", "ws-kpi-value", item.value), note);
     const track = el("div", "ws-kpi-track");
     const fill = el("i", "ws-kpi-fill");
     fill.style.width = Math.max(0, Math.min(100, Number(item.ratio) || 0)) + "%";
@@ -62,5 +64,23 @@
     }
     return card;
   }
-  global.AquaFleetWorkspaceComponents = Object.freeze({ el: el, button: button, pill: pill, metric: metric, state: state, fact: fact, action: action, detailCard: detailCard });
+  /* One tab strip for every page of a sidebar group. It is read from the
+     sidebar itself, so the strip and the navigation can never disagree and
+     every page in a group shows the same complete set of sibling pages. */
+  function sectionTabs(currentKey) {
+    const current = document.querySelector('.nav-flyout [data-view="' + currentKey + '"]');
+    const group = current && current.closest(".nav-flyout");
+    if (!group) return null;
+    const tabs = el("nav", "ws-tabs"); tabs.setAttribute("aria-label", "Section pages");
+    group.querySelectorAll("[data-view]").forEach(function tab(link) {
+      const key = link.dataset.view, active = key === currentKey;
+      const node = button(link.dataset.title || link.textContent.trim(), "ws-tab" + (active ? " active" : ""), function () {
+        if (!active) global.AquaFleetApp.navigate(key);
+      });
+      if (active) node.setAttribute("aria-current", "page");
+      tabs.appendChild(node);
+    });
+    return tabs;
+  }
+  global.AquaFleetWorkspaceComponents = Object.freeze({ el: el, button: button, pill: pill, metric: metric, state: state, fact: fact, action: action, detailCard: detailCard, sectionTabs: sectionTabs });
 })(window);

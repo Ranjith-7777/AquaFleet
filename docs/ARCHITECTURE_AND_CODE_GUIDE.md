@@ -96,7 +96,7 @@ effective even when data is changed outside Flask.
 
 | File | Use |
 |---|---|
-| `database/schema.sql` | Fresh MySQL 8 database: 21 tables, constraints, indexes, views, triggers and procedures |
+| `database/schema.sql` | Fresh MySQL 8 database: 22 tables, constraints, indexes, views, triggers and procedures |
 | `database/sample_data.sql` | Destructive deterministic domain-data reset for a known demo database only |
 | `database/migrations/phase1_add_viewer_role.sql` | Earlier one-time VIEWER role upgrade |
 | `database/migrations/phase3_upgrade_existing_database.sql` | Idempotent non-destructive upgrade for the finished existing database |

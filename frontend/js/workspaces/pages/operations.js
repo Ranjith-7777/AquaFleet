@@ -104,7 +104,7 @@
     const rostered = new Set(rows.map((row) => String(row.operator_id))).size;
     const active = info.missions === null ? null : rows.filter((row) => parentStatus(row, info) === "In Progress").length;
     return [metric("Duty Assignments", rows.length, `Across ${new Set(rows.map((row) => String(row.mission_id))).size} missions`, "⚇", "blue", 100),
-      metric("Operators Rostered", rostered, "Distinct operator IDs in assignments", "◎", "teal", 100),
+      metric("Operators Rostered", rostered, "Distinct operators assigned", "◎", "teal", 100),
       metric("In Progress Assignments", active, "Parent mission status In Progress", "⌖", "navy", active === null ? 0 : percent(active, rows.length)),
       metric("Watch Patterns", new Set(rows.map((row) => row.shift)).size, "Distinct recorded shift strings", "▤", "grey", 100)];
   }

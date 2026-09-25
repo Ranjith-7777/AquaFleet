@@ -168,8 +168,11 @@
       rows = null; state = "error"; errorMessage = error.message || "The reporting query failed.";
     }
     renderResult(report);
+    if (panel && global.AquaFleetMotion) global.AquaFleetMotion.results(panel.querySelector(".report-result"));
   }
   function select(key) {
+    /* Switching reports transitions the report region only (a no-op during the page entrance). */
+    if (panel && global.AquaFleetMotion) global.AquaFleetMotion.swap(panel.querySelector(".report-workspace"));
     activeKey = reportByKey(key).key;
     filterValue = "";
     const report = reportByKey(activeKey);
@@ -217,6 +220,7 @@
     const layout = node("div", "report-layout");
     layout.append(main, document.getElementById("context-rail"));
     container.appendChild(layout);
+    if (global.AquaFleetMotion) global.AquaFleetMotion.content(container);   // page entrance (navigation)
     select(activeKey);
   }
   global.AquaFleetReports = Object.freeze({

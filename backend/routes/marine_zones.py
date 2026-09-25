@@ -502,6 +502,11 @@ def update_marine_zone(zone_id):
         if err.errno == errorcode.ER_DUP_ENTRY:
             return duplicate_name_response()
 
+        # Raised by trg_zone_depth_bu / trg_expedition_dates_bu.  Their message
+        # text is written by us, so it is safe to show, unlike other driver errors.
+        if err.errno == errorcode.ER_SIGNAL_EXCEPTION:
+            return jsonify({"success": False, "message": err.msg}), 409
+
         return db_failure(err, "update")
 
     finally:

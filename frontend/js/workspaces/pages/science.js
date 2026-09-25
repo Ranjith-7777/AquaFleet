@@ -34,7 +34,7 @@
     const affected = new Set(rows.map((row) => String(row.mission_id))).size;
     const low = rows.filter((row) => row.severity === "Low").length;
     return [metric("Recorded Incidents", rows.length, `Across ${affected} missions`, "!", "blue", 100),
-      metric("High Or Critical", high, "Stored severity, regardless of mission state", "▲", "teal", percent(high, rows.length)),
+      metric("High Or Critical", high, "Stored severity, any mission state", "▲", "teal", percent(high, rows.length)),
       metric("Missions Affected", affected, info.missions === null ? "Mission collection unavailable" : `of ${info.missions.size} recorded missions`, "◎", "navy", info.missions?.size ? percent(affected, info.missions.size) : 0),
       metric("Low Severity", low, "Stored severity", "✓", "grey", percent(low, rows.length))];
   }
@@ -55,7 +55,7 @@
     const transit = rows.filter((row) => row.chain_of_custody_status === "In Transit").length;
     const held = rows.filter((row) => ["Stored", "Received"].includes(row.chain_of_custody_status)).length;
     return [metric("Recorded Samples", rows.length, `From ${new Set(rows.map((row) => String(row.mission_id))).size} missions`, "◈", "blue", 100),
-      metric("Aliquot Rows", info.allAliquots === null ? null : info.allAliquots.length, "Sub-portions across these samples", "▤", "teal", 100),
+      metric("Aliquot Rows", info.allAliquots === null ? null : info.allAliquots.length, "Sub-portions of all samples", "▤", "teal", 100),
       metric("In Transit", transit, "Stored sample custody state", "⌖", "navy", percent(transit, rows.length)),
       metric("Stored Or Received", held, "Two literal custody values", "✓", "grey", percent(held, rows.length))];
   }
@@ -78,8 +78,8 @@
     const held = rows.filter((row) => ["Stored", "Received"].includes(row.chain_of_custody_status)).length;
     return [metric("Aliquots", rows.length, `Derived from ${new Set(rows.map((row) => String(row.sample_id))).size} samples`, "▤", "blue", 100),
       metric("Total Volume", (volume / 1000).toFixed(2), "Litres across all aliquot rows", "◈", "teal", 100),
-      metric("At -80 °C", atMinus80, "Exact recorded storage temperature", "❄", "navy", percent(atMinus80, rows.length)),
-      metric("Parent Stored/Received", held, "Rows whose parent has either custody value", "✓", "grey", percent(held, rows.length))];
+      metric("At -80 °C", atMinus80, "Recorded storage temperature", "❄", "navy", percent(atMinus80, rows.length)),
+      metric("Parent Stored/Received", held, "Parent sample stored or received", "✓", "grey", percent(held, rows.length))];
   }
   global.AquaFleetWorkspace.register(base("sample-aliquots", "Sample Aliquots", "Sub-portions of collected samples with volume and storage temperature.", "AquaFleet Command · Programme", "Search aliquots or samples", "Add Aliquot", "Aliquot Register", "sample_id", aliquotKey,
     custody, "68px 68px minmax(145px,1.4fr) 105px 110px 105px 112px",

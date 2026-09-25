@@ -125,10 +125,6 @@
     if (state.currentView === "dashboard") { renderMissionActivity(); return; }
     if (state.currentView === "reports") { Reports.setQuery(state.searchQuery); return; }
     if (Workspace.has(state.currentView)) { Workspace.setQuery(state.searchQuery); return; }
-    if (state.currentView === "vessels") {
-      if (!state.loading) { vesselState.page = 1; renderVesselWorkspace(); }
-      return;
-    }
     const config = Resources.byKey[state.currentResource];
     if (config && !state.loading) renderTable(config, state.rows, state.totalCount);
   }
@@ -367,6 +363,7 @@
   }
 
   function renderMissionActivity() {
+    if (global.AquaFleetMotion) global.AquaFleetMotion.settle();   // a search must not replay the dashboard entrance
     const existing = document.querySelector(".activity-panel");
     if (existing && existing.parentNode) existing.parentNode.replaceChild(buildMissionActivity(), existing);
   }
@@ -480,10 +477,11 @@
   }
 
   async function renderDashboard(button) {
+    refreshNotifications();
     const sequence = ++state.requestSequence;
     state.currentView = "dashboard"; state.currentResource = null; state.rows = []; state.loading = true;
     document.body.classList.add("af-auth-shell", "dashboard-view");
-    document.body.classList.remove("vessels-view"); setEyebrow();
+    setEyebrow();
     const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader("Dashboard", "Fleet, mission and expedition readiness from the current AquaFleet database state.");
     setSearchPlaceholder("Search missions");
@@ -527,318 +525,14 @@
       buildExpeditionPanel(data.expeditions), buildAttentionPanel(data)
     ] });
     panel.append(kpis, grid);
+    if (global.AquaFleetMotion) global.AquaFleetMotion.content(panel);
     Ui.clearElement(document.getElementById("context-rail"));
     Ui.setButtonPending(refresh, false);
-  }
-
-  /* =====================================================================
-     Research Vessels workspace (approved Vessels design).
-     Data comes from the existing /api/vessels and /api/expeditions routes;
-     deployment status, KPIs and the detail panel are all derived from those
-     two responses. Search reuses the shared header field and filterRows().
-     ===================================================================== */
-
-  const VESSEL_PAGE_SIZE = 8;
-  const VESSEL_FILTERS = [["all", "All"], ["at-sea", "At Sea"], ["in-port", "In Port"], ["unassigned", "Unassigned"]];
-  const vesselState = { rows: [], expeditions: null, selectedId: null, filter: "all", page: 1 };
-
-  function resetVesselState() {
-    vesselState.rows = []; vesselState.expeditions = null;
-    vesselState.selectedId = null; vesselState.filter = "all"; vesselState.page = 1;
   }
 
   function setEyebrow(text) {
     const node = document.querySelector(".page-eyebrow");
     if (node) node.textContent = text || "AquaFleet Command";
-  }
-
-  function vesselExpeditions(vesselId) {
-    if (vesselState.expeditions === null) return null;
-    return vesselState.expeditions.filter(function match(row) { return Number(row.vessel_id) === Number(vesselId); });
-  }
-
-  /* Deployment is derived, never stored: an Active expedition means At Sea,
-     a Planned one means Scheduled, past-only history means In Port and no
-     expedition at all means Unassigned. */
-  function vesselDeployment(vessel) {
-    const list = vesselExpeditions(vessel.vessel_id);
-    if (list === null) return { label: "Unknown", group: null, tone: "unknown" };
-    if (list.some(function active(row) { return normalizeText(row.status) === "active"; })) return { label: "At Sea", group: "at-sea", tone: "sea" };
-    if (list.some(function planned(row) { return normalizeText(row.status) === "planned"; })) return { label: "Scheduled", group: "in-port", tone: "scheduled" };
-    if (list.length) return { label: "In Port", group: "in-port", tone: "port" };
-    return { label: "Unassigned", group: "unassigned", tone: "unassigned" };
-  }
-
-  function vesselIsDeepSea(vessel) { return /ocean|deep[\s-]?sea/i.test(String(vessel.vessel_type || "")); }
-  function vesselPad(id) { return String(id).padStart(2, "0"); }
-
-  function visibleVessels() {
-    const config = Resources.byKey.vessels;
-    return filterRows(config, vesselState.rows, state.searchQuery).filter(function inFilter(row) {
-      return vesselState.filter === "all" || vesselDeployment(row).group === vesselState.filter;
-    });
-  }
-
-  function vesselSelected() {
-    return vesselState.rows.find(function find(row) { return row.vessel_id === vesselState.selectedId; }) || null;
-  }
-
-  function selectVessel(id, scrollDetail) {
-    vesselState.selectedId = id;
-    renderVesselWorkspace();
-    if (scrollDetail && global.innerWidth < 1100) {
-      const detail = document.querySelector(".vessel-detail");
-      if (detail) detail.scrollIntoView({ block: "start", behavior: "smooth" });
-    }
-  }
-
-  function vesselPill(deployment) {
-    return Ui.element("span", { className: "vessel-pill vessel-pill-" + deployment.tone, text: deployment.label });
-  }
-
-  function vesselLink(label, tone, handler, aria) {
-    const button = Ui.element("button", { className: "vessel-link vessel-link-" + tone, text: label, attributes: { type: "button", "aria-label": aria } });
-    button.addEventListener("click", function onClick(event) { event.stopPropagation(); handler(); });
-    return button;
-  }
-
-  function buildVesselRegister(visible) {
-    const total = vesselState.rows.length;
-    const panel = Ui.element("section", { className: "dashboard-panel vessel-panel vessel-register" });
-    const tabs = Ui.element("div", { className: "vessel-tabs", attributes: { role: "group", "aria-label": "Filter vessels by deployment" } });
-    VESSEL_FILTERS.forEach(function tab(entry) {
-      const button = Ui.element("button", {
-        className: "vessel-tab" + (vesselState.filter === entry[0] ? " active" : ""), text: entry[1],
-        attributes: { type: "button", "aria-pressed": String(vesselState.filter === entry[0]) }
-      });
-      button.addEventListener("click", function onTab() {
-        vesselState.filter = entry[0]; vesselState.page = 1;
-        const next = visibleVessels();
-        if (next.length && !next.some(function has(row) { return row.vessel_id === vesselState.selectedId; })) vesselState.selectedId = next[0].vessel_id;
-        renderVesselWorkspace();
-      });
-      tabs.appendChild(button);
-    });
-    panel.appendChild(Ui.element("div", { className: "vessel-register-head", children: [
-      Ui.element("h2", { text: "Vessel Register" }), tabs,
-      Ui.element("span", { className: "dashboard-panel-meta", attributes: { role: "status", "aria-live": "polite" }, text: visible.length + " of " + total + " shown" })
-    ] }));
-
-    const scroll = Ui.element("div", { className: "vessel-table-scroll" });
-    if (!total) {
-      scroll.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No research vessels recorded." }));
-    } else if (!visible.length) {
-      const empty = Ui.element("div", { className: "activity-no-match" });
-      empty.appendChild(Ui.element("p", { text: normalizeText(state.searchQuery)
-        ? "No vessels match “" + state.searchQuery + "”." : "No vessels in this deployment group." }));
-      const clear = Ui.element("button", { className: "btn btn-outline-primary btn-sm", text: normalizeText(state.searchQuery) ? "Clear Search" : "Show All", attributes: { type: "button" } });
-      clear.addEventListener("click", function onClear() {
-        vesselState.filter = "all"; vesselState.page = 1; clearSearch(false); renderVesselWorkspace();
-        const input = searchInput(); if (input) input.focus();
-      });
-      empty.appendChild(clear); scroll.appendChild(empty);
-    } else {
-      const pages = Math.max(1, Math.ceil(visible.length / VESSEL_PAGE_SIZE));
-      vesselState.page = Math.min(Math.max(1, vesselState.page), pages);
-      const start = (vesselState.page - 1) * VESSEL_PAGE_SIZE;
-      const pageRows = visible.slice(start, start + VESSEL_PAGE_SIZE);
-      const table = Ui.element("table", { className: "vessel-table" });
-      table.appendChild(Ui.element("caption", { className: "visually-hidden", text: "Research vessels" }));
-      const headRow = Ui.element("tr");
-      [["ID", ""], ["Vessel", ""], ["Home Port", ""], ["Capacity", "num"], ["Deployment", ""], ["Actions", "act"]].forEach(function heading(entry) {
-        headRow.appendChild(Ui.element("th", { className: entry[1], text: entry[0], attributes: { scope: "col" } }));
-      });
-      table.appendChild(Ui.element("thead", { children: [headRow] }));
-      const body = Ui.element("tbody");
-      pageRows.forEach(function vessel(row) {
-        const selected = row.vessel_id === vesselState.selectedId;
-        const tr = Ui.element("tr", { className: selected ? "selected" : "", attributes: { tabindex: "0", "aria-selected": String(selected) } });
-        tr.addEventListener("click", function onRow() { selectVessel(row.vessel_id, false); });
-        tr.addEventListener("keydown", function onKey(event) {
-          if ((event.key === "Enter" || event.key === " ") && event.target === tr) { event.preventDefault(); selectVessel(row.vessel_id, false); }
-        });
-        tr.appendChild(Ui.element("td", { className: "vessel-id", text: vesselPad(row.vessel_id) }));
-        tr.appendChild(Ui.element("td", { children: [Ui.element("div", { className: "vessel-name", children: [
-          Ui.element("strong", { text: Ui.nullableText(row.vessel_name) }), Ui.element("small", { text: Ui.nullableText(row.vessel_type) })
-        ] })] }));
-        tr.appendChild(Ui.element("td", { className: "vessel-port", text: Ui.nullableText(row.home_port) }));
-        tr.appendChild(Ui.element("td", { className: "num", text: Ui.formatNumber(row.capacity) }));
-        tr.appendChild(Ui.element("td", { children: [vesselPill(vesselDeployment(row))] }));
-        const actions = Ui.element("td", { className: "act" });
-        const label = Master.label("vessels", row);
-        actions.appendChild(vesselLink("View", "view", function view() { selectVessel(row.vessel_id, true); }, "View " + label));
-        if (Master.can("vessels", "update")) actions.appendChild(vesselLink("Edit", "edit", function edit() { Master.openEdit("vessels", row); }, "Edit " + label));
-        if (Master.can("vessels", "delete")) actions.appendChild(vesselLink("Delete", "delete", function del() { Master.openDelete("vessels", row); }, "Delete " + label));
-        tr.appendChild(actions); body.appendChild(tr);
-      });
-      table.appendChild(body); scroll.appendChild(table);
-      panel.appendChild(scroll);
-
-      const pager = Ui.element("nav", { className: "vessel-pager", attributes: { "aria-label": "Vessel pages" } });
-      const step = function stepButton(text, label, target, disabled, current) {
-        const button = Ui.element("button", { className: "vessel-page-button" + (current ? " current" : ""), text: text, attributes: { type: "button", "aria-label": label } });
-        if (current) button.setAttribute("aria-current", "page");
-        button.disabled = disabled;
-        button.addEventListener("click", function onPage() { vesselState.page = target; renderVesselWorkspace(); });
-        return button;
-      };
-      const controls = Ui.element("div", { className: "vessel-page-controls" });
-      controls.appendChild(step("‹", "Previous page", vesselState.page - 1, vesselState.page <= 1, false));
-      for (let page = 1; page <= pages; page += 1) controls.appendChild(step(String(page), "Page " + page, page, false, page === vesselState.page));
-      controls.appendChild(step("›", "Next page", vesselState.page + 1, vesselState.page >= pages, false));
-      pager.append(Ui.element("span", { className: "dashboard-panel-meta", text:
-        "Showing " + (start + 1) + "–" + (start + pageRows.length) + " of " + visible.length + " records" }), controls);
-      panel.appendChild(pager);
-      return panel;
-    }
-    panel.appendChild(scroll);
-    return panel;
-  }
-
-  function buildVesselDetail(vessel) {
-    const panel = Ui.element("aside", { className: "dashboard-panel vessel-panel vessel-detail", attributes: { "aria-label": "Vessel detail" } });
-    panel.appendChild(Ui.element("div", { className: "vessel-detail-head", children: [
-      Ui.element("h2", { text: "Vessel Detail" }),
-      Ui.element("span", { className: "dashboard-panel-meta", text: vessel ? "#" + vesselPad(vessel.vessel_id) : "" })
-    ] }));
-    if (!vessel) {
-      panel.appendChild(Ui.element("p", { className: "dashboard-empty", text: "Select a vessel to see its details." }));
-      return panel;
-    }
-    const expeditions = vesselExpeditions(vessel.vessel_id);
-    panel.appendChild(Ui.element("h3", { className: "vessel-detail-name", text: Ui.nullableText(vessel.vessel_name) }));
-    panel.appendChild(Ui.element("p", { className: "vessel-detail-type", text: Ui.nullableText(vessel.vessel_type) }));
-    panel.appendChild(vesselPill(vesselDeployment(vessel)));
-    const fact = function factCard(label, value, wide) {
-      return Ui.element("div", { className: "vessel-fact" + (wide ? " vessel-fact-wide" : ""), children: [
-        Ui.element("span", { text: label }), Ui.element("strong", { text: value })
-      ] });
-    };
-    panel.appendChild(Ui.element("div", { className: "vessel-facts", children: [
-      fact("Capacity", Ui.formatNumber(vessel.capacity)),
-      fact("Expeditions", expeditions === null ? "—" : String(expeditions.length)),
-      fact("Home Port", Ui.nullableText(vessel.home_port), true)
-    ] }));
-    panel.appendChild(Ui.element("p", { className: "vessel-section-label", text: "Linked Expeditions" }));
-    const linked = Ui.element("div", { className: "vessel-linked" });
-    if (expeditions === null) {
-      linked.appendChild(Ui.element("p", { className: "dashboard-empty", text: "Expedition data unavailable." }));
-    } else if (!expeditions.length) {
-      linked.appendChild(Ui.element("div", { className: "vessel-linked-row", children: [Ui.element("div", { children: [
-        Ui.element("strong", { text: "No expeditions assigned" }), Ui.element("small", { text: "Vessel is free for scheduling" })
-      ] })] }));
-    } else {
-      expeditions.slice().sort(function newest(a, b) { return String(b.start_date).localeCompare(String(a.start_date)); }).forEach(function each(row) {
-        linked.appendChild(Ui.element("div", { className: "vessel-linked-row", children: [
-          Ui.element("div", { children: [
-            Ui.element("strong", { text: Ui.nullableText(row.title), attributes: { title: Ui.nullableText(row.title) } }),
-            Ui.element("small", { text: Ui.formatDate(row.start_date) + " – " + Ui.formatDate(row.end_date) })
-          ] }), dashboardBadge(row.status, "expedition")
-        ] }));
-      });
-    }
-    panel.appendChild(linked);
-    const actions = Ui.element("div", { className: "vessel-detail-actions" });
-    if (Master.can("vessels", "update")) {
-      const edit = Ui.element("button", { className: "vessel-edit-button", text: "Edit Vessel", attributes: { type: "button" } });
-      edit.addEventListener("click", function onEdit() { Master.openEdit("vessels", vessel); });
-      actions.appendChild(edit);
-    }
-    if (Master.can("vessels", "delete")) {
-      const del = Ui.element("button", { className: "vessel-delete-button", text: "Delete", attributes: { type: "button" } });
-      del.addEventListener("click", function onDelete() { Master.openDelete("vessels", vessel); });
-      actions.appendChild(del);
-    }
-    if (actions.children.length) panel.appendChild(actions);
-    panel.appendChild(Ui.element("p", { className: "vessel-note", text: "Vessels assigned to an expedition cannot be deleted." }));
-    return panel;
-  }
-
-  /* Rebuilds only the register + detail panels from data already in memory.
-     Search, filters, paging and selection never fetch and never re-run the
-     KPI count-up. */
-  function renderVesselWorkspace() {
-    const grid = document.querySelector(".vessels-grid");
-    if (!grid) return;
-    const visible = visibleVessels();
-    if (vesselState.selectedId === null || !vesselSelected()) {
-      vesselState.selectedId = vesselState.rows.length ? vesselState.rows[0].vessel_id : null;
-    }
-    const previous = grid.querySelector(".vessel-table-scroll");
-    const scrollTop = previous ? previous.scrollTop : 0;
-    Ui.clearElement(grid);
-    grid.append(buildVesselRegister(visible), buildVesselDetail(vesselSelected()));
-    const next = grid.querySelector(".vessel-table-scroll");
-    if (next) next.scrollTop = scrollTop;
-  }
-
-  function buildVesselKpis() {
-    const rows = vesselState.rows, total = rows.length;
-    const ports = new Set(rows.map(function port(row) { return normalizeText(row.home_port); }).filter(Boolean)).size;
-    const capacities = rows.map(function cap(row) { return Number(row.capacity) || 0; });
-    const capacity = capacities.reduce(function sum(a, b) { return a + b; }, 0);
-    const mean = total ? Math.round(capacity / total) : 0;
-    const largest = capacities.length ? Math.max.apply(null, capacities) : 0;
-    const deep = rows.filter(vesselIsDeepSea).length;
-    const committed = vesselState.expeditions === null ? null : rows.filter(function busy(row) {
-      const tone = vesselDeployment(row).tone; return tone === "sea" || tone === "scheduled";
-    }).length;
-    const kpis = Ui.element("div", { className: "dashboard-kpis" });
-    kpis.appendChild(dashboardMetric("Registered Vessels", total, "Across " + ports + " home " + (ports === 1 ? "port" : "ports"), "⚓", total ? 1 : 0));
-    kpis.appendChild(dashboardMetric("Assigned to Expeditions", committed,
-      committed + " of " + total + " vessels committed", "⌖", committed === null ? null : total ? committed / total : 0));
-    kpis.appendChild(dashboardMetric("Total Berth Capacity", capacity, "Mean " + mean + " berths per vessel", "◫", largest ? mean / largest : 0));
-    kpis.appendChild(dashboardMetric("Deep Sea Class", deep, "Ocean and deep-sea platforms", "▣", total ? deep / total : 0));
-    return kpis;
-  }
-
-  async function renderVessels() {
-    const config = Resources.byKey.vessels;
-    const sequence = ++state.requestSequence;
-    state.currentView = "vessels"; state.currentResource = "vessels"; state.rows = []; state.loading = true;
-    document.body.classList.add("dashboard-view", "vessels-view");
-    const search = searchInput(); if (search) search.disabled = false;
-    Ui.setPageHeader("Research Vessels", "Registered fleet platforms, berth capacity and home-port assignment from the AquaFleet database.");
-    setEyebrow("AquaFleet Command · Fleet");
-    setSearchPlaceholder("Search vessels or ports");
-    Ui.clearAlerts(); updateActiveNavigation("vessels");
-
-    const meta = Ui.element("div", { className: "vessels-record-meta", children: [
-      Ui.element("span", { text: "RECORDS" }), Ui.element("strong", { className: "vessels-record-count", text: "— VESSELS" })
-    ] });
-    const actions = document.getElementById("page-actions"); Ui.clearElement(actions);
-    actions.appendChild(meta);
-    /* Always present, as in the approved header. Creating is still governed by
-       the existing RBAC check inside Master.openCreate, so a role without the
-       permission gets a disabled control instead of a missing one. */
-    const canCreate = Master.can("vessels", "create");
-    const add = Ui.element("button", { className: "vessel-add-button", attributes: { type: "button" }, children: [
-      Ui.element("span", { text: "+", attributes: { "aria-hidden": "true" } }), Ui.element("span", { text: "Add Vessel" })
-    ] });
-    if (canCreate) add.addEventListener("click", function onAdd() { Master.openCreate("vessels"); });
-    else { add.disabled = true; add.title = "Your role cannot add vessels"; }
-    actions.appendChild(add);
-    const panel = document.getElementById("content-panel");
-    Ui.renderLoading(panel, "Loading research vessels…");
-
-    const results = await Promise.allSettled([Api.get(config.path), Api.get(Resources.byKey.expeditions.path)]);
-    if (sequence !== state.requestSequence || state.currentResource !== "vessels") return;
-    state.loading = false;
-    if (results[0].status !== "fulfilled") {
-      Ui.renderError(panel, "Unable to load " + config.title, normalizedError(results[0].reason));
-      return;
-    }
-    vesselState.rows = Array.isArray(results[0].value.data) ? results[0].value.data : [];
-    state.rows = vesselState.rows;
-    state.totalCount = results[0].value.payload.count ?? vesselState.rows.length;
-    vesselState.expeditions = results[1].status === "fulfilled" && Array.isArray(results[1].value.data) ? results[1].value.data : null;
-
-    const count = meta.querySelector(".vessels-record-count");
-    count.textContent = vesselState.rows.length + (vesselState.rows.length === 1 ? " VESSEL" : " VESSELS");
-    Ui.clearElement(panel); panel.setAttribute("aria-busy", "false");
-    Ui.clearElement(document.getElementById("context-rail"));
-    panel.append(buildVesselKpis(), Ui.element("div", { className: "vessels-grid" }));
-    renderVesselWorkspace();
   }
 
   function keyDisplay(config, row) {
@@ -952,11 +646,10 @@
   async function renderResource(key, button) {
     const config = Resources.byKey[key];
     if (!config) { renderDashboard(); return; }
-    if (key === "vessels") return renderVessels();
     if (Workspace.has(key)) return renderWorkspaceResource(key);
     const sequence = ++state.requestSequence;
     state.currentView = key; state.currentResource = key; state.rows = []; state.loading = true;
-    document.body.classList.remove("dashboard-view", "vessels-view"); setEyebrow();
+    document.body.classList.remove("dashboard-view"); setEyebrow();
     const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader(config.title, config.subtitle); Ui.clearAlerts(); updateActiveNavigation(key);
     /* Refresh and post-CRUD reloads land here with the query intact, so the
@@ -987,11 +680,13 @@
     ++state.requestSequence;
     state.currentView = key; state.currentResource = key; state.rows = []; state.loading = false;
     document.body.classList.add("dashboard-view", "workspace-view");
-    document.body.classList.remove("vessels-view");
-    document.body.setAttribute("data-workspace", key);
+        document.body.setAttribute("data-workspace", key);
     const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader(page.title, page.subtitle);
-    setEyebrow(page.eyebrow || "AquaFleet Command · Fleet & Crew"); setSearchPlaceholder(page.searchPlaceholder);
+    /* The eyebrow names the sidebar group, exactly like the section tab strip. */
+    const groupHeading = document.querySelector('.nav-flyout [data-view="' + key + '"]');
+    const groupTitle = groupHeading && groupHeading.closest(".nav-flyout").querySelector(".flyout-title");
+    setEyebrow("AquaFleet Command · " + (groupTitle ? groupTitle.textContent.trim() : "Workspace")); setSearchPlaceholder(page.searchPlaceholder);
     Ui.clearAlerts(); updateActiveNavigation(key);
     document.querySelectorAll("[data-nav-group]").forEach(function closeFlyout(button) {
       button.setAttribute("aria-expanded", "false");
@@ -1012,7 +707,7 @@
     ++state.requestSequence;
     state.currentView = "reports"; state.currentResource = null; state.rows = []; state.loading = false;
     document.body.classList.add("workspace-view", "reports-view");
-    document.body.classList.remove("dashboard-view", "vessels-view");
+    document.body.classList.remove("dashboard-view");
     setEyebrow("AquaFleet Command · Reporting");
     Ui.setPageHeader("Reports", "Read-only results from the AquaFleet SQL reporting views. No derived data is stored.");
     Ui.clearAlerts(); updateActiveNavigation("reports"); setActions(null);
@@ -1020,6 +715,8 @@
     const search = searchInput(); if (search) search.disabled = false;
     Reports.render(document.getElementById("content-panel"));
   }
+
+  function refreshNotifications() { if (global.AquaFleetNotifications) global.AquaFleetNotifications.refresh(); }
 
   function navigate(view) {
     document.body.classList.add("af-auth-shell");
@@ -1034,12 +731,14 @@
     clearSearch(false);
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     document.querySelector(".app-main").scrollTop = 0;
+    if (global.AquaFleetMotion) global.AquaFleetMotion.route();   // context change: settle heading, arm page entrance
     if (view === "dashboard") renderDashboard();
     else if (view === "reports") renderReports();
     else renderResource(view);
+    refreshNotifications();
   }
 
-  async function mutationComplete(key,message){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");}}
+  async function mutationComplete(key,message){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");refreshNotifications();}}
   async function refreshIfCurrent(key){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);}}
 
   function initializeNavigation() {
@@ -1102,7 +801,14 @@
 
   global.AquaFleetApp = Object.freeze({
     getState: function getState() { return Object.assign({}, state); },
-    navigate: navigate, renderDashboard: renderDashboard, renderResource: renderResource,
+    navigate: navigate, renderResource: renderResource,
+    /* External callers (auth.js after sign-in) enter the dashboard as a new
+       context; the Refresh button calls the internal function directly and so
+       never replays the page entrance. */
+    renderDashboard: function renderDashboardEntry(button) {
+      if (!button && global.AquaFleetMotion) global.AquaFleetMotion.route();
+      return renderDashboard(button);
+    },
     renderReports: renderReports,
     mutationComplete:mutationComplete,refreshIfCurrent:refreshIfCurrent,
     clearCurrentSearch: function clearCurrentSearch() { clearSearch(true); },
@@ -1112,7 +818,7 @@
       state.searchQuery = "";
       state.rows = [];
       state.missions = [];
-      resetVesselState();
+      if (global.AquaFleetNotifications) global.AquaFleetNotifications.reset();
       Workspace.leave();
       const input = searchInput();
       if (input) input.value = "";

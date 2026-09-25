@@ -44,7 +44,7 @@ AquaFleet/
 │       ├── reporting.js          # five view-backed reports
 │       └── app.js / ui.js        # SPA coordination and DOM helpers
 ├── database/
-│   ├── schema.sql                # 21 tables + DB programming objects
+│   ├── schema.sql                # 22 tables + DB programming objects
 │   ├── sample_data.sql           # deterministic domain demo reset
 │   ├── demo_transactions.sql     # commit/rollback/savepoint workflows
 │   ├── faculty_demo.sql          # ordered viva SQL demonstrations
@@ -145,7 +145,7 @@ If `mysql` is not on your PATH on Windows, use the full path:
 
 1. Open MySQL Workbench and connect to your local MySQL 8 instance.
 2. **File → Open SQL Script…** and choose `database/schema.sql`.
-3. Click the lightning bolt (**Execute All**). The script creates `aquafleet_db` and all 21 tables.
+3. Click the lightning bolt (**Execute All**). The script creates `aquafleet_db` and all 22 tables.
 4. **File → Open SQL Script…** and choose `database/sample_data.sql`.
 5. Click **Execute All**. The inserts run first, then eight validation `SELECT` queries produce result grids.
 6. Right-click **aquafleet_db** in the Navigator and choose **Refresh All** to see the tables.

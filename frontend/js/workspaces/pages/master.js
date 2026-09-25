@@ -17,7 +17,7 @@
     return [
       { icon: "◈", label: "Registered Zones", value: String(zones.length), note: "Across " + regions + (regions === 1 ? " sea region" : " sea regions"), ratio: zones.length ? 100 : 0, tone: "blue" },
       { icon: "⌖", label: "Zones In Use", value: used === null ? "—" : String(used), note: used === null ? "Mission data unavailable" : used === zones.length && zones.length ? "All zones carry missions" : used + " of " + zones.length + " zones carry missions", ratio: used === null || !zones.length ? 0 : used / zones.length * 100, tone: "teal" },
-      { icon: "▽", label: "Deepest Envelope", value: deepest ? String(deepest.max_depth) : "—", note: deepest ? deepest.zone_name + " · metres" : "No depth data recorded", ratio: deepest ? 88 : 0, tone: "navy" },
+      { icon: "▽", label: "Deepest Envelope (m)", value: deepest ? String(deepest.max_depth) : "—", note: deepest ? deepest.zone_name : "No depth data recorded", ratio: deepest ? 88 : 0, tone: "navy" },
       { icon: "!", label: "High Or Critical Risk", value: String(restricted), note: restricted + " of " + zones.length + " zones restricted", ratio: zones.length ? restricted / zones.length * 100 : 0, tone: "grey" }
     ];
   }

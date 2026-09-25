@@ -20,7 +20,7 @@
 | Subquery | Missions deeper than the overall average use a non-correlated AVG subquery. |
 | Correlated subquery | A per-mission sample count refers to the current outer `mission_id`. |
 | View | Five read-only report views expose expedition summary, mission operations, readiness, sample lineage and incidents. |
-| Trigger | `trg_mission_validate_bi/bu` reject mission depths outside the zone and dates outside the expedition. Vehicle assignment triggers reject retired vehicles. |
+| Trigger | `trg_mission_validate_bi/bu` reject mission depths outside the zone and dates outside the expedition. Vehicle assignment triggers reject retired vehicles. `trg_expedition_dates_bu` and `trg_zone_depth_bu` protect missions from parent edits; six `*_notify_*` AFTER triggers populate `notification`. |
 | Stored Procedure | `sp_get_expedition_report`, `sp_get_mission_summary` and `sp_get_vehicle_maintenance_history` package reusable reports. |
 | IN parameter | `sp_get_mission_summary(IN p_mission_id INT)` selects one mission and its assignments. |
 | OUT parameter | `sp_get_expedition_metrics` returns mission, incident and sample totals through three OUT variables. |

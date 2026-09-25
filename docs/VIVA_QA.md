@@ -142,7 +142,11 @@
 
 34. **What triggers are implemented?**
     Mission insert/update triggers enforce expedition dates and zone depth;
-    mission-vehicle insert/update triggers reject retired vehicles.
+    mission-vehicle insert/update triggers reject retired vehicles; expedition
+    and zone update triggers stop a parent edit from excluding existing
+    missions; six AFTER triggers write `notification` rows for high/critical
+    incidents, poor/replace batteries and maintenance due within 14 days. They
+    run in the writer's transaction, so a rollback removes the notification too.
 
 35. **Why validate in Flask and triggers?**
     Flask gives early friendly errors, while triggers protect integrity for

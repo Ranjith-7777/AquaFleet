@@ -109,7 +109,9 @@ def main():
         triggers = object_count(
             cursor,
             "SELECT COUNT(*) FROM information_schema.triggers "
-            "WHERE trigger_schema=DATABASE() AND trigger_name LIKE 'trg\\_%'",
+            "WHERE trigger_schema=DATABASE() AND trigger_name IN ("
+            "'trg_mission_validate_bi','trg_mission_validate_bu',"
+            "'trg_mission_vehicle_ready_bi','trg_mission_vehicle_ready_bu')",
         )
         procedures = object_count(
             cursor,

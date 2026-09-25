@@ -110,6 +110,13 @@ RESOURCE_PERMISSIONS = {
         "update": {"ADMIN", "RESEARCHER"},
         "delete": {"ADMIN"},
     },
+    # Notifications are created only by database triggers.  Every role may read
+    # them; marking one read is an update reserved for roles that can act on it.
+    "notifications": {
+        "create": set(),
+        "update": {"ADMIN", "RESEARCHER", "OPERATOR"},
+        "delete": set(),
+    },
     # Reporting is intentionally read-only for every role.
     "reports": {"create": set(), "update": set(), "delete": set()},
 }

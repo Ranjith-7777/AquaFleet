@@ -116,6 +116,7 @@ class Phase2DatabaseTests(unittest.TestCase):
             "mission_operator", "vehicle_sensor", "vehicle_battery",
             "maintenance_record", "telemetry_point", "sample",
             "sample_aliquot", "incident", "inspection_task", "app_user",
+            "notification",
         }
         connection = self.connect()
         cursor = connection.cursor(dictionary=True)

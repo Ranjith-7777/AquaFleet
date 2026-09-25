@@ -123,8 +123,8 @@ from MySQL views.
 
 Say:
 
-- “PKs, 19 FKs, 6 UNIQUE constraints and 35 CHECK constraints protect data.”
-- “Four triggers enforce cross-table depth/date/readiness rules.”
+- “PKs, 19 FKs, 6 UNIQUE constraints and 38 CHECK constraints protect data.”
+- “Six triggers enforce cross-table depth/date/readiness rules, and six more write notifications for serious incidents, poor batteries and due maintenance.”
 - “Transactions, rollback and savepoints protect multi-table workflows.”
 - “The existing-database migration is idempotent and verifies row/user
   preservation after a backup.”

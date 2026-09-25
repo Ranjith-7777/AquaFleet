@@ -242,3 +242,29 @@ SELECT
     (SELECT COUNT(*) FROM mission WHERE mission_id = -94001) AS demo_missions,
     (SELECT COUNT(*) FROM sample WHERE sample_id IN (-94002, -94003)) AS demo_samples,
     (SELECT COUNT(*) FROM sample_aliquot WHERE sample_id IN (-94002, -94003)) AS demo_aliquots;
+
+-- 13. NOTIFICATION TRIGGERS (rolled back, nothing is kept) ----------------------
+-- An AFTER INSERT trigger writes a notification in the SAME transaction as the
+-- incident, so ROLLBACK removes both.  Critical -> Critical, High -> Warning.
+START TRANSACTION;
+INSERT INTO incident (mission_id, incident_type, severity, time_reported, description)
+SELECT MIN(mission_id), 'DEMO critical incident', 'Critical', NOW(), 'faculty demonstration'
+  FROM mission;
+SELECT category, severity, title, message, is_read
+  FROM notification
+ ORDER BY notification_id DESC
+ LIMIT 1;
+ROLLBACK;
+SELECT
+    (SELECT COUNT(*) FROM incident WHERE incident_type = 'DEMO critical incident') AS demo_incidents_after_rollback,
+    (SELECT COUNT(*) FROM notification WHERE message LIKE 'DEMO critical incident%') AS demo_notifications_after_rollback;
+
+-- 14. PARENT-SIDE INTEGRITY TRIGGER (rolled back) -------------------------------
+-- trg_zone_depth_bu refuses to narrow a zone so that an existing mission's depth
+-- target would fall outside it.  The blocked UPDATE is shown by the error text.
+-- (Run the next statement on its own to see:  ERROR 1644 ... Zone depth band
+--  cannot exclude the depth target of its existing missions)
+START TRANSACTION;
+UPDATE marine_zone SET max_depth = max_depth + 100 WHERE zone_id = 1;   -- widening is allowed
+SELECT zone_id, min_depth, max_depth FROM marine_zone WHERE zone_id = 1;
+ROLLBACK;

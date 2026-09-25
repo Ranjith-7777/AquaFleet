@@ -87,7 +87,7 @@ def build_test_app(account_provider):
 
 class PermissionMatrixTests(unittest.TestCase):
     def test_every_resource_has_explicit_mutation_policy(self):
-        self.assertEqual(20, len(RESOURCE_PERMISSIONS))
+        self.assertEqual(21, len(RESOURCE_PERMISSIONS))
         for policy in RESOURCE_PERMISSIONS.values():
             self.assertEqual({"create", "update", "delete"}, set(policy))
 
@@ -123,6 +123,9 @@ class PermissionMatrixTests(unittest.TestCase):
         for resource in RESOURCE_PERMISSIONS:
             for method in ("POST", "PUT", "PATCH", "DELETE"):
                 expected = resource != "reports"
+                if resource == "notifications":
+                    # Rows are written only by database triggers.
+                    expected = method in ("PUT", "PATCH")
                 self.assertEqual(expected, is_authorized("ADMIN", resource, method))
 
 

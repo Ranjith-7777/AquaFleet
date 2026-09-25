@@ -190,7 +190,8 @@ class Phase3MigrationTests(unittest.TestCase):
         for table_name, row_count in before_counts.items():
             self.assertEqual(row_count, after_counts[table_name], table_name)
         self.assertEqual(self.VIEWS, self.object_names(connection, "views"))
-        self.assertEqual(self.TRIGGERS, self.object_names(connection, "triggers"))
+        # Later phases add triggers of their own; Phase 3 owns exactly these four.
+        self.assertTrue(self.TRIGGERS.issubset(self.object_names(connection, "triggers")))
         self.assertEqual(self.PROCEDURES, self.object_names(connection, "procedures"))
         self.assertTrue(
             self.INDEXES.issubset(self.object_names(connection, "indexes"))

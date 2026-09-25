@@ -30,8 +30,8 @@
     const missions = new Set(rows.map((row) => String(row.mission_id))).size;
     return [metric("Logged Points", rows.length, `Across ${missions} missions`, "▤", "blue", 100),
       metric("Deepest Reading", deepest === null ? "—" : fixed(deepest, 2), "Metres, maximum recorded depth", "▽", "teal", rows.length ? 100 : 0),
-      metric("Lowest Battery Reading", lowest === null ? "—" : fixed(lowest, 2), "Recorded percentage, no threshold", "⚡", "navy", lowest ?? 0),
-      metric("Missions Logged", missions, "Distinct mission IDs in telemetry rows", "◎", "grey", 100)];
+      metric("Lowest Battery Reading", lowest === null ? "—" : fixed(lowest, 2), "Recorded percentage", "⚡", "navy", lowest ?? 0),
+      metric("Missions Logged", missions, "Missions with telemetry", "◎", "grey", 100)];
   }
   global.AquaFleetWorkspace.register(base("telemetry-points", "Telemetry Points", "Recorded mission positions, depth, battery percentage and water temperature.", "Search missions or log numbers", "Add Log Point", "Telemetry Log", "mission_id", telemetryKey,
     ["All", "Planned", "In Progress", "Completed", "Aborted"], "65px 62px 145px 85px 92px 85px 105px 112px",

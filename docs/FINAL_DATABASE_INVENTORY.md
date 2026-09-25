@@ -8,14 +8,15 @@ a proposed design.
 
 | Object | Count | Implemented objects |
 |---|---:|---|
-| Base tables | 21 | Domain tables plus `app_user` |
+| Base tables | 22 | Domain tables plus `app_user` and `notification` |
 | Reporting views | 5 | `vw_expedition_summary`, `vw_mission_operations`, `vw_vehicle_readiness`, `vw_sample_lineage`, `vw_incident_overview` |
-| Integrity triggers | 4 | Mission insert/update validation and mission-vehicle insert/update readiness checks |
+| Integrity triggers | 6 | Mission insert/update validation, mission-vehicle insert/update readiness checks, and expedition-date / zone-depth update guards |
+| Notification triggers | 6 | AFTER INSERT/UPDATE on `incident`, `battery_pack` and `maintenance_record` write to `notification` |
 | Stored procedures | 4 | Expedition report, mission summary, vehicle maintenance history, expedition metrics |
 | Dedicated reporting indexes | 3 | `idx_expedition_status`, `idx_mission_status`, `idx_incident_severity_time` |
 
-The live database contains 21 primary keys, 19 foreign keys, 6 additional
-UNIQUE constraints and 35 CHECK constraints.
+The live database contains 22 primary keys, 19 foreign keys, 6 additional
+UNIQUE constraints and 38 CHECK constraints.
 
 ## Base tables and identifiers
 

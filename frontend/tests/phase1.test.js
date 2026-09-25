@@ -26,7 +26,7 @@ load("js/master-data.js");
 const permissions = window.AquaFleetPermissions;
 const forms = window.AquaFleetMasterData.forms;
 
-assert.equal(20, Object.keys(permissions.grants).length);
+assert.equal(21, Object.keys(permissions.grants).length);
 assert.equal(19, Object.keys(forms).length);
 
 for (const resource of Object.keys(permissions.grants)) {
@@ -35,7 +35,10 @@ for (const resource of Object.keys(permissions.grants)) {
   assert.equal(false, permissions.can(resource, "update", "VIEWER"));
   assert.equal(false, permissions.can(resource, "delete", "VIEWER"));
   for (const action of ["create", "update", "delete"]) {
-    assert.equal(resource !== "reports", permissions.can(resource, action, "ADMIN"));
+    /* Reports are read-only; notifications are written by triggers, so they
+       can only be updated (marked read), never created or deleted. */
+    const expected = resource === "reports" ? false : resource === "notifications" ? action === "update" : true;
+    assert.equal(expected, permissions.can(resource, action, "ADMIN"));
   }
 }
 

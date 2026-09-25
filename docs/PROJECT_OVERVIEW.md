@@ -68,7 +68,7 @@ Research Vessel
 - Four M:N junction tables and weak/dependent entities
 - Parameterized joins, aggregates, subqueries and filtering
 - Five reporting views
-- Four cross-table integrity triggers
+- Six cross-table integrity triggers and six notification triggers
 - Four stored procedures, including IN and OUT parameters
 - Commit, rollback and savepoint demonstrations
 - FK and three dedicated reporting indexes with EXPLAIN checks
@@ -102,7 +102,7 @@ for all four roles and a live end-to-end operational workflow.
 
 AquaFleet is a local coursework deployment with simulated data. It does not
 provide production identity federation, high-volume pagination, live vehicle
-telemetry ingestion, GIS maps, notifications or immutable audit logging. See
+telemetry ingestion, GIS maps, external (email/SMS/push) notifications or immutable audit logging. See
 `LIMITATIONS_AND_FUTURE_WORK.md` for the complete distinction.
 
 ## 13. Possible future enhancements

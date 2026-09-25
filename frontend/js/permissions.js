@@ -24,6 +24,7 @@
     "inspection-tasks": shared(["ADMIN", "OPERATOR"]),
     samples: policy(["ADMIN", "RESEARCHER"], ["ADMIN", "RESEARCHER"], ["ADMIN"]),
     "sample-aliquots": policy(["ADMIN", "RESEARCHER"], ["ADMIN", "RESEARCHER"], ["ADMIN"]),
+    notifications: policy([], ["ADMIN", "RESEARCHER", "OPERATOR"], []),
     reports: policy([], [], [])
   };
 

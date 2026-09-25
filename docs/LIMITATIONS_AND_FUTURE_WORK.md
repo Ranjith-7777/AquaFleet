@@ -20,8 +20,11 @@ transactions, indexes, reports, validation, migration and testing.
   use client-side search, suitable for the small demonstration dataset.
 - **No GIS map.** Coordinates are validated and reportable but are displayed
   in tables rather than nautical/map layers.
-- **No notification engine.** Incidents, maintenance due dates and critical
-  battery health do not send email/SMS/push alerts.
+- **In-app notifications only.** Database triggers record high/critical
+  incidents, poor or replace-rated batteries and maintenance due within 14 days
+  in the `notification` table, shown by the sidebar bell. Nothing sends
+  email/SMS/push alerts, and a maintenance record only notifies when it is
+  written (there is no scheduler that re-checks due dates over time).
 - **No immutable audit trail.** Domain history is relationally protected, but
   the application does not record every user mutation in an append-only log.
 - **Single database target.** The SQL and migration deliberately target

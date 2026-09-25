@@ -36,6 +36,7 @@ from routes.marine_zones import marine_zones_bp
 from routes.mission_operators import mission_operators_bp
 from routes.mission_vehicles import mission_vehicles_bp
 from routes.missions import missions_bp
+from routes.notifications import notifications_bp
 from routes.offshore_assets import offshore_assets_bp
 from routes.operators import operators_bp
 from routes.reports import reports_bp
@@ -105,6 +106,7 @@ app.register_blueprint(samples_bp)
 app.register_blueprint(sample_aliquots_bp)
 app.register_blueprint(incidents_bp)
 app.register_blueprint(inspection_tasks_bp)
+app.register_blueprint(notifications_bp)
 app.register_blueprint(reports_bp)
 
 

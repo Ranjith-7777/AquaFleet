@@ -28,6 +28,7 @@ permissions are explicit:
 | Vehicle sensors and batteries | Create/update/delete | Read | Create/update/delete | Read |
 | Maintenance, telemetry, incidents, inspection tasks | Create/update/delete | Read | Create/update/delete | Read |
 | Samples and aliquots | Create/update/delete | Create/update | Read | Read |
+| Notifications (trigger-written) | Read / mark read | Read / mark read | Read / mark read | Read |
 | Reports | Read | Read | Read | Read |
 
 The browser mirrors this matrix by hiding unavailable controls. That is only
