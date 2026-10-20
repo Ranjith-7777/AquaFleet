@@ -19,13 +19,18 @@ Run with:
     python app.py
 """
 
-from flask import Flask, jsonify, request
+from pathlib import Path
+
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from flask_limiter.errors import RateLimitExceeded
 from mysql.connector import Error as MySQLError
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from authentication import guard_authorization, guard_request
 from config import Config
 from database import get_db_connection
+from extensions import limiter
 from routes.auth import auth_bp
 from routes.battery_packs import battery_packs_bp
 from routes.expeditions import expeditions_bp
@@ -49,8 +54,14 @@ from routes.vehicle_sensors import vehicle_sensors_bp
 from routes.vehicles import vehicles_bp
 from routes.vessels import vessels_bp
 
-# Create the Flask application object.
-app = Flask(__name__)
+# Serve the existing static frontend from the same origin as the API. This
+# avoids production cross-origin cookies and requires no frontend build step.
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
+if Config.TRUST_PROXY_HEADERS:
+    # Render terminates TLS and supplies one trusted forwarding hop. Keep this
+    # opt-in so a directly exposed local server never trusts spoofed headers.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # ---------------------------------------------------------------------------
 # Session configuration
@@ -62,6 +73,11 @@ app.config["SECRET_KEY"] = Config.SECRET_KEY
 app.config["SESSION_COOKIE_HTTPONLY"] = Config.SESSION_COOKIE_HTTPONLY
 app.config["SESSION_COOKIE_SAMESITE"] = Config.SESSION_COOKIE_SAMESITE
 app.config["SESSION_COOKIE_SECURE"] = Config.SESSION_COOKIE_SECURE
+app.config["PERMANENT_SESSION_LIFETIME"] = Config.PERMANENT_SESSION_LIFETIME
+app.config["SESSION_REFRESH_EACH_REQUEST"] = Config.SESSION_REFRESH_EACH_REQUEST
+app.config["RATELIMIT_STORAGE_URI"] = Config.RATELIMIT_STORAGE_URI
+
+limiter.init_app(app)
 
 _secret_warning = Config.check_secret_key()
 if _secret_warning:
@@ -222,12 +238,22 @@ def database_health():
 
 @app.route("/", methods=["GET"])
 def index():
-    """Friendly message for anyone opening the backend root URL directly."""
-    return jsonify({
-        "success": True,
-        "message": "AquaFleet backend. Try GET /api/health, "
-                   "GET /api/health/database or GET /api/vessels"
+    """Serve the existing AquaFleet SPA shell."""
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.errorhandler(RateLimitExceeded)
+def rate_limit_exceeded(error):
+    """Keep login throttling responses inside the API's JSON contract."""
+    response = jsonify({
+        "success": False,
+        "message": "Too many login attempts. Please try again later.",
+        "error_code": "LOGIN_RATE_LIMITED",
     })
+    response.status_code = 429
+    if error.retry_after is not None:
+        response.headers["Retry-After"] = str(error.retry_after)
+    return response
 
 
 @app.errorhandler(404)

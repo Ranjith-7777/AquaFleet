@@ -2,7 +2,9 @@
 (function exposeAquaFleetApi(global) {
   "use strict";
 
-  const API_BASE_URL = "http://127.0.0.1:5000";
+  /* Production is same-origin. Developers who serve the frontend separately
+     may set window.AQUAFLEET_API_BASE_URL before this script loads. */
+  const API_BASE_URL = global.AQUAFLEET_API_BASE_URL || global.location.origin;
 
   /* Called once whenever a PROTECTED request comes back 401, so the SPA can
      drop straight to the login screen instead of showing a broken table.

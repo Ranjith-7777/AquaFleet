@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: aquafleet
+    runtime: python
+    region: singapore
+    plan: free
+    branch: deploy/render
+    autoDeployTrigger: off
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: >-
+      gunicorn --chdir backend --bind 0.0.0.0:$PORT
+      --workers 1 --threads 4 --timeout 60 app:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: SESSION_COOKIE_SECURE
+        value: "True"
+      - key: SESSION_LIFETIME_MINUTES
+        value: "480"
+      - key: LOGIN_RATE_LIMIT
+        value: 10 per minute
+      - key: RATELIMIT_STORAGE_URI
+        value: memory://
+      - key: TRUST_PROXY_HEADERS
+        value: "True"
+      - key: CORS_ORIGINS
+        value: ""
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_CONNECT_TIMEOUT
+        value: "10"
+      - key: DB_SSL_CA
+        sync: false
+      - key: DB_SSL_VERIFY_CERT
+        value: "True"
+      - key: DB_SSL_VERIFY_IDENTITY
+        value: "True"

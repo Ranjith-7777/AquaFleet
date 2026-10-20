@@ -40,6 +40,8 @@ from authentication import (
     start_session,
 )
 from database import get_db_connection
+from extensions import limiter
+from config import Config
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -145,6 +147,7 @@ def validate_login_payload(payload):
 # ============================================================================
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit(Config.LOGIN_RATE_LIMIT)
 def login():
     """Verify credentials and establish a session."""
     # silent=True turns malformed JSON into None instead of Flask's own HTML

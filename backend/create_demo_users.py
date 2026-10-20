@@ -138,7 +138,10 @@ def main(reset=False):
         )
         if cursor.fetchone()["present"] == 0:
             connection.rollback()
-            print("app_user table not found. Run database/schema.sql first.")
+            print(
+                "app_user table not found. Initialize the database with "
+                "manage_database.py first."
+            )
             return 1
 
         created = 0

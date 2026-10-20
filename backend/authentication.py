@@ -172,6 +172,10 @@ def start_session(user):
     reaches the session.
     """
     session.clear()
+    # Permanent means "use the configured server-side maximum age", not
+    # "never expire". SESSION_REFRESH_EACH_REQUEST is disabled, so this is an
+    # absolute lifetime rather than an indefinitely sliding session.
+    session.permanent = True
     session[SESSION_USER_ID] = user["user_id"]
     session[SESSION_USERNAME] = user["username"]
     session[SESSION_FULL_NAME] = user["full_name"]

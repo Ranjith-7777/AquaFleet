@@ -47,6 +47,7 @@ DROP VIEW IF EXISTS vw_expedition_summary;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Application authentication (independent of the marine-domain tables)
+DROP TABLE IF EXISTS schema_migration;
 DROP TABLE IF EXISTS app_user;
 
 -- Trigger-generated notifications (independent of the marine-domain tables)

@@ -30,7 +30,8 @@ AquaFleet/
 │   ├── authentication.py         # signed-session helpers + central RBAC
 │   ├── config.py / database.py   # environment config + MySQL connection
 │   ├── create_demo_users.py      # explicit local demo-account setup/reset
-│   ├── apply_database_upgrade.py # guarded existing-database migration
+│   ├── manage_database.py        # guarded initialization + tracked migrations
+│   ├── apply_database_upgrade.py # legacy Phase 3-only local helper
 │   ├── routes/                   # auth, reports and 20 domain Blueprints
 │   └── tests/                    # RBAC, DB objects, migration and regression
 ├── frontend/
@@ -121,7 +122,11 @@ Then open `.env` and fill in your own MySQL username and password. Leave `DB_NAM
 
 ## Database setup
 
-The database is named **`aquafleet_db`**. Both scripts are rerunnable: `schema.sql` drops and recreates every table, and `sample_data.sql` truncates and reloads every table.
+The database is named **`aquafleet_db`**. The commands in this section are for
+disposable local coursework databases: `schema.sql` drops and recreates every
+table, and `sample_data.sql` truncates and reloads demo rows. Never use these
+raw scripts against an existing or production database. Production and managed
+MySQL setup uses the guarded commands in `docs/RENDER_DEPLOYMENT.md`.
 
 ### Option A — MySQL command line
 
@@ -180,7 +185,8 @@ From `AquaFleet/backend` with the virtual environment active:
 python app.py
 ```
 
-The server starts at `http://localhost:5000`.
+The complete application starts at `http://localhost:5000`; Flask serves both
+the frontend and `/api` from the same origin.
 
 Test the health endpoint in a browser or with curl:
 
@@ -316,8 +322,9 @@ Put it in `backend/.env` (which is git-ignored — never commit it):
 
 ```
 SECRET_KEY=<paste the generated value here>
-CORS_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
 SESSION_COOKIE_SECURE=False
+SESSION_LIFETIME_MINUTES=480
+LOGIN_RATE_LIMIT=10 per minute
 ```
 
 `SESSION_COOKIE_SECURE=False` is correct for local HTTP only. **Set it to `True` for any HTTPS deployment**, otherwise the session cookie travels in the clear. `app.py` refuses to start with the built-in fallback secret when `FLASK_DEBUG=False`.
@@ -2079,21 +2086,9 @@ curl.exe -i -X DELETE http://127.0.0.1:5000/api/inspection-tasks/7
 
 ## Opening and testing the frontend
 
-Keep the Flask server running in its own terminal, then open the page.
-
-**Option A — open the file directly.** Double-click `AquaFleet/frontend/index.html`, or run:
-
-```bash
-start AquaFleet\frontend\index.html
-```
-
-**Option B — serve it on a local port (recommended).** In a second terminal, from the `AquaFleet` folder:
-
-```bash
-python -m http.server 5500 --directory frontend
-```
-
-Then visit `http://localhost:5500` in your browser.
+Keep the Flask server running and visit `http://localhost:5000`. The frontend is
+served directly by Flask, matching the production same-origin architecture.
+No Node.js server or frontend build is required.
 
 ### What you should see
 
@@ -2244,22 +2239,21 @@ can be checked and run again safely.
 1. Stop writers and create a verified `mysqldump` backup outside committed
    source files. Keep database credentials in environment variables or the
    existing local `.env`; do not put them on the command line or in Git.
-2. From `backend`, run the guarded upgrade utility:
+2. From `backend`, run the guarded ordered migration utility:
 
    ```bat
-   venv\Scripts\python.exe apply_database_upgrade.py
+   venv\Scripts\python.exe manage_database.py migrate
    ```
 
-3. Confirm the utility reports preserved table counts and user records, plus
-   21 tables, 5 views, 4 triggers, 4 procedures and 3 reporting indexes.
+3. Run `venv\Scripts\python.exe manage_database.py status` and confirm the
+   complete schema and both tracked migrations are reported.
 4. Start Flask and check `GET /api/health` and
    `GET /api/health/database` before allowing normal use.
 
-The utility deliberately refuses any `DB_NAME` other than `aquafleet_db`.
-The underlying SQL is
-`database/migrations/phase3_upgrade_existing_database.sql`; do not substitute
-`schema.sql` for this step because the schema bootstrap intentionally recreates
-the database and is only for fresh installations.
+The ordered utility accepts the configured database name, refuses empty or
+incomplete databases, and records migration checksums in `schema_migration`.
+Do not substitute `schema.sql` for this step because the development bootstrap
+intentionally recreates tables and is only for disposable local installations.
 
 ### Verification
 
