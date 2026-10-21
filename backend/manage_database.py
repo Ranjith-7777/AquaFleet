@@ -31,6 +31,11 @@ MIGRATIONS = (
         PROJECT_DIR / "database" / "migrations" /
         "phase4_notifications_and_integrity.sql",
     ),
+    (
+        "003_mission_status_end_constraint",
+        PROJECT_DIR / "database" / "migrations" /
+        "phase5_mission_status_end_constraint.sql",
+    ),
 )
 MIGRATION_TABLE = "schema_migration"
 INITIAL_SCHEMA_MARKER = "CREATE TABLE research_vessel"

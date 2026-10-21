@@ -101,6 +101,17 @@ class DeploymentUnitTests(unittest.TestCase):
         self.assertNotIn("CREATE DATABASE", source)
         self.assertNotIn("USE AQUAFLEET_DB", source)
 
+    def test_mission_constraint_migration_is_guarded_and_non_destructive(self):
+        version, path = MIGRATIONS[-1]
+        source = path.read_text(encoding="utf-8").upper()
+        self.assertEqual("003_mission_status_end_constraint", version)
+        self.assertIn("INFORMATION_SCHEMA.TABLE_CONSTRAINTS", source)
+        self.assertIn("EXISTING MISSIONS VIOLATE THE RULE", source)
+        self.assertIn("ADD CONSTRAINT CHK_MISSION_STATUS_END", source)
+        self.assertNotIn("DROP TABLE", source)
+        self.assertNotIn("TRUNCATE TABLE", source)
+        self.assertNotIn("DELETE FROM", source)
+
     def test_destructive_commands_require_explicit_confirmation(self):
         with redirect_stderr(StringIO()):
             with self.assertRaises(SystemExit):

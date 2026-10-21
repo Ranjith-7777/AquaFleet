@@ -25,9 +25,12 @@ load("js/master-data.js");
 
 const permissions = window.AquaFleetPermissions;
 const forms = window.AquaFleetMasterData.forms;
+const masterDataSource = fs.readFileSync(path.join(frontend, "js/master-data.js"), "utf8");
 
 assert.equal(21, Object.keys(permissions.grants).length);
 assert.equal(19, Object.keys(forms).length);
+assert.match(masterDataSource, /attributes:\{id:"resource-modal-alert"\}/);
+assert.doesNotMatch(masterDataSource, /\{id:"resource-modal-alert",className:"modal-alert"\}/);
 
 for (const resource of Object.keys(permissions.grants)) {
   assert.equal(true, permissions.can(resource, "read", "VIEWER"));
@@ -73,6 +76,31 @@ assert.equal(
     window.AquaFleetResources.byKey["mission-vehicles"],
     { mission_id: 4, vehicle_id: 5 }
   )
+);
+
+const missionOptions = {
+  expeditions: [{ expedition_id: 1, start_date: "2025-11-03", end_date: "2025-11-28" }],
+  "marine-zones": [{ zone_id: 1, min_depth: 50, max_depth: 600 }]
+};
+function missionErrors(values) {
+  const errors = {};
+  forms.missions.validate(values, errors, { options: missionOptions });
+  return errors;
+}
+assert.deepEqual(
+  missionErrors({ expedition_id: 1, zone_id: 1, start_time: "2026-10-22 23:05:35", end_time: "2026-10-29 23:05:48", depth_target: 500, status: "Planned" }),
+  {
+    end_time: "End time must be blank when status is Planned",
+    start_time: "Start time must fall within the expedition date range 2025-11-03 to 2025-11-28"
+  }
+);
+assert.deepEqual(
+  missionErrors({ expedition_id: 1, zone_id: 1, start_time: "2025-11-10 08:00:00", end_time: null, depth_target: 500, status: "Completed" }),
+  { end_time: "End time is required when status is Completed" }
+);
+assert.deepEqual(
+  missionErrors({ expedition_id: 1, zone_id: 1, start_time: "2025-11-10 08:00:00", end_time: null, depth_target: 601, status: "In Progress" }),
+  { depth_target: "Target depth must be between 50 and 600 for the selected marine zone" }
 );
 
 console.log("Phase 1 frontend checks passed");

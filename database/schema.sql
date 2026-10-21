@@ -285,6 +285,10 @@ CREATE TABLE mission (
     CONSTRAINT pk_mission            PRIMARY KEY (mission_id),
     -- end_time may be NULL while a mission is still running.
     CONSTRAINT chk_mission_times     CHECK (end_time IS NULL OR end_time > start_time),
+    CONSTRAINT chk_mission_status_end CHECK (
+        (status IN ('Planned', 'In Progress') AND end_time IS NULL)
+        OR (status IN ('Completed', 'Aborted') AND end_time IS NOT NULL)
+    ),
     CONSTRAINT chk_mission_depth     CHECK (depth_target >= 0),
     CONSTRAINT chk_mission_status    CHECK (status IN ('Planned', 'In Progress', 'Completed', 'Aborted')),
 

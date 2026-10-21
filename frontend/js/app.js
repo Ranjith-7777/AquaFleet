@@ -738,7 +738,17 @@
     refreshNotifications();
   }
 
-  async function mutationComplete(key,message){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");refreshNotifications();}}
+  async function mutationComplete(key,message){
+    if(state.currentView==="dashboard"&&key==="missions"){
+      await renderDashboard();
+      Ui.showAlert("success",message||"Operation completed successfully");
+      refreshNotifications();
+    }else if(state.currentResource===key){
+      if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);
+      Ui.showAlert("success",message||"Operation completed successfully");
+      refreshNotifications();
+    }
+  }
   async function refreshIfCurrent(key){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);}}
 
   function initializeNavigation() {

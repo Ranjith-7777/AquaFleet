@@ -81,7 +81,7 @@ const Ui = {
   },
   clearElement(node) { while (node.firstChild) node.removeChild(node.firstChild); },
   setPageHeader(title, subtitle) { ids["page-title"].textContent = title; ids["page-subtitle"].textContent = subtitle; },
-  clearAlerts() {}, renderLoading(node) { Ui.clearElement(node); },
+  clearAlerts() {}, showAlert(type, message) { ids["alert-region"].textContent = type + ":" + message; }, renderLoading(node) { Ui.clearElement(node); },
   setButtonPending(node, pending) { node.disabled = pending; },
   nullableText(value, fallback = "—") { return value == null || value === "" ? fallback : String(value); },
   formatDate(value) { return value || "—"; }, formatDateTime(value) { return value || "—"; },
@@ -119,6 +119,10 @@ vm.runInContext(fs.readFileSync(path.join(frontend, "js", "app.js"), "utf8"), co
   view.listeners.click();
   assert.equal(opened.title, "Mission Details");
   assert.equal(opened.footer, null);
+  const missionRequests = requests.filter(url => url === "/api/missions").length;
+  await window.AquaFleetApp.mutationComplete("missions", "Mission updated successfully");
+  assert.equal(requests.filter(url => url === "/api/missions").length, missionRequests + 1);
+  assert.match(ids["alert-region"].textContent, /Mission updated successfully/);
   const before = requests.length;
   window.AquaFleetApp.getState().searchQuery = "reef";
   assert.equal(requests.length, before);
