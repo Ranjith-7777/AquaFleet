@@ -1,0 +1,48 @@
+/* Responsive rules for the shared workspace layout.  Text sizes are never
+   reduced to fit: narrow screens reflow or scroll internally instead. */
+@media (max-width: 1500px) {
+  .ws-kpis { gap: 12px; }
+  .ws-layout { grid-template-columns: minmax(0, 2.75fr) minmax(300px, 1fr); }
+}
+@media (max-width: 1200px) {
+  .ws-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ws-layout { grid-template-columns: 1fr; }
+  .ws-register { min-height: 420px; }
+  .ws-detail { min-height: 450px; }
+  .ws-detail-body { overflow: visible; }
+}
+/* Short desktop screens (1366x768): tighten vertical spacing only. */
+@media (max-height: 800px) and (min-width: 1201px) {
+  .ws-kpi-note { margin-bottom: 4px; }
+  .ws-register-top { padding-top: 12px; padding-bottom: 10px; }
+  .ws-detail-head { padding-top: 12px; }
+  .ws-detail-body { padding-bottom: 6px; }
+  .ws-facts { margin-top: 10px; }
+  .ws-fact { padding: 8px 12px; }
+  .ws-fact-wide { margin-top: 6px; }
+  .ws-section-label { margin-top: 12px; }
+  .ws-linked-row { padding: 6px 8px; }
+  .ws-detail-footer { padding-bottom: 10px; }
+  .ws-detail-actions { padding-top: 10px; }
+}
+@media (max-width: 767.98px) {
+  .ws-tabs { max-width: 100%; overflow: auto; }
+  .ws-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ws-kpi-icon { display: none; }
+  .ws-filters { max-width: 100%; overflow: auto; }
+  .ws-register-top { padding-inline: 14px; }
+  .ws-detail-footer { padding-inline: 14px; }
+}
+@media (max-width: 430px) {
+  .ws-kpis { grid-template-columns: 1fr 1fr; }
+  .ws-kpi-value { font-size: 26px; }
+  .ws-kpi-note { white-space: normal; }
+  .ws-record-meta { display: none; }
+  .ws-add-button { padding-inline: 14px; }
+  .ws-add-button span:last-child { font-size: 0; }
+  .ws-add-button span:first-child { font-size: 20px; }
+  .ws-detail-actions { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-view .ws-add-button, .workspace-view .ws-table-row { transition: none; }
+}

@@ -1,4 +1,4 @@
-/* Declarative read-only configuration for every direct AquaFleet API resource. */
+/* Declarative table/detail configuration for every direct AquaFleet resource. */
 (function exposeAquaFleetResources(global) {
   "use strict";
 

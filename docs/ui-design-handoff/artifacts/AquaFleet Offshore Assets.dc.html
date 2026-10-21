@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#e9eff5;font-family:Manrope,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1c6f93;text-decoration:none}a:hover{color:#0e4f6c}
+@keyframes afIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes afGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#c7d8e2;border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+main::-webkit-scrollbar{width:0;height:0}
+main{scrollbar-width:none}
+</style>
+</helmet>
+<div style="display:flex;width:100%;min-height:100vh;height:100vh;background:#e9eff5;overflow:hidden;color:#173544">
+
+  <nav style="position:relative;z-index:3;display:flex;flex:0 0 100px;min-height:0;flex-direction:column;align-items:center;padding:clamp(12px,2.4vh,26px) 0 clamp(12px,2.2vh,24px);background:linear-gradient(180deg,#071d2c 0%,#0b2b3a 100%);border-radius:0;box-shadow:10px 0 30px rgba(8,39,57,.16)">
+    <a href="AquaFleet Dashboard.dc.html" title="AquaFleet" style="display:grid;flex:0 0 auto;width:52px;height:52px;place-items:center;border:1px solid rgba(123,203,222,.38);border-radius:16px;background:#0c3545;color:#a8e2ed;font-family:Manrope,sans-serif;font-size:26px;font-weight:700;line-height:1;text-decoration:none">≈</a>
+
+    <div style="display:flex;flex:1 1 auto;min-height:0;flex-direction:column;justify-content:center;align-items:center;gap:clamp(8px,2.2vh,26px);width:100%;position:relative;overflow:visible">
+      <a href="AquaFleet Dashboard.dc.html" title="Dashboard" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">⌁</a>
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:56px">
+        <div style="position:absolute;left:0;right:0;top:0;bottom:0;background:#fff;border-radius:0;box-shadow:none"></div>
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#54c3e0"></div>
+        <span style="position:relative;display:grid;place-items:center;width:100%;height:56px;color:#12637f;font-size:24px;font-weight:700;line-height:1">◇</span>
+      </div>
+      <a href="AquaFleet Missions.dc.html" title="Missions" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◎</a>
+      <a href="AquaFleet Expeditions.dc.html" title="Expeditions" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">⊞</a>
+      <a href="AquaFleet Vehicles.dc.html" title="Vehicles" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◉</a>
+      <a href="AquaFleet Reports.dc.html" title="Reports" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">▤</a>
+    </div>
+
+    <div style="display:flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:clamp(8px,1.6vh,14px);padding-top:10px">
+      <div style="display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(140,216,232,.26);border-radius:15px;background:#124257;color:#cfeaf2;font-size:12px;font-weight:800;letter-spacing:.04em">TU</div>
+      <div title="Database connected" style="display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(140,216,232,.23);border-radius:15px;background:#10394d">
+        <span style="display:block;width:9px;height:9px;border-radius:50%;background:#4ac780;box-shadow:0 0 0 5px rgba(74,199,128,.14)"></span>
+      </div>
+    </div>
+  </nav><main style="position:relative;z-index:1;flex:1;min-width:0;margin:0 0 0 -100px;padding:22px 24px 24px 126px;background:#e9eff5;border-radius:0;box-shadow:inset 0 0 0 1px rgba(23,53,68,.04);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:14px">
+
+    <header data-af-header="1" style="position:relative;flex:0 0 auto;min-height:126px;margin:-22px -24px 4px -126px;box-sizing:border-box;width:auto;display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:18px 30px 18px 148px;border-radius:0;background:linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%);box-shadow:0 12px 30px rgba(17,91,135,.22);overflow:hidden;animation:afIn .5s ease both;align-self:stretch">
+      <div style="position:absolute;top:-104px;right:26%;width:240px;height:240px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03);pointer-events:none"></div>
+      <div style="position:relative;min-width:0;flex:1 1 320px">
+        <p style="margin:0 0 2px;color:#d4eef3;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;font-weight:500;letter-spacing:.11em;text-transform:uppercase">AquaFleet Command · Fleet &amp; Crew</p>
+        <h1 style="margin:0;color:#fff;font-family:Sora,Manrope,sans-serif;font-size:36px;font-weight:700;letter-spacing:-.045em;line-height:1.05">Offshore Assets</h1>
+        <p style="margin:6px 0 0;color:#e2f4f8;font-size:12.5px;font-weight:500">Offshore infrastructure targeted by inspection tasks, with recorded positions.</p>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:10px;width:300px;height:48px;padding:0 18px;border-radius:999px;background:#fff;box-shadow:0 8px 20px rgba(6,48,76,.18)">
+          <span style="display:grid;place-items:center;width:18px;height:18px;color:#327f97;font-size:16px;line-height:1">⌕</span>
+          <input type="text" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search assets or types" style="min-width:0;flex:1;border:0;outline:none;background:transparent;color:#193443;font-family:Manrope,sans-serif;font-size:13px;font-weight:500">
+        </label>
+        <div style="display:flex;flex-direction:column;gap:2px;color:#cde8ef;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">
+          <span>Records</span>
+          <strong style="color:#fff;font-size:11px;letter-spacing:.02em;white-space:nowrap">{{ totalLabel }}</strong>
+        </div>
+        <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid rgba(255,255,255,.67);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background 170ms ease,color 170ms ease,transform 170ms ease" style-hover="background:#f0fbfd;color:#0c526f;border-color:#fff;transform:translateY(-2px)"><span style="font-size:16px;font-weight:500;line-height:1">＋</span>Add Asset</button>
+      </div>
+    </header>
+
+    <nav aria-label="Section pages" style="flex:0 0 auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:0 4px 2px;border-bottom:1px solid #dde6ec;animation:afIn .5s ease .04s both">
+      <a href="AquaFleet Vessels.dc.html" style="padding:0 0 9px;color:#65818e;font-size:12px;font-weight:600" style-hover="color:#12637f">Research Vessels</a>
+      <a href="AquaFleet Marine Zones.dc.html" style="padding:0 0 9px;color:#65818e;font-size:12px;font-weight:600" style-hover="color:#12637f">Marine Zones</a>
+      <span style="position:relative;padding:0 0 9px;color:#12637f;font-size:12px;font-weight:700;box-shadow:inset 0 -2px 0 #2b8fc7">Offshore Assets</span>
+      <a href="AquaFleet Operators.dc.html" style="padding:0 0 9px;color:#65818e;font-size:12px;font-weight:600" style-hover="color:#12637f">Operators</a>
+    </nav>
+
+    <section aria-label="Summary" style="flex:0 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px">
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease 0.06s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e7f4f9;color:#1c7595;font-size:20px;line-height:1">▣</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Registered Assets</p>
+          <strong style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">4</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">4 distinct asset types</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#2b8fc7,#54c3e0);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) 0.30s both"></i></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease 0.12s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e6f5f1;color:#1f7f72;font-size:20px;line-height:1">⌖</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Inspection Tasks</p>
+          <strong style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">7</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">Across all assets</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#258f89,#5cc6ae);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) 0.36s both"></i></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease 0.18s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e8f1fb;color:#1a5f97;font-size:20px;line-height:1">!</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Open Inspections</p>
+          <strong style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">2</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">Pending or in progress</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:29%;border-radius:99px;background:linear-gradient(90deg,#1266a5,#4aa7cc);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) 0.42s both"></i></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease 0.24s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#eef2f5;color:#5b7381;font-size:20px;line-height:1">✓</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Completed Inspections</p>
+          <strong style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">4</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">With recorded findings</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:57%;border-radius:99px;background:linear-gradient(90deg,#2b8fc7,#54c3e0);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) 0.48s both"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex:1 1 auto;min-height:320px;gap:14px;flex-wrap:wrap">
+      <article style="display:flex;min-width:520px;min-height:0;flex:3 1 640px;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);overflow:hidden;animation:afIn .5s ease .3s both">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 22px 12px">
+          <h2 style="margin:0;min-width:0;flex:1 1 200px;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Asset Register</h2>
+          <div style="display:flex;align-items:center;gap:6px;padding:3px;border-radius:10px;background:#f1f5f8">
+            <sc-for list="{{ filters }}" as="filter" hint-placeholder-count="3">
+              <button type="button" onClick="{{ filter.onPick }}" style="{{ filter.style }}">{{ filter.label }}</button>
+            </sc-for>
+          </div>
+          <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">{{ shownLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:52px minmax(200px,2.2fr) 100px 100px 70px 126px 122px;gap:12px;align-items:center;padding:8px 22px;border-top:1px solid #eef2f5;border-bottom:1px solid #eef2f5;background:#fafcfd;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">
+          <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ID</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Asset</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Latitude</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Longitude</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">Tasks</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Status</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right">Actions</span>
+        </div>
+
+        <div style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 10px 10px">
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="6">
+            <div onClick="{{ row.onPick }}" style="{{ row.rowStyle }}" style-hover="background:#f3f8fb">
+              <span style="color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10.5px">{{ row.c0 }}</span>
+              <div style="min-width:0">
+                <strong style="display:block;overflow:hidden;color:#193949;font-size:13.5px;font-weight:700;text-overflow:ellipsis;white-space:nowrap">{{ row.c1 }}</strong>
+                <small style="display:block;overflow:hidden;color:#718996;font-size:10.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap">{{ row.s1 }}</small>
+              </div>
+              <span style="min-width:0;overflow:hidden;color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;text-overflow:ellipsis;white-space:nowrap">{{ row.c2 }}</span>
+              <span style="min-width:0;overflow:hidden;color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;text-overflow:ellipsis;white-space:nowrap">{{ row.c3 }}</span>
+              <span style="color:#254a59;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;text-align:right">{{ row.c4 }}</span>
+              <span style="{{ row.p5 }}">{{ row.c5 }}</span>
+              <span style="display:flex;justify-content:flex-end;gap:10px">
+                <a href="#" style="color:#1c7595;font-size:11.5px;font-weight:700">View</a>
+                <a href="#" style="color:#1c7595;font-size:11.5px;font-weight:700">Edit</a>
+                <a href="#" style="color:#a9564d;font-size:11.5px;font-weight:700">Delete</a>
+              </span>
+            </div>
+            <div style="height:1px;margin:0 12px;background:#eef2f5"></div>
+          </sc-for>
+          <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;place-items:center;gap:6px;padding:46px 20px;text-align:center">
+              <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#eef4f8;color:#8aa3ad;font-size:19px">⌕</span>
+              <strong style="color:#254a59;font-size:13px;font-weight:700">No matching records</strong>
+              <small style="color:#718996;font-size:11px">Adjust the search or filter to see assets.</small>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 22px;border-top:1px solid #eef2f5">
+          <span style="min-width:0;flex:1;color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">{{ pageLabel }}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button type="button" style="display:grid;place-items:center;width:30px;height:30px;border:1px solid #e2e9ee;border-radius:9px;background:#fff;color:#5f7f8c;font-size:13px;cursor:pointer" style-hover="border-color:#b9d3df;color:#1c7595">‹</button>
+            <span style="display:grid;place-items:center;min-width:30px;height:30px;padding:0 9px;border-radius:9px;background:#e5f3fa;color:#16617e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;font-weight:500">1</span>
+            <button type="button" style="display:grid;place-items:center;width:30px;height:30px;border:1px solid #e2e9ee;border-radius:9px;background:#fff;color:#5f7f8c;font-size:13px;cursor:pointer" style-hover="border-color:#b9d3df;color:#1c7595">›</button>
+          </div>
+        </div>
+      </article>
+
+      <article style="{{ detailStyle }}">
+        <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 10px">
+          <h2 style="margin:0;min-width:0;flex:1;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Asset Detail</h2>
+          <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">{{ detail.ref }}</span>
+        </div>
+        <div style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 22px 18px">
+          <strong style="display:block;color:#193949;font-family:Sora,Manrope,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.03em">{{ detail.title }}</strong>
+          <p style="margin:3px 0 12px;color:#718996;font-size:11px;font-weight:500">{{ detail.sub }}</p>
+          <span style="{{ detail.pillStyle }}">{{ detail.status }}</span>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px">
+            <div style="padding:11px 12px;border-radius:10px;background:#f6f9fb">
+              <p style="margin:0 0 3px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Inspection Tasks</p>
+              <strong style="color:#183e50;font-family:Sora,Manrope,sans-serif;font-size:16px;font-weight:700">{{ detail.tasks }}</strong>
+            </div>
+            <div style="padding:11px 12px;border-radius:10px;background:#f6f9fb">
+              <p style="margin:0 0 3px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Open Tasks</p>
+              <strong style="color:#183e50;font-family:Sora,Manrope,sans-serif;font-size:16px;font-weight:700">{{ detail.open }}</strong>
+            </div>
+          </div>
+
+          <div style="margin-top:8px;padding:11px 12px;border-radius:10px;background:#f6f9fb">
+            <p style="margin:0 0 3px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Latitude</p>
+            <strong style="color:#183e50;font-size:12.5px;font-weight:700">{{ detail.lat }}</strong>
+          </div>
+          <div style="margin-top:8px;padding:11px 12px;border-radius:10px;background:#f6f9fb">
+            <p style="margin:0 0 3px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Longitude</p>
+            <strong style="color:#183e50;font-size:12.5px;font-weight:700">{{ detail.lon }}</strong>
+          </div>
+
+          <p style="margin:18px 0 8px;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Inspection tasks</p>
+          <sc-for list="{{ detail.linked }}" as="item" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+              <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12px;font-weight:700">{{ item.title }}</strong><small style="color:#718996;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px">{{ item.dates }}</small></div>
+              <span style="{{ item.pillStyle }}">{{ item.status }}</span>
+            </div>
+          </sc-for>
+
+          <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #eef2f5">
+            <button type="button" style="flex:1;height:38px;border:0;border-radius:10px;background:#1266a5;color:#fff;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background 160ms ease" style-hover="background:#0e527e">Edit Asset</button>
+            <button type="button" style="flex:0 0 auto;height:38px;padding:0 16px;border:1px solid #e6dcda;border-radius:10px;background:#fff;color:#a9564d;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background 160ms ease" style-hover="background:#fdf4f3">Delete</button>
+          </div>
+          <p style="margin:9px 0 0;color:#8296a0;font-size:10px;font-weight:500">Assets with inspection tasks cannot be deleted.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;headerFrom&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#1266a5&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#1266a5&quot;,&quot;#0e527e&quot;,&quot;#12607f&quot;,&quot;#1b4f8f&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;headerTo&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#54c3e0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#54c3e0&quot;,&quot;#4aa7cc&quot;,&quot;#63d6cf&quot;,&quot;#7fd0ef&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;showDetailPanel&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Comfortable&quot;,&quot;options&quot;:[&quot;Comfortable&quot;,&quot;Compact&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+const PILL_BASE = "display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap";
+const TONE = {
+  green: "background:#e8f5ee;color:#25795a",
+  blue: "background:#e5f3fa;color:#16617e",
+  amber: "background:#fbf2e2;color:#8a6224",
+  red: "background:#fdeceb;color:#a9453c",
+  grey: "background:#eef2f5;color:#5b7381"
+};
+const TONE_OF = {"Completed":"green","Active":"green","Available":"green","Low":"green","Surveyed":"green","Assigned":"green","Good":"green","Excellent":"green","In Progress":"blue","Deployed":"blue","On Mission":"blue","Moderate":"amber","Medium":"amber","Pending":"amber","Inspection Due":"amber","Fair":"amber","Maintenance":"amber","High":"red","Critical":"red","Urgent":"red","Replace":"red","Planned":"grey","Cancelled":"grey","Retired":"grey","None":"grey"};
+const SMALL_BASE = "padding:4px 10px;border-radius:999px;font-size:9.5px;font-weight:700;white-space:nowrap";
+const COLS = [{"key":"id","sub":null,"type":"id"},{"key":"asset","sub":"type","type":"primary"},{"key":"lat","sub":null,"type":"mono"},{"key":"lon","sub":null,"type":"mono"},{"key":"tasks","sub":null,"type":"num"},{"key":"status","sub":null,"type":"pill"},{"key":null,"sub":null,"type":"actions"}];
+const DATA = [{"id":"01","asset":"Mumbai High North Platform","type":"Production Platform","lat":"19.451200","lon":"71.312400","tasks":"1","open":"0","status":"Surveyed","linked":[{"title":"Platform Leg Cathodic Protection Check","dates":"Low priority","status":"Cancelled"}]},{"id":"02","asset":"KG-D6 Subsea Manifold","type":"Subsea Manifold","lat":"16.312500","lon":"82.145600","tasks":"2","open":"0","status":"Surveyed","linked":[{"title":"Subsea Manifold Structural Scan","dates":"High priority","status":"Completed"},{"title":"Sacrificial Anode Depletion Survey","dates":"Medium priority","status":"Completed"}]},{"id":"03","asset":"Kochi LNG Terminal Jetty","type":"LNG Terminal Jetty","lat":"9.965400","lon":"76.243100","tasks":"2","open":"2","status":"Inspection Due","linked":[{"title":"LNG Jetty Pile Corrosion Inspection","dates":"Urgent priority","status":"Pending"},{"title":"Scour Survey at Jetty Foundation","dates":"High priority","status":"In Progress"}]},{"id":"04","asset":"Andaman Submarine Cable Segment A","type":"Submarine Cable","lat":"11.623400","lon":"92.712900","tasks":"2","open":"0","status":"Surveyed","linked":[{"title":"Visual Cable Route Survey","dates":"Medium priority","status":"Completed"},{"title":"Cable Burial Depth Verification","dates":"Low priority","status":"Completed"}]}];
+const FILTERS = ["All","Surveyed","Inspection Due"];
+const FILTER_KEY = "status";
+const DETAIL = {"title":"Asset Detail","refKey":"id","titleKey":"asset","subKey":"type","statusKey":"status","stats":[["Inspection Tasks","tasks"],["Open Tasks","open"]],"fields":[["Latitude","lat"],["Longitude","lon"]],"linkedLabel":"Inspection tasks","emptyLinked":"No inspection tasks recorded","editLabel":"Edit Asset","note":"Assets with inspection tasks cannot be deleted."};
+const pill = (v, base) => (base || PILL_BASE) + ";" + (TONE[TONE_OF[v]] || TONE.grey);
+
+class Component extends DCLogic {
+  state = { query: "", filter: "All", selected: 0 };
+
+  componentDidMount() {
+    const header = document.querySelector("[data-af-header]");
+    if (header && this.props.headerFrom && this.props.headerTo) {
+      header.style.background = "linear-gradient(100deg," + this.props.headerFrom + " 0%," + this.props.headerTo + " 100%)";
+    }
+  }
+
+  matches(r) {
+    const q = this.state.query.trim().toLowerCase();
+    const hay = Object.values(r).filter(v => typeof v === "string" || typeof v === "number").join(" ").toLowerCase();
+    const okQ = !q || hay.includes(q);
+    const okF = !FILTER_KEY || this.state.filter === "All" || String(r[FILTER_KEY]) === this.state.filter;
+    return okQ && okF;
+  }
+
+  renderVals() {
+    const list = DATA.filter(r => this.matches(r));
+    const sel = DATA[this.state.selected] || DATA[0] || {};
+    const compact = this.props.density === "Compact";
+    const showDetail = this.props.showDetailPanel !== false;
+    const out = {
+      query: this.state.query,
+      onQuery: e => this.setState({ query: e.target.value }),
+      totalLabel: DATA.length + " records",
+      shownLabel: list.length + " of " + DATA.length + " shown",
+      pageLabel: list.length ? "Showing 1–" + list.length + " of " + DATA.length + " records" : "No records to display",
+      isEmpty: list.length === 0,
+      detailStyle: showDetail
+        ? "display:flex;min-width:300px;min-height:0;flex:1 1 320px;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);overflow:hidden;animation:afIn .5s ease .36s both"
+        : "display:none",
+      filters: FILTERS.map(label => ({
+        label,
+        onPick: () => this.setState({ filter: label }),
+        style: "padding:6px 12px;border:0;border-radius:8px;background:" + (this.state.filter === label ? "#fff" : "transparent") +
+          ";color:" + (this.state.filter === label ? "#12637f" : "#5f7f8c") +
+          ";font-family:Manrope,sans-serif;font-size:11px;font-weight:700;cursor:pointer;box-shadow:" +
+          (this.state.filter === label ? "0 2px 6px rgba(23,53,68,.10)" : "none")
+      })),
+      rows: list.map(r => {
+        const idx = DATA.indexOf(r);
+        const row = {
+          onPick: () => this.setState({ selected: idx }),
+          rowStyle: "display:grid;grid-template-columns:52px minmax(200px,2.2fr) 100px 100px 70px 126px 122px;gap:12px;align-items:center;padding:" +
+            (compact ? "7px 12px" : "11px 12px") + ";border-radius:10px;cursor:pointer;transition:background 150ms ease;background:" +
+            (idx === this.state.selected ? "#f1f9fc;box-shadow:inset 3px 0 0 #54c3e0" : "transparent")
+        };
+        COLS.forEach((c, i) => {
+          row["c" + i] = c.key ? r[c.key] : "";
+          if (c.sub) row["s" + i] = r[c.sub];
+          if (c.type === "pill") row["p" + i] = pill(r[c.key]);
+        });
+        return row;
+      }),
+      detail: {
+        ref: sel[DETAIL.refKey] != null ? "#" + sel[DETAIL.refKey] : "—",
+        title: sel[DETAIL.titleKey],
+        sub: sel[DETAIL.subKey],
+        status: sel[DETAIL.statusKey],
+        pillStyle: pill(sel[DETAIL.statusKey]),
+        linked: (sel.linked && sel.linked.length ? sel.linked : [{ title: DETAIL.emptyLinked, dates: "", status: "None" }])
+          .map(l => ({ ...l, pillStyle: pill(l.status, SMALL_BASE) }))
+      }
+    };
+    DETAIL.stats.forEach(s => { out.detail[s[1]] = sel[s[1]]; });
+    DETAIL.fields.forEach(f => { out.detail[f[1]] = sel[f[1]]; });
+    return out;
+  }
+}
+</script>
+</body>
+</html>

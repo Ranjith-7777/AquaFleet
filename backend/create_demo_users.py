@@ -3,7 +3,7 @@ create_demo_users.py
 --------------------
 LOCAL ACADEMIC DEMONSTRATION SETUP - run by hand, never by the application.
 
-Creates the two AquaFleet demonstration login accounts in the `app_user`
+Creates the four AquaFleet demonstration login accounts in the `app_user`
 table. Flask does NOT import or execute this file; it exists so a marker or a
 teammate can bring up a working login on a fresh database with one command:
 
@@ -12,15 +12,21 @@ teammate can bring up a working login on a fresh database with one command:
 The script is idempotent. Running it repeatedly is safe: an account is created
 only when its username is not already present, and an existing account is left
 exactly as it is - its password is never reset and its is_active flag is never
-flipped. Nothing is deleted.
+flipped. Nothing is deleted. For a deliberate local faculty-demo reset, use:
 
-WHY THE PASSWORDS LIVE HERE AND NOWHERE ELSE
---------------------------------------------
-These plaintext values are deliberately confined to this one setup file. They
-are not in schema.sql, not in sample_data.sql and not in any frontend file, so
-neither the database dump nor the shipped browser code ever contains a
-password. What reaches the database is a werkzeug hash (scrypt by default),
-which is one-way: the stored value cannot be turned back into the password.
+    python create_demo_users.py --reset
+
+That explicit option resets only the four usernames listed in DEMO_USERS to
+their documented coursework passwords, canonical roles, names and active
+state. It never touches any other account.
+
+WHERE THE COURSEWORK PASSWORDS LIVE
+-----------------------------------
+These plaintext values are deliberately confined to local setup/documentation.
+They are not in schema.sql, sample_data.sql or any frontend file, so neither
+the database bootstrap nor shipped browser code contains a password. What
+reaches the database is a werkzeug hash (scrypt by default), which is one-way:
+the stored value cannot be turned back into the password.
 
 These are throwaway credentials for a local coursework deployment. Change them
 before running this anywhere that is reachable by anyone else.
@@ -46,6 +52,18 @@ DEMO_USERS = (
         "password": "AquaResearch@2026",
         "full_name": "Marine Researcher",
         "role": "RESEARCHER",
+    },
+    {
+        "username": "operator",
+        "password": "AquaOperator@2026",
+        "full_name": "Fleet Operations Officer",
+        "role": "OPERATOR",
+    },
+    {
+        "username": "viewer",
+        "password": "AquaViewer@2026",
+        "full_name": "AquaFleet Viewer",
+        "role": "VIEWER",
     },
 )
 
@@ -79,7 +97,27 @@ def insert_user(cursor, user):
     )
 
 
-def main():
+def reset_user(cursor, user):
+    """Reset one named coursework account without exposing its hash."""
+    cursor.execute(
+        """
+        UPDATE app_user
+           SET password_hash = %s,
+               full_name = %s,
+               role = %s,
+               is_active = TRUE
+         WHERE username = %s
+        """,
+        (
+            generate_password_hash(user["password"]),
+            user["full_name"],
+            user["role"],
+            user["username"],
+        )
+    )
+
+
+def main(reset=False):
     """Create any missing demonstration account. Returns a process exit code."""
     connection = None
     cursor = None
@@ -100,13 +138,22 @@ def main():
         )
         if cursor.fetchone()["present"] == 0:
             connection.rollback()
-            print("app_user table not found. Run database/schema.sql first.")
+            print(
+                "app_user table not found. Initialize the database with "
+                "manage_database.py first."
+            )
             return 1
 
         created = 0
+        reset_count = 0
         for user in DEMO_USERS:
             if username_exists(cursor, user["username"]):
-                print(f"  exists  : {user['username']} ({user['role']}) - left unchanged")
+                if reset:
+                    reset_user(cursor, user)
+                    reset_count += 1
+                    print(f"  reset   : {user['username']} ({user['role']})")
+                else:
+                    print(f"  exists  : {user['username']} ({user['role']}) - left unchanged")
                 continue
             insert_user(cursor, user)
             created += 1
@@ -114,8 +161,9 @@ def main():
 
         # Commit once, after every account has been handled.
         connection.commit()
+        unchanged = len(DEMO_USERS) - created - reset_count
         print(f"\nDone. {created} account(s) created, "
-              f"{len(DEMO_USERS) - created} already present.")
+              f"{reset_count} reset, {unchanged} left unchanged.")
         print("Passwords are stored only as one-way hashes.")
         return 0
 
@@ -147,4 +195,8 @@ def main():
 if __name__ == "__main__":
     print("AquaFleet demonstration accounts")
     print("--------------------------------")
-    sys.exit(main())
+    arguments = sys.argv[1:]
+    if any(argument != "--reset" for argument in arguments) or arguments.count("--reset") > 1:
+        print("Usage: python create_demo_users.py [--reset]")
+        sys.exit(2)
+    sys.exit(main(reset="--reset" in arguments))

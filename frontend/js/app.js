@@ -1,4 +1,4 @@
-/* AquaFleet read-only SPA coordinator for dashboard and resource views. */
+/* AquaFleet SPA coordinator for dashboard, resources and role-aware CRUD. */
 (function initializeAquaFleetApp(global) {
   "use strict";
 
@@ -6,6 +6,8 @@
   const Ui = global.AquaFleetUi;
   const Resources = global.AquaFleetResources;
   const Master = global.AquaFleetMasterData;
+  const Reports = global.AquaFleetReports;
+  const Workspace = global.AquaFleetWorkspace;
   const dashboardMetrics = [
     ["vessels", "Research Vessels"], ["vehicles", "AUV/ROV Vehicles"],
     ["expeditions", "Expeditions"], ["missions", "Missions"],
@@ -23,7 +25,7 @@
     /* The dashboard's mission list, kept so the Mission Activity panel can
        be re-filtered on keystroke without another API call. KPI cards are
        computed from this same full list and never from the filtered view. */
-    missions: []
+    missions: [], missionsAvailable: true
   };
 
   /* =====================================================================
@@ -121,6 +123,8 @@
   /* Re-render the current screen from data already in state. Never fetches. */
   function reapplySearch() {
     if (state.currentView === "dashboard") { renderMissionActivity(); return; }
+    if (state.currentView === "reports") { Reports.setQuery(state.searchQuery); return; }
+    if (Workspace.has(state.currentView)) { Workspace.setQuery(state.searchQuery); return; }
     const config = Resources.byKey[state.currentResource];
     if (config && !state.loading) renderTable(config, state.rows, state.totalCount);
   }
@@ -186,6 +190,12 @@
       if (active) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");
     });
+    /* A group button (e.g. Master Data) is active while a page inside its
+       flyout is showing. */
+    document.querySelectorAll("[data-nav-group]").forEach(function group(button) {
+      const menu = button.closest(".nav-group");
+      button.classList.toggle("active", Boolean(menu && menu.querySelector('[data-view="' + view + '"]')));
+    });
   }
 
   function closeMobileNavigation() {
@@ -237,7 +247,7 @@
 
   function setResourceActions(config, refresh) {
     const actions = document.getElementById("page-actions"); Ui.clearElement(actions);
-    if (Master.isCrud(config.key)) {
+    if (Master.can(config.key, "create")) {
       const add = Ui.element("button", {className:"btn btn-primary btn-sm primary-action",text:"Add "+config.form.label,attributes:{type:"button"}});
       add.addEventListener("click",()=>Master.openCreate(config.key)); actions.appendChild(add);
     }
@@ -257,8 +267,8 @@
     state.health = "checking"; state.databaseHealth = "checking";
     setHealthIndicator("checking");
     const results = await Promise.allSettled([Api.get("/api/health"), Api.get("/api/health/database")]);
-    state.health = results[0].status === "fulfilled" ? "ok" : "offline";
-    state.databaseHealth = results[1].status === "fulfilled" ? "ok" : "error";
+    state.health = results[0].status === "fulfilled" && results[0].value.payload.success !== false ? "ok" : "offline";
+    state.databaseHealth = results[1].status === "fulfilled" && results[1].value.payload.success !== false ? "ok" : "error";
     if (results[1].status === "fulfilled") {
       state.databaseName = results[1].value.payload.database || null;
       state.mysqlVersion = results[1].value.payload.mysql_version || null;
@@ -266,12 +276,45 @@
     setHealthIndicator(healthSummary());
   }
 
-  function metricCard(label, result) {
-    const card = Ui.element("article", { className: "metric-card" + (result.ok ? "" : " metric-unavailable") });
-    card.appendChild(Ui.element("p", { className: "metric-label", text: label }));
-    card.appendChild(Ui.element("p", { className: "metric-value", text: result.ok ? result.count : "Unavailable" }));
-    card.appendChild(Ui.element("p", { className: "metric-note", text: result.ok ? "Current records" : "Could not load this count" }));
+  function dashboardRows(results, key) {
+    const result = results[key];
+    return result && result.status === "fulfilled" && Array.isArray(result.value.data)
+      ? result.value.data : null;
+  }
+
+  function dashboardCount(rows, predicate) {
+    return rows === null ? null : (predicate ? rows.filter(predicate).length : rows.length);
+  }
+
+  function dashboardMetric(label, value, note, icon, ratio) {
+    const card = Ui.element("article", { className: "dashboard-kpi" + (value === null ? " dashboard-unavailable" : "") });
+    card.appendChild(Ui.element("span", { className: "dashboard-kpi-icon", text: icon, attributes: { "aria-hidden": "true" } }));
+    const copy = Ui.element("div", { className: "dashboard-kpi-copy" });
+    copy.appendChild(Ui.element("p", { className: "dashboard-kpi-label", text: label }));
+    const number = Ui.element("strong", { className: "dashboard-kpi-value", text: value === null ? "Unavailable" : "0" });
+    copy.appendChild(number);
+    copy.appendChild(Ui.element("p", { className: "dashboard-kpi-note", text: value === null ? "Data could not be loaded" : note }));
+    copy.appendChild(Ui.element("div", { className: "dashboard-kpi-track", children: [
+      Ui.element("span", { attributes: { style: "--progress:" + (ratio === null ? 0 : Math.round(ratio * 100)) + "%" } })
+    ] }));
+    card.appendChild(copy);
+    if (value !== null) animateNumber(number, value);
     return card;
+  }
+
+  function dashboardHeading(title, meta) {
+    return Ui.element("div", { className: "dashboard-panel-heading", children: [
+      Ui.element("h2", { text: title }),
+      Ui.element("span", { className: "dashboard-panel-meta", text: meta })
+    ] });
+  }
+
+  function dashboardUnavailable(message) {
+    return Ui.element("p", { className: "dashboard-empty", text: message || "Data unavailable. Refresh to try again." });
+  }
+
+  function dashboardBadge(value, category) {
+    return Ui.element("span", { className: "dashboard-badge dashboard-badge-" + category + "-" + String(value || "unknown").toLowerCase().replace(/\s+/g, "-"), text: value || "Unknown" });
   }
 
   function healthDetail(label, value) {
@@ -281,119 +324,215 @@
     return item;
   }
 
-  /* Builds the Mission Activity panel from state.missions, honouring the
-     current query. The KPI cards above it and the summary rail beside it are
-     built from the SAME full state.missions / vehicle list, so a search never
-     moves a headline number. */
+  /* Search replaces this panel only; counts always use the complete API response. */
   function buildMissionActivity() {
-    const config = Resources.byKey.missions;
     const all = state.missions;
-    const rows = filterRows(config, all, state.searchQuery);
+    const rows = filterRows(Resources.byKey.missions, all, state.searchQuery);
     const filtering = Boolean(normalizeText(state.searchQuery));
-
-    const activity = Ui.element("section", {
-      className: "activity-panel",
-      children: [Ui.element("div", {
-        className: "activity-heading",
-        children: [
-          Ui.element("h2", { text: "Mission Activity" }),
-          Ui.element("span", {
-            attributes: { role: "status", "aria-live": "polite" },
-            text: filtering
-              ? rows.length + " of " + all.length + " missions"
-              : all.length + " missions"
-          })
-        ]
-      })]
-    });
-
-    if (all.length && !rows.length) {
+    const activity = Ui.element("section", { className: "dashboard-panel dashboard-operations activity-panel" });
+    activity.appendChild(dashboardHeading("Active Operations",
+      state.missionsAvailable ? (filtering ? rows.length + " of " + all.length + " missions" : all.length + " missions") : "Unavailable"));
+    const list = Ui.element("div", { className: "dashboard-mission-list" });
+    if (!state.missionsAvailable) list.appendChild(dashboardUnavailable("Mission data unavailable. Refresh to try again."));
+    else if (!all.length) list.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No missions recorded." }));
+    else if (!rows.length) {
       const empty = Ui.element("div", { className: "activity-no-match" });
-      empty.appendChild(Ui.element("p", {
-        className: "mb-2", text: "No missions match “" + state.searchQuery + "”."
-      }));
-      const clear = Ui.element("button", {
-        className: "btn btn-outline-primary btn-sm", text: "Clear Search",
-        attributes: { type: "button" }
+      empty.appendChild(Ui.element("p", { text: "No missions match “" + state.searchQuery + "”." }));
+      const clear = Ui.element("button", { className: "btn btn-outline-primary btn-sm", text: "Clear Search", attributes: { type: "button" } });
+      clear.addEventListener("click", function () { clearSearch(true); searchInput().focus(); });
+      empty.appendChild(clear); list.appendChild(empty);
+    } else {
+      rows.forEach(function mission(row, index) {
+        const view = Ui.element("button", { className: "activity-action", text: "View",
+          attributes: { type: "button", "aria-label": "View mission " + row.mission_id } });
+        view.addEventListener("click", function () { showDetails(Resources.byKey.missions, row); });
+        const item = Ui.element("div", { className: "dashboard-mission-row" + (row.status === "In Progress" ? " dashboard-mission-active" : "") });
+        item.appendChild(Ui.element("span", { className: "dashboard-mission-index", text: "#" + (index + 1) }));
+        item.appendChild(Ui.element("div", { className: "dashboard-mission-name", children: [
+          Ui.element("strong", { text: Ui.nullableText(row.mission_type) }),
+          Ui.element("small", { text: Ui.nullableText(row.expedition_title, "Expedition unavailable") })
+        ] }));
+        item.appendChild(Ui.element("span", { className: "dashboard-mission-zone", text: Ui.nullableText(row.zone_name) }));
+        item.appendChild(Ui.element("time", { className: "dashboard-mission-time", text: Ui.formatDateTime(row.start_time) }));
+        item.appendChild(dashboardBadge(row.status, "mission"));
+        item.appendChild(view); list.appendChild(item);
       });
-      clear.addEventListener("click", function onClear() {
-        clearSearch(true);
-        const input = searchInput();
-        if (input) input.focus();
-      });
-      empty.appendChild(clear);
-      activity.appendChild(empty);
-      return activity;
     }
-
-    rows.slice(0, 8).forEach(function mission(row, index) {
-      const view = Ui.element("button", {
-        className: "activity-action", text: "View",
-        attributes: { type: "button", "aria-label": "View mission " + row.mission_id }
-      });
-      view.addEventListener("click", function () { showDetails(config, row); });
-      activity.appendChild(Ui.element("div", {
-        className: "activity-row",
-        children: [
-          Ui.element("span", { className: "activity-tile", text: String(index + 1).padStart(2, "0") }),
-          Ui.element("div", {
-            className: "activity-copy",
-            children: [
-              Ui.element("strong", { text: row.mission_type }),
-              Ui.element("small", { text: (row.expedition_title || "Expedition") + " · " + (row.zone_name || "Marine zone") })
-            ]
-          }),
-          Ui.statusBadge(row.status, "mission"),
-          Ui.element("span", { className: "activity-time", text: Ui.formatDateTime(row.start_time) }),
-          view
-        ]
-      }));
-    });
+    activity.appendChild(list);
     return activity;
   }
 
-  /* Swap only the activity panel, leaving the KPI cards untouched. */
   function renderMissionActivity() {
+    if (global.AquaFleetMotion) global.AquaFleetMotion.settle();   // a search must not replay the dashboard entrance
     const existing = document.querySelector(".activity-panel");
-    if (!existing || !existing.parentNode) return;
-    existing.parentNode.replaceChild(buildMissionActivity(), existing);
+    if (existing && existing.parentNode) existing.parentNode.replaceChild(buildMissionActivity(), existing);
+  }
+
+  function buildFleetPanel(vehicles) {
+    const fleet = Ui.element("section", { className: "dashboard-panel dashboard-fleet" });
+    fleet.appendChild(dashboardHeading("Fleet Availability", vehicles === null ? "Unavailable" :
+      Math.min(3, vehicles.length) + " of " + vehicles.length + " vehicles shown"));
+    if (vehicles === null) { fleet.appendChild(dashboardUnavailable("Vehicle data unavailable.")); return fleet; }
+    const total = vehicles.length;
+    const statuses = [["Available", "#64b8d5"], ["Deployed", "#4988ba"], ["Maintenance", "#cba56c"], ["Retired", "#becbd3"]];
+    const counts = statuses.map(function (entry) { return countBy(vehicles, "status", entry[0]); });
+    const percent = total ? Math.round(counts[0] / total * 100) : 0;
+    let offset = 0;
+    const stops = statuses.map(function (entry, index) {
+      const start = offset; offset += total ? counts[index] / total * 100 : 0;
+      return entry[1] + " " + start + "% " + offset + "%";
+    }).join(", ");
+    const visual = Ui.element("div", { className: "dashboard-fleet-visual" });
+    const ring = Ui.element("div", { className: "dashboard-donut", attributes: {
+      style: "--donut-colors:" + (total ? "conic-gradient(" + stops + ")" : "conic-gradient(#e3ebef 0 100%)"),
+      "aria-label": percent + "% of vehicles available"
+    }, children: [Ui.element("div", { children: [
+      Ui.element("strong", { text: percent + "%" }), Ui.element("small", { text: "available" })
+    ] })] });
+    visual.appendChild(ring);
+    const distribution = Ui.element("div", { className: "dashboard-distribution" });
+    const segments = Ui.element("div", { className: "dashboard-segments", attributes: { "aria-hidden": "true" } });
+    statuses.forEach(function (entry, index) {
+      if (counts[index]) segments.appendChild(Ui.element("span", { attributes: {
+        style: "width:" + (counts[index] / total * 100) + "%;background:" + entry[1]
+      } }));
+    });
+    distribution.appendChild(segments);
+    const legend = Ui.element("div", { className: "dashboard-fleet-legend" });
+    statuses.forEach(function (entry, index) {
+      legend.appendChild(Ui.element("div", { children: [
+        Ui.element("i", { attributes: { style: "background:" + entry[1], "aria-hidden": "true" } }),
+        Ui.element("span", { text: entry[0] }), Ui.element("b", { text: counts[index] })
+      ] }));
+    });
+    distribution.appendChild(legend); visual.appendChild(distribution); fleet.appendChild(visual);
+    const roster = Ui.element("div", { className: "dashboard-vehicle-list" });
+    vehicles.slice(0, 3).forEach(function (row) {
+      roster.appendChild(Ui.element("div", { className: "dashboard-vehicle-row", children: [
+        Ui.element("div", { children: [
+          Ui.element("strong", { text: Ui.nullableText(row.vehicle_name) }),
+          Ui.element("small", { text: [row.vehicle_type, row.model].filter(Boolean).join(" · ") || "Vehicle" })
+        ] }), dashboardBadge(row.status, "vehicle")
+      ] }));
+    });
+    if (!total) roster.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No vehicles recorded." }));
+    fleet.appendChild(roster); return fleet;
+  }
+
+  function buildExpeditionPanel(expeditions) {
+    const panel = Ui.element("section", { className: "dashboard-panel dashboard-expeditions" });
+    panel.appendChild(dashboardHeading("Expedition Programme", "Active and planned"));
+    if (expeditions === null) { panel.appendChild(dashboardUnavailable("Expedition data unavailable.")); return panel; }
+    const list = Ui.element("div", { className: "dashboard-expedition-list" });
+    const current = expeditions.filter(function (row) { return row.status === "Active" || row.status === "Planned"; });
+    current.forEach(function (row) {
+      const item = Ui.element("div", { className: "dashboard-expedition-row" });
+      item.appendChild(Ui.element("div", { className: "dashboard-expedition-name", children: [
+        Ui.element("strong", { text: Ui.nullableText(row.title) }),
+        Ui.element("small", { text: Ui.nullableText(row.vessel_name, "Vessel unavailable") })
+      ] }));
+      const timeline = Ui.element("div", { className: "dashboard-timeline" });
+      timeline.appendChild(Ui.element("div", { className: "dashboard-timeline-line", attributes: { "aria-hidden": "true" } }));
+      timeline.appendChild(Ui.element("div", { className: "dashboard-timeline-dates", children: [
+        Ui.element("time", { text: Ui.formatDate(row.start_date) }),
+        Ui.element("time", { text: Ui.formatDate(row.end_date) })
+      ] }));
+      item.appendChild(timeline);
+      item.appendChild(Ui.element("span", { className: "dashboard-expedition-count", text:
+        row.mission_count == null ? "— missions" : row.mission_count + " missions" }));
+      item.appendChild(dashboardBadge(row.status, "expedition"));
+      list.appendChild(item);
+    });
+    if (!current.length) list.appendChild(Ui.element("p", { className: "dashboard-empty", text: "No active or planned expeditions." }));
+    panel.appendChild(list); return panel;
+  }
+
+  function buildAttentionPanel(data) {
+    const panel = Ui.element("section", { className: "dashboard-panel dashboard-attention" });
+    panel.appendChild(dashboardHeading("Operational Attention", "Recorded conditions"));
+    const groups = [
+      ["High / critical incidents", "Recorded incident severity", "!", data.incidents, row => ["high", "critical"].includes(normalizeText(row.severity)), "incident"],
+      ["Pending / active inspections", "Inspection workflow", "✓", data["inspection-tasks"], row => ["pending", "in progress"].includes(normalizeText(row.status)), "inspection"],
+      ["Vehicles in maintenance", "Current vehicle status", "⚙", data.vehicles, row => normalizeText(row.status) === "maintenance", "maintenance"],
+      ["Battery condition review", "Fair, poor or replace", "▣", data["battery-packs"], row => ["fair", "poor", "replace"].includes(normalizeText(row.health_status)), "battery"]
+    ];
+    const list = Ui.element("div", { className: "dashboard-attention-list" });
+    groups.forEach(function (group) {
+      const value = dashboardCount(group[3], group[4]);
+      list.appendChild(Ui.element("div", { className: "dashboard-attention-row dashboard-attention-" + group[5], children: [
+        Ui.element("span", { className: "dashboard-attention-icon", text: group[2], attributes: { "aria-hidden": "true" } }),
+        Ui.element("div", { children: [Ui.element("strong", { text: group[0] }), Ui.element("small", { text: group[1] })] }),
+        Ui.element("b", { text: value === null ? "—" : value, attributes: { "aria-label": value === null ? group[0] + " unavailable" : group[0] + ": " + value } })
+      ] }));
+    });
+    panel.appendChild(list);
+    const summary = Ui.element("div", { className: "dashboard-system-summary" });
+    const health = healthSummary();
+    summary.appendChild(Ui.element("span", { className: "dashboard-db dashboard-db-" + health,
+      text: health === "connected" ? "Database connected" : state.databaseHealth === "error" || health === "offline" ? "Database unavailable" : "Database degraded" }));
+    summary.appendChild(Ui.element("span", { className: "dashboard-db-name", text: state.databaseName || "AquaFleet database" }));
+    summary.appendChild(Ui.element("span", { text: "Recorded Incidents  " + (data.incidents === null ? "Unavailable" : data.incidents.length) }));
+    summary.appendChild(Ui.element("span", { text: "Scientific Samples  " + (data.samples === null ? "Unavailable" : data.samples.length) }));
+    panel.appendChild(summary); return panel;
   }
 
   async function renderDashboard(button) {
+    refreshNotifications();
     const sequence = ++state.requestSequence;
     state.currentView = "dashboard"; state.currentResource = null; state.rows = []; state.loading = true;
-    Ui.setPageHeader("Dashboard", "Read-only operational summary from existing AquaFleet APIs.");
+    document.body.classList.add("af-auth-shell", "dashboard-view");
+    setEyebrow();
+    const search = searchInput(); if (search) search.disabled = false;
+    Ui.setPageHeader("Dashboard", "Fleet, mission and expedition readiness from the current AquaFleet database state.");
     setSearchPlaceholder("Search missions");
     Ui.clearAlerts(); updateActiveNavigation("dashboard");
     const refresh = makeRefreshButton("Refresh Dashboard", renderDashboard);
-    const pendingButton = button || refresh;
-    setActions(refresh); Ui.setButtonPending(pendingButton, true, "Refreshing…");
-    Ui.renderLoading(document.getElementById("content-panel"), "Loading system health and operational counts…");
-
-    const work = [loadHealth()].concat(dashboardMetrics.map(function loadMetric(item) {
-      return Api.get(Resources.byKey[item[0]].path);
-    }));
+    setActions(refresh);
+    const refreshed = Ui.element("div", { className: "dashboard-refresh-meta", children: [
+      Ui.element("span", { text: "LAST REFRESHED" }),
+      Ui.element("strong", { className: "dashboard-refreshed", text: state.lastRefreshed ? state.lastRefreshed.toLocaleTimeString() : "—" })
+    ] });
+    document.getElementById("page-actions").prepend(refreshed);
+    Ui.setButtonPending(refresh, true, "Refreshing…");
+    Ui.renderLoading(document.getElementById("content-panel"), "Loading AquaFleet operations…");
+    const work = [loadHealth()].concat(dashboardMetrics.map(function (item) { return Api.get(Resources.byKey[item[0]].path); }));
     const results = await Promise.allSettled(work);
     if (sequence !== state.requestSequence || state.currentView !== "dashboard") return;
-
     state.loading = false; state.lastRefreshed = new Date();
-    const payloads = {}; dashboardMetrics.forEach(function map(item, index) { payloads[item[0]] = results[index + 1].status === "fulfilled" ? results[index + 1].value : { data: [], payload: { count: 0 } }; });
-    const missions = payloads.missions.data || [], vehicles = payloads.vehicles.data || [];
-    /* Stored so a keystroke can re-filter the activity list with no refetch. */
-    state.missions = missions;
-    const panel = document.getElementById("content-panel"); Ui.clearElement(panel); panel.setAttribute("aria-busy", "false");
-    const top = Ui.element("div", { className: "dashboard-top" });
-    const active = countBy(missions, "status", "In Progress");
-    const primary = Ui.element("article", { className: "operations-card", children: [Ui.element("p", { className: "card-kicker", text: "Active Marine Operations" }), Ui.element("strong", { className: "operations-value", text: "0" }), Ui.element("p", { className: "operations-caption", text: "Missions currently underway" }), Ui.element("div", { className: "wave-motif", attributes: { "aria-hidden": "true" } }), Ui.element("div", { className: "operations-breakdown", children: [Ui.element("span", { children: [Ui.element("small", { text: "Planned" }), Ui.element("b", { text: countBy(missions, "status", "Planned") })] }), Ui.element("span", { children: [Ui.element("small", { text: "Completed" }), Ui.element("b", { text: countBy(missions, "status", "Completed") })] }), Ui.element("span", { children: [Ui.element("small", { text: "Total" }), Ui.element("b", { text: missions.length })] })] })] });
-    animateNumber(primary.querySelector(".operations-value"), active); top.appendChild(primary);
-    const available = countBy(vehicles, "status", "Available"), deployed = countBy(vehicles, "status", "Deployed"), maintenance = countBy(vehicles, "status", "Maintenance"), retired = countBy(vehicles, "status", "Retired");
-    const readiness = vehicles.length ? Math.round(available / vehicles.length * 100) : 0;
-    const fleet = Ui.element("article", { className: "fleet-card", children: [Ui.element("div", { className: "card-heading", children: [Ui.element("div", { children: [Ui.element("p", { className: "card-kicker", text: "Fleet readiness" }), Ui.element("h2", { text: "Vehicle status" })] }), Ui.element("span", { text: "Live" })] }), Ui.element("div", { className: "fleet-body", children: [Ui.element("div", { className: "readiness-ring", attributes: { style: "--ready:" + readiness * 3.6 + "deg" }, children: [Ui.element("strong", { text: readiness + "%" }), Ui.element("small", { text: "available" })] }), Ui.element("div", { className: "fleet-legend", children: [["Available", available], ["Deployed", deployed], ["Maintenance", maintenance], ["Retired", retired]].map(function legend(item) { return Ui.element("div", { children: [Ui.element("i"), Ui.element("span", { text: item[0] }), Ui.element("b", { text: item[1] })] }); }) })] })] }); top.appendChild(fleet); panel.appendChild(top);
-    panel.appendChild(buildMissionActivity());
-    const rail = document.getElementById("context-rail"); Ui.clearElement(rail); rail.appendChild(Ui.element("div", { className: "rail-heading", children: [Ui.element("p", { text: "Operational pulse" }), Ui.element("h2", { text: "Live summary" })] }));
-    rail.appendChild(summaryCard("Open incidents", payloads.incidents.payload.count, "Reported records", "coral")); rail.appendChild(summaryCard("Inspection tasks", payloads["inspection-tasks"].payload.count, "Current workload", "yellow")); rail.appendChild(summaryCard("Samples collected", payloads.samples.payload.count, "Scientific records", "aqua")); rail.appendChild(summaryCard("Battery packs", payloads["battery-packs"] ? payloads["battery-packs"].payload.count : 0, "Fleet energy", "blue"));
-    rail.appendChild(Ui.element("article", { className: "rail-card connection-card", children: [Ui.element("span", { className: "health-dot" }), Ui.element("div", { children: [Ui.element("strong", { text: "Database connected" }), Ui.element("small", { text: state.databaseName || "AquaFleet DB" })] })] }));
-    Ui.setButtonPending(pendingButton, false);
+    const data = {};
+    dashboardMetrics.forEach(function (item, index) { data[item[0]] = dashboardRows(results, index + 1); });
+    state.missionsAvailable = data.missions !== null;
+    state.missions = data.missions || [];
+    const panel = document.getElementById("content-panel");
+    Ui.clearElement(panel); panel.setAttribute("aria-busy", "false");
+    const stamp = document.querySelector(".dashboard-refreshed");
+    if (stamp) stamp.textContent = state.lastRefreshed.toLocaleTimeString();
+    const kpis = Ui.element("div", { className: "dashboard-kpis" });
+    const ratio = function (count, total) { return count === null || total === null ? null : total ? count / total : 0; };
+    const vesselCount = dashboardCount(data.vessels);
+    const expeditionCount = dashboardCount(data.expeditions, row => normalizeText(row.status) === "active");
+    const missionCount = dashboardCount(data.missions, row => normalizeText(row.status) === "in progress");
+    const vehicleCount = dashboardCount(data.vehicles, row => normalizeText(row.status) === "available");
+    kpis.appendChild(dashboardMetric("Research Vessels", vesselCount, "Registered fleet platforms", "⚓", vesselCount === null ? null : 1));
+    kpis.appendChild(dashboardMetric("Active Expeditions", expeditionCount,
+      expeditionCount + " of " + data.expeditions?.length + " programmes active", "✧", ratio(expeditionCount, data.expeditions?.length ?? null)));
+    kpis.appendChild(dashboardMetric("Active Missions", missionCount,
+      missionCount + " of " + data.missions?.length + " missions in progress", "◎", ratio(missionCount, data.missions?.length ?? null)));
+    kpis.appendChild(dashboardMetric("Available Vehicles", vehicleCount,
+      "of " + data.vehicles?.length + " vehicles", "▣", ratio(vehicleCount, data.vehicles?.length ?? null)));
+    const grid = Ui.element("div", { className: "dashboard-grid", children: [
+      buildMissionActivity(), buildFleetPanel(data.vehicles),
+      buildExpeditionPanel(data.expeditions), buildAttentionPanel(data)
+    ] });
+    panel.append(kpis, grid);
+    if (global.AquaFleetMotion) global.AquaFleetMotion.content(panel);
+    Ui.clearElement(document.getElementById("context-rail"));
+    Ui.setButtonPending(refresh, false);
+  }
+
+  function setEyebrow(text) {
+    const node = document.querySelector(".page-eyebrow");
+    if (node) node.textContent = text || "AquaFleet Command";
   }
 
   function keyDisplay(config, row) {
@@ -458,10 +597,15 @@
       });
       view.addEventListener("click", function openDetails() { showDetails(config, row); });
       actions.appendChild(view);
-      if(Master.isCrud(config.key)){
+      if(Master.can(config.key,"update")||Master.can(config.key,"delete")){
+        if(Master.can(config.key,"update")){
         const edit=Ui.element("button",{className:"btn btn-sm btn-outline-secondary",text:"Edit",attributes:{type:"button","aria-label":"Edit "+Master.label(config.key,row)}});
-        const del=Ui.element("button",{className:"btn btn-sm btn-outline-danger",text:"Delete",attributes:{type:"button","aria-label":"Delete "+Master.label(config.key,row)}});
-        edit.addEventListener("click",()=>Master.openEdit(config.key,row));del.addEventListener("click",()=>Master.openDelete(config.key,row));actions.append(edit,del);
+        edit.addEventListener("click",()=>Master.openEdit(config.key,row));actions.appendChild(edit);
+        }
+        if(Master.can(config.key,"delete")){
+          const del=Ui.element("button",{className:"btn btn-sm btn-outline-danger",text:"Delete",attributes:{type:"button","aria-label":"Delete "+Master.label(config.key,row)}});
+          del.addEventListener("click",()=>Master.openDelete(config.key,row));actions.appendChild(del);
+        }
       }
       tr.appendChild(actions); body.appendChild(tr);
     });
@@ -490,7 +634,7 @@
     });
     body.appendChild(list);
     let footer=null;
-    if(Master.isCrud(config.key)){footer=Ui.element("div",{className:"modal-actions"});const close=Ui.element("button",{className:"btn btn-light",text:"Close",attributes:{type:"button","data-bs-dismiss":"modal"}});const edit=Ui.element("button",{className:"btn btn-primary",text:"Edit",attributes:{type:"button"}});edit.addEventListener("click",()=>{Ui.closeModal();setTimeout(()=>Master.openEdit(config.key,row),180);});footer.append(close,edit);}
+    if(Master.can(config.key,"update")){footer=Ui.element("div",{className:"modal-actions"});const close=Ui.element("button",{className:"btn btn-light",text:"Close",attributes:{type:"button","data-bs-dismiss":"modal"}});const edit=Ui.element("button",{className:"btn btn-primary",text:"Edit",attributes:{type:"button"}});edit.addEventListener("click",()=>{Ui.closeModal();setTimeout(()=>Master.openEdit(config.key,row),180);});footer.append(close,edit);}
     Ui.openModal({ title: config.title + " Details", body: body,footer:footer });
   }
 
@@ -502,8 +646,11 @@
   async function renderResource(key, button) {
     const config = Resources.byKey[key];
     if (!config) { renderDashboard(); return; }
+    if (Workspace.has(key)) return renderWorkspaceResource(key);
     const sequence = ++state.requestSequence;
     state.currentView = key; state.currentResource = key; state.rows = []; state.loading = true;
+    document.body.classList.remove("dashboard-view"); setEyebrow();
+    const search = searchInput(); if (search) search.disabled = false;
     Ui.setPageHeader(config.title, config.subtitle); Ui.clearAlerts(); updateActiveNavigation(key);
     /* Refresh and post-CRUD reloads land here with the query intact, so the
        placeholder is set but the query is deliberately NOT cleared. Clearing
@@ -528,17 +675,71 @@
     }
   }
 
+  function renderWorkspaceResource(key) {
+    const page = Workspace.describe(key);
+    ++state.requestSequence;
+    state.currentView = key; state.currentResource = key; state.rows = []; state.loading = false;
+    document.body.classList.add("dashboard-view", "workspace-view");
+        document.body.setAttribute("data-workspace", key);
+    const search = searchInput(); if (search) search.disabled = false;
+    Ui.setPageHeader(page.title, page.subtitle);
+    /* The eyebrow names the sidebar group, exactly like the section tab strip. */
+    const groupHeading = document.querySelector('.nav-flyout [data-view="' + key + '"]');
+    const groupTitle = groupHeading && groupHeading.closest(".nav-flyout").querySelector(".flyout-title");
+    setEyebrow("AquaFleet Command · " + (groupTitle ? groupTitle.textContent.trim() : "Workspace")); setSearchPlaceholder(page.searchPlaceholder);
+    Ui.clearAlerts(); updateActiveNavigation(key);
+    document.querySelectorAll("[data-nav-group]").forEach(function closeFlyout(button) {
+      button.setAttribute("aria-expanded", "false");
+      button.closest(".nav-group").classList.remove("flyout-open");
+    });
+    const actions = document.getElementById("page-actions"); Ui.clearElement(actions);
+    const meta = Ui.element("div", { className: "ws-record-meta", children: [Ui.element("span", { text: "RECORDS" }), Ui.element("strong", { className: "ws-record-count", text: "— RECORDS" })] });
+    actions.appendChild(meta);
+    if (Master.can(key, "create")) {
+      const add = Ui.element("button", { className: "ws-add-button", attributes: { type: "button" }, children: [Ui.element("span", { text: "＋", attributes: { "aria-hidden": "true" } }), Ui.element("span", { text: page.addLabel })] });
+      add.addEventListener("click", function () { Master.openCreate(key); }); actions.appendChild(add);
+    }
+    Ui.clearElement(document.getElementById("context-rail"));
+    Workspace.open(key, state.searchQuery);
+  }
+
+  function renderReports() {
+    ++state.requestSequence;
+    state.currentView = "reports"; state.currentResource = null; state.rows = []; state.loading = false;
+    document.body.classList.add("workspace-view", "reports-view");
+    document.body.classList.remove("dashboard-view");
+    setEyebrow("AquaFleet Command · Reporting");
+    Ui.setPageHeader("Reports", "Read-only results from the AquaFleet SQL reporting views. No derived data is stored.");
+    Ui.clearAlerts(); updateActiveNavigation("reports"); setActions(null);
+    clearSearch(false); setSearchPlaceholder("Search returned report rows");
+    const search = searchInput(); if (search) search.disabled = false;
+    Reports.render(document.getElementById("content-panel"));
+  }
+
+  function refreshNotifications() { if (global.AquaFleetNotifications) global.AquaFleetNotifications.refresh(); }
+
   function navigate(view) {
+    document.body.classList.add("af-auth-shell");
+    if (state.currentView === "reports" && view !== "reports") Reports.leave();
+    if (view !== "reports") document.body.classList.remove("reports-view");
+    if (Workspace.has(state.currentView) && view !== state.currentView) Workspace.leave();
+    if (!Workspace.has(view)) { document.body.classList.remove("workspace-view"); document.body.removeAttribute("data-workspace"); }
     closeMobileNavigation();
     /* A screen change starts clean: a vessel search must not silently carry
        into missions. Refresh and post-CRUD reloads do NOT come through here,
        which is exactly why they keep the query. */
     clearSearch(false);
-    if (view === "dashboard") renderDashboard(); else renderResource(view);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.querySelector(".app-main").scrollTop = 0;
+    if (global.AquaFleetMotion) global.AquaFleetMotion.route();   // context change: settle heading, arm page entrance
+    if (view === "dashboard") renderDashboard();
+    else if (view === "reports") renderReports();
+    else renderResource(view);
+    refreshNotifications();
   }
 
-  async function mutationComplete(key,message){if(state.currentResource===key){await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");}}
-  async function refreshIfCurrent(key){if(state.currentResource===key)await renderResource(key);}
+  async function mutationComplete(key,message){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);Ui.showAlert("success",message||"Operation completed successfully");refreshNotifications();}}
+  async function refreshIfCurrent(key){if(state.currentResource===key){if(Workspace.has(key))await Workspace.refresh();else await renderResource(key);}}
 
   function initializeNavigation() {
     document.querySelectorAll("[data-view]").forEach(function register(link) {
@@ -600,14 +801,25 @@
 
   global.AquaFleetApp = Object.freeze({
     getState: function getState() { return Object.assign({}, state); },
-    navigate: navigate, renderDashboard: renderDashboard, renderResource: renderResource,
+    navigate: navigate, renderResource: renderResource,
+    /* External callers (auth.js after sign-in) enter the dashboard as a new
+       context; the Refresh button calls the internal function directly and so
+       never replays the page entrance. */
+    renderDashboard: function renderDashboardEntry(button) {
+      if (!button && global.AquaFleetMotion) global.AquaFleetMotion.route();
+      return renderDashboard(button);
+    },
+    renderReports: renderReports,
     mutationComplete:mutationComplete,refreshIfCurrent:refreshIfCurrent,
+    clearCurrentSearch: function clearCurrentSearch() { clearSearch(true); },
     /* auth.js calls this so a query never survives a logout or a session
        loss into the next person's session. */
     clearSearch: function clearSearchState() {
       state.searchQuery = "";
       state.rows = [];
       state.missions = [];
+      if (global.AquaFleetNotifications) global.AquaFleetNotifications.reset();
+      Workspace.leave();
       const input = searchInput();
       if (input) input.value = "";
       syncClearButton();

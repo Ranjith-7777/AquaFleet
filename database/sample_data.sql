@@ -20,6 +20,7 @@ USE aquafleet_db;
 
 -- Clear existing rows so this script can be rerun on its own.
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE notification;
 TRUNCATE TABLE inspection_task;
 TRUNCATE TABLE incident;
 TRUNCATE TABLE sample_aliquot;

@@ -65,6 +65,7 @@
       }
     }));
     region.appendChild(alert);
+    if (global.AquaFleetMotion) global.AquaFleetMotion.autoDismiss(alert);   // success toasts leave on their own
     return alert;
   }
 

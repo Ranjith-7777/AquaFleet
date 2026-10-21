@@ -10,6 +10,7 @@ Copy `.env.example` to `.env` and fill in your own values before running.
 """
 
 import os
+from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -26,11 +27,17 @@ class Config:
     DB_PORT = int(os.getenv("DB_PORT", "3306"))
     DB_USER = os.getenv("DB_USER", "root")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")  # never hard-code a real password
-    DB_NAME = os.getenv("DB_NAME", "aquafleet")
+    DB_NAME = os.getenv("DB_NAME", "aquafleet_db")
+    DB_CONNECT_TIMEOUT = int(os.getenv("DB_CONNECT_TIMEOUT", "10"))
+    DB_SSL_CA = os.getenv("DB_SSL_CA", "").strip()
+    DB_SSL_VERIFY_CERT = os.getenv("DB_SSL_VERIFY_CERT", "True").lower() == "true"
+    DB_SSL_VERIFY_IDENTITY = (
+        os.getenv("DB_SSL_VERIFY_IDENTITY", "True").lower() == "true"
+    )
 
     # ---- Flask settings ------------------------------------------------
     FLASK_HOST = os.getenv("FLASK_HOST", "127.0.0.1")
-    FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
+    FLASK_PORT = int(os.getenv("PORT", os.getenv("FLASK_PORT", "5000")))
     # DEBUG is a string in the environment, so compare it to "true".
     DEBUG = os.getenv("FLASK_DEBUG", "True").lower() == "true"
 
@@ -68,6 +75,19 @@ class Config:
     SESSION_COOKIE_SECURE = (
         os.getenv("SESSION_COOKIE_SECURE", "False").lower() == "true"
     )
+    PERMANENT_SESSION_LIFETIME = timedelta(
+        minutes=int(os.getenv("SESSION_LIFETIME_MINUTES", "480"))
+    )
+    SESSION_REFRESH_EACH_REQUEST = False
+
+    # Only the login endpoint is rate limited. The default in-memory backend is
+    # appropriate for the single-process faculty deployment in render.yaml.
+    # A shared limiter backend can be supplied later without code changes.
+    LOGIN_RATE_LIMIT = os.getenv("LOGIN_RATE_LIMIT", "10 per minute")
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+    TRUST_PROXY_HEADERS = (
+        os.getenv("TRUST_PROXY_HEADERS", "False").lower() == "true"
+    )
 
     @classmethod
     def check_secret_key(cls):
@@ -89,10 +109,18 @@ class Config:
 
         This dictionary is passed straight into mysql.connector.connect().
         """
-        return {
+        params = {
             "host": cls.DB_HOST,
             "port": cls.DB_PORT,
             "user": cls.DB_USER,
             "password": cls.DB_PASSWORD,
             "database": cls.DB_NAME,
+            "connection_timeout": cls.DB_CONNECT_TIMEOUT,
         }
+        if cls.DB_SSL_CA:
+            params.update({
+                "ssl_ca": cls.DB_SSL_CA,
+                "ssl_verify_cert": cls.DB_SSL_VERIFY_CERT,
+                "ssl_verify_identity": cls.DB_SSL_VERIFY_IDENTITY,
+            })
+        return params

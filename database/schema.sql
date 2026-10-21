@@ -22,6 +22,24 @@ CREATE DATABASE IF NOT EXISTS aquafleet_db
 USE aquafleet_db;
 
 
+-- Database-programming objects depend on tables and must be removed first.
+DROP PROCEDURE IF EXISTS sp_get_expedition_report;
+DROP PROCEDURE IF EXISTS sp_get_vehicle_maintenance_history;
+DROP PROCEDURE IF EXISTS sp_get_mission_summary;
+DROP PROCEDURE IF EXISTS sp_get_expedition_metrics;
+
+DROP TRIGGER IF EXISTS trg_mission_validate_bi;
+DROP TRIGGER IF EXISTS trg_mission_validate_bu;
+DROP TRIGGER IF EXISTS trg_mission_vehicle_ready_bi;
+DROP TRIGGER IF EXISTS trg_mission_vehicle_ready_bu;
+
+DROP VIEW IF EXISTS vw_incident_overview;
+DROP VIEW IF EXISTS vw_sample_lineage;
+DROP VIEW IF EXISTS vw_vehicle_readiness;
+DROP VIEW IF EXISTS vw_mission_operations;
+DROP VIEW IF EXISTS vw_expedition_summary;
+
+
 -- ============================================================================
 -- DROP SECTION (reverse dependency order)
 -- ============================================================================
@@ -29,7 +47,11 @@ USE aquafleet_db;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Application authentication (independent of the marine-domain tables)
+DROP TABLE IF EXISTS schema_migration;
 DROP TABLE IF EXISTS app_user;
+
+-- Trigger-generated notifications (independent of the marine-domain tables)
+DROP TABLE IF EXISTS notification;
 
 -- Offshore inspection tables
 DROP TABLE IF EXISTS inspection_task;
@@ -235,7 +257,8 @@ CREATE TABLE expedition (
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    INDEX idx_expedition_vessel (vessel_id)
+    INDEX idx_expedition_vessel (vessel_id),
+    INDEX idx_expedition_status (status)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -278,7 +301,8 @@ CREATE TABLE mission (
         ON DELETE RESTRICT,
 
     INDEX idx_mission_expedition (expedition_id),
-    INDEX idx_mission_zone       (zone_id)
+    INDEX idx_mission_zone       (zone_id),
+    INDEX idx_mission_status     (status)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -553,7 +577,8 @@ CREATE TABLE incident (
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    INDEX idx_incident_mission (mission_id)
+    INDEX idx_incident_mission (mission_id),
+    INDEX idx_incident_severity_time (severity, time_reported)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -611,10 +636,9 @@ CREATE TABLE inspection_task (
 -- 255 characters leaves ample room: a current scrypt hash is ~162 characters.
 -- No API ever selects or returns this column.
 --
--- role is stored and returned to the client, but Phase 9 does NOT enforce
--- role-based authorization - every authenticated role reaches the same
--- functionality. The column exists so that authorization can be layered on
--- later without another migration.
+-- role is re-read from this table on every protected request. Flask enforces
+-- the resource/action permission matrix; the frontend mirrors it only to
+-- avoid presenting controls that the current role cannot use.
 -- ----------------------------------------------------------------------------
 CREATE TABLE app_user (
     user_id       INT AUTO_INCREMENT,
@@ -628,10 +652,425 @@ CREATE TABLE app_user (
     CONSTRAINT pk_app_user          PRIMARY KEY (user_id),
     CONSTRAINT uq_app_user_username UNIQUE (username),
     CONSTRAINT chk_app_user_role
-        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER'))
+        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER', 'VIEWER'))
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
+
+
+-- ############################################################################
+-- SECTION 7 : REPORTING VIEWS
+-- Derived reporting structures keep joins and aggregates reusable without
+-- storing values that can be calculated from the normalized tables.
+-- ############################################################################
+
+CREATE VIEW vw_expedition_summary AS
+SELECT e.expedition_id,
+       e.title,
+       e.vessel_id,
+       rv.vessel_name,
+       rv.home_port,
+       e.start_date,
+       e.end_date,
+       e.status,
+       e.budget,
+       COUNT(m.mission_id) AS mission_count
+  FROM expedition e
+  JOIN research_vessel rv ON rv.vessel_id = e.vessel_id
+  LEFT JOIN mission m ON m.expedition_id = e.expedition_id
+ GROUP BY e.expedition_id, e.title, e.vessel_id, rv.vessel_name, rv.home_port,
+          e.start_date, e.end_date, e.status, e.budget;
+
+CREATE VIEW vw_mission_operations AS
+SELECT m.mission_id,
+       m.expedition_id,
+       e.title AS expedition_title,
+       m.zone_id,
+       z.zone_name,
+       z.region,
+       m.mission_type,
+       m.start_time,
+       m.end_time,
+       TIMESTAMPDIFF(MINUTE, m.start_time, m.end_time) AS duration_minutes,
+       m.depth_target,
+       m.status,
+       (SELECT COUNT(*) FROM mission_vehicle mv
+         WHERE mv.mission_id = m.mission_id) AS vehicle_count,
+       (SELECT COUNT(*) FROM mission_operator mo
+         WHERE mo.mission_id = m.mission_id) AS operator_count
+  FROM mission m
+  JOIN expedition e ON e.expedition_id = m.expedition_id
+  JOIN marine_zone z ON z.zone_id = m.zone_id;
+
+CREATE VIEW vw_vehicle_readiness AS
+SELECT v.vehicle_id,
+       v.vehicle_name,
+       v.vehicle_type,
+       v.model,
+       v.max_depth,
+       v.status,
+       (SELECT COUNT(*) FROM vehicle_sensor vs
+         WHERE vs.vehicle_id = v.vehicle_id) AS sensor_count,
+       (SELECT COUNT(*) FROM vehicle_battery vb
+         WHERE vb.vehicle_id = v.vehicle_id
+           AND vb.end_cycle IS NULL) AS open_battery_assignment_count,
+       (SELECT MAX(mr.maint_date) FROM maintenance_record mr
+         WHERE mr.vehicle_id = v.vehicle_id) AS last_maintenance_date,
+       (SELECT MIN(mr.next_due_date) FROM maintenance_record mr
+         WHERE mr.vehicle_id = v.vehicle_id
+           AND mr.next_due_date IS NOT NULL) AS next_maintenance_due
+  FROM auv_rov v;
+
+CREATE VIEW vw_sample_lineage AS
+SELECT e.expedition_id,
+       e.title AS expedition_title,
+       m.mission_id,
+       m.mission_type,
+       s.sample_id,
+       s.sample_type,
+       s.collected_at,
+       s.preservation_method,
+       s.chain_of_custody_status,
+       sa.aliquot_no,
+       sa.volume_ml,
+       sa.storage_temp
+  FROM sample s
+  JOIN mission m ON m.mission_id = s.mission_id
+  JOIN expedition e ON e.expedition_id = m.expedition_id
+  LEFT JOIN sample_aliquot sa ON sa.sample_id = s.sample_id;
+
+CREATE VIEW vw_incident_overview AS
+SELECT i.incident_id,
+       i.mission_id,
+       m.mission_type,
+       m.status AS mission_status,
+       e.expedition_id,
+       e.title AS expedition_title,
+       z.zone_id,
+       z.zone_name,
+       i.incident_type,
+       i.severity,
+       i.time_reported,
+       i.description
+  FROM incident i
+  JOIN mission m ON m.mission_id = i.mission_id
+  JOIN expedition e ON e.expedition_id = m.expedition_id
+  JOIN marine_zone z ON z.zone_id = m.zone_id;
+
+
+-- Notifications written by AFTER triggers (Section 8).  No foreign key on
+-- source_id: a notification must outlive the row that caused it.
+CREATE TABLE notification (
+    notification_id INT AUTO_INCREMENT,
+    category        VARCHAR(30)  NOT NULL,
+    severity        VARCHAR(20)  NOT NULL,
+    title           VARCHAR(150) NOT NULL,
+    message         VARCHAR(500) NOT NULL,
+    source_table    VARCHAR(40)  NOT NULL,
+    source_id       INT          NOT NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_read         TINYINT(1)   NOT NULL DEFAULT 0,
+    read_at         DATETIME     NULL,
+
+    CONSTRAINT pk_notification          PRIMARY KEY (notification_id),
+    CONSTRAINT chk_notification_cat     CHECK (category IN ('Incident', 'Battery', 'Maintenance')),
+    CONSTRAINT chk_notification_sev     CHECK (severity IN ('Info', 'Warning', 'Critical')),
+    CONSTRAINT chk_notification_read    CHECK (is_read IN (0, 1)),
+
+    INDEX idx_notification_unread (is_read, created_at)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
+
+-- ############################################################################
+-- SECTION 8 : CROSS-TABLE INTEGRITY TRIGGERS
+-- Flask gives friendly validation errors; these triggers protect the same
+-- critical invariants when data is written directly through SQL.
+-- ############################################################################
+
+DELIMITER $$
+
+CREATE TRIGGER trg_mission_validate_bi
+BEFORE INSERT ON mission
+FOR EACH ROW
+BEGIN
+    DECLARE v_min_depth DECIMAL(8,2);
+    DECLARE v_max_depth DECIMAL(8,2);
+    DECLARE v_start_date DATE;
+    DECLARE v_end_date DATE;
+
+    SELECT min_depth, max_depth INTO v_min_depth, v_max_depth
+      FROM marine_zone WHERE zone_id = NEW.zone_id;
+    SELECT start_date, end_date INTO v_start_date, v_end_date
+      FROM expedition WHERE expedition_id = NEW.expedition_id;
+
+    IF NEW.depth_target < v_min_depth OR NEW.depth_target > v_max_depth THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Mission depth target is outside the marine zone depth band';
+    END IF;
+    IF DATE(NEW.start_time) < v_start_date OR DATE(NEW.start_time) > v_end_date
+       OR (NEW.end_time IS NOT NULL AND
+           (DATE(NEW.end_time) < v_start_date OR DATE(NEW.end_time) > v_end_date)) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Mission times must fall within the expedition date range';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_mission_validate_bu
+BEFORE UPDATE ON mission
+FOR EACH ROW
+BEGIN
+    DECLARE v_min_depth DECIMAL(8,2);
+    DECLARE v_max_depth DECIMAL(8,2);
+    DECLARE v_start_date DATE;
+    DECLARE v_end_date DATE;
+
+    SELECT min_depth, max_depth INTO v_min_depth, v_max_depth
+      FROM marine_zone WHERE zone_id = NEW.zone_id;
+    SELECT start_date, end_date INTO v_start_date, v_end_date
+      FROM expedition WHERE expedition_id = NEW.expedition_id;
+
+    IF NEW.depth_target < v_min_depth OR NEW.depth_target > v_max_depth THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Mission depth target is outside the marine zone depth band';
+    END IF;
+    IF DATE(NEW.start_time) < v_start_date OR DATE(NEW.start_time) > v_end_date
+       OR (NEW.end_time IS NOT NULL AND
+           (DATE(NEW.end_time) < v_start_date OR DATE(NEW.end_time) > v_end_date)) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Mission times must fall within the expedition date range';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_mission_vehicle_ready_bi
+BEFORE INSERT ON mission_vehicle
+FOR EACH ROW
+BEGIN
+    DECLARE v_status VARCHAR(30);
+    SELECT status INTO v_status FROM auv_rov WHERE vehicle_id = NEW.vehicle_id;
+    IF v_status = 'Retired' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Retired vehicles cannot be assigned to missions';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_mission_vehicle_ready_bu
+BEFORE UPDATE ON mission_vehicle
+FOR EACH ROW
+BEGIN
+    DECLARE v_status VARCHAR(30);
+    SELECT status INTO v_status FROM auv_rov WHERE vehicle_id = NEW.vehicle_id;
+    IF v_status = 'Retired' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Retired vehicles cannot be assigned to missions';
+    END IF;
+END$$
+
+-- ---------------------------------------------------------------------------
+-- Integrity: parents may not be edited so that existing missions fall outside
+-- them.  (trg_mission_validate_* only protects the mission side.)
+-- ---------------------------------------------------------------------------
+CREATE TRIGGER trg_expedition_dates_bu
+BEFORE UPDATE ON expedition
+FOR EACH ROW
+BEGIN
+    IF (NEW.start_date <> OLD.start_date OR NEW.end_date <> OLD.end_date)
+       AND EXISTS (
+            SELECT 1 FROM mission m
+             WHERE m.expedition_id = NEW.expedition_id
+               AND (DATE(m.start_time) < NEW.start_date
+                    OR DATE(m.start_time) > NEW.end_date
+                    OR (m.end_time IS NOT NULL
+                        AND (DATE(m.end_time) < NEW.start_date
+                             OR DATE(m.end_time) > NEW.end_date)))
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Expedition dates cannot exclude its existing missions';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_zone_depth_bu
+BEFORE UPDATE ON marine_zone
+FOR EACH ROW
+BEGIN
+    IF (NEW.min_depth <> OLD.min_depth OR NEW.max_depth <> OLD.max_depth)
+       AND EXISTS (
+            SELECT 1 FROM mission m
+             WHERE m.zone_id = NEW.zone_id
+               AND (m.depth_target < NEW.min_depth OR m.depth_target > NEW.max_depth)
+       ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Zone depth band cannot exclude the depth target of its existing missions';
+    END IF;
+END$$
+
+-- ---------------------------------------------------------------------------
+-- Notifications
+-- ---------------------------------------------------------------------------
+CREATE TRIGGER trg_incident_notify_ai
+AFTER INSERT ON incident
+FOR EACH ROW
+BEGIN
+    IF NEW.severity IN ('High', 'Critical') THEN
+        INSERT INTO notification (category, severity, title, message, source_table, source_id)
+        VALUES ('Incident',
+                IF(NEW.severity = 'Critical', 'Critical', 'Warning'),
+                CONCAT(NEW.severity, ' incident reported'),
+                CONCAT(NEW.incident_type, ' on mission #', NEW.mission_id),
+                'incident', NEW.incident_id);
+    END IF;
+END$$
+
+CREATE TRIGGER trg_incident_notify_au
+AFTER UPDATE ON incident
+FOR EACH ROW
+BEGIN
+    IF NEW.severity IN ('High', 'Critical') AND OLD.severity <> NEW.severity
+       AND OLD.severity NOT IN ('High', 'Critical') THEN
+        INSERT INTO notification (category, severity, title, message, source_table, source_id)
+        VALUES ('Incident',
+                IF(NEW.severity = 'Critical', 'Critical', 'Warning'),
+                CONCAT('Incident escalated to ', NEW.severity),
+                CONCAT(NEW.incident_type, ' on mission #', NEW.mission_id),
+                'incident', NEW.incident_id);
+    END IF;
+END$$
+
+CREATE TRIGGER trg_battery_notify_ai
+AFTER INSERT ON battery_pack
+FOR EACH ROW
+BEGIN
+    IF NEW.health_status IN ('Poor', 'Replace') THEN
+        INSERT INTO notification (category, severity, title, message, source_table, source_id)
+        VALUES ('Battery',
+                IF(NEW.health_status = 'Replace', 'Critical', 'Warning'),
+                CONCAT('Battery pack health: ', NEW.health_status),
+                CONCAT('Battery pack #', NEW.battery_id, ' (', NEW.chemistry, ') is rated ', NEW.health_status),
+                'battery_pack', NEW.battery_id);
+    END IF;
+END$$
+
+CREATE TRIGGER trg_battery_notify_au
+AFTER UPDATE ON battery_pack
+FOR EACH ROW
+BEGIN
+    IF NEW.health_status IN ('Poor', 'Replace') AND OLD.health_status <> NEW.health_status THEN
+        INSERT INTO notification (category, severity, title, message, source_table, source_id)
+        VALUES ('Battery',
+                IF(NEW.health_status = 'Replace', 'Critical', 'Warning'),
+                CONCAT('Battery pack health: ', NEW.health_status),
+                CONCAT('Battery pack #', NEW.battery_id, ' (', NEW.chemistry, ') is rated ', NEW.health_status),
+                'battery_pack', NEW.battery_id);
+    END IF;
+END$$
+
+CREATE TRIGGER trg_maintenance_notify_ai
+AFTER INSERT ON maintenance_record
+FOR EACH ROW
+BEGIN
+    IF NEW.next_due_date IS NOT NULL
+       AND NEW.next_due_date <= DATE_ADD(CURDATE(), INTERVAL 14 DAY) THEN
+        INSERT INTO notification (category, severity, title, message, source_table, source_id)
+        VALUES ('Maintenance',
+                IF(NEW.next_due_date < CURDATE(), 'Critical', 'Warning'),
+                IF(NEW.next_due_date < CURDATE(), 'Maintenance overdue', 'Maintenance due soon'),
+                CONCAT((SELECT vehicle_name FROM auv_rov WHERE vehicle_id = NEW.vehicle_id),
+                       ' next maintenance due ', DATE_FORMAT(NEW.next_due_date, '%d/%m/%Y')),
+                'maintenance_record', NEW.maintenance_id);
+    END IF;
+END$$
+
+CREATE TRIGGER trg_maintenance_notify_au
+AFTER UPDATE ON maintenance_record
+FOR EACH ROW
+BEGIN
+    IF NEW.next_due_date IS NOT NULL
+       AND NEW.next_due_date <= DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+       AND (OLD.next_due_date IS NULL OR OLD.next_due_date <> NEW.next_due_date) THEN
+        INSERT INTO notification (category, severity, title, message, source_table, source_id)
+        VALUES ('Maintenance',
+                IF(NEW.next_due_date < CURDATE(), 'Critical', 'Warning'),
+                IF(NEW.next_due_date < CURDATE(), 'Maintenance overdue', 'Maintenance due soon'),
+                CONCAT((SELECT vehicle_name FROM auv_rov WHERE vehicle_id = NEW.vehicle_id),
+                       ' next maintenance due ', DATE_FORMAT(NEW.next_due_date, '%d/%m/%Y')),
+                'maintenance_record', NEW.maintenance_id);
+    END IF;
+END$$
+
+
+-- ############################################################################
+-- SECTION 9 : REPORTING STORED PROCEDURES
+-- ############################################################################
+
+CREATE PROCEDURE sp_get_expedition_report(IN p_expedition_id INT)
+BEGIN
+    SELECT expedition_id, title, vessel_id, vessel_name, home_port,
+           start_date, end_date, status, budget, mission_count
+      FROM vw_expedition_summary
+     WHERE expedition_id = p_expedition_id;
+    SELECT mission_id, expedition_id, expedition_title, zone_id, zone_name,
+           region, mission_type, start_time, end_time, duration_minutes,
+           depth_target, status, vehicle_count, operator_count
+      FROM vw_mission_operations
+     WHERE expedition_id = p_expedition_id
+     ORDER BY start_time, mission_id;
+END$$
+
+CREATE PROCEDURE sp_get_vehicle_maintenance_history(IN p_vehicle_id INT)
+BEGIN
+    SELECT vehicle_id, vehicle_name, vehicle_type, model, max_depth, status,
+           sensor_count, open_battery_assignment_count,
+           last_maintenance_date, next_maintenance_due
+      FROM vw_vehicle_readiness
+     WHERE vehicle_id = p_vehicle_id;
+    SELECT maintenance_id, vehicle_id, maint_date, action_taken, cost,
+           next_due_date
+      FROM maintenance_record
+     WHERE vehicle_id = p_vehicle_id
+     ORDER BY maint_date DESC, maintenance_id DESC;
+END$$
+
+CREATE PROCEDURE sp_get_mission_summary(IN p_mission_id INT)
+BEGIN
+    SELECT mission_id, expedition_id, expedition_title, zone_id, zone_name,
+           region, mission_type, start_time, end_time, duration_minutes,
+           depth_target, status, vehicle_count, operator_count
+      FROM vw_mission_operations WHERE mission_id = p_mission_id;
+    SELECT mv.vehicle_id, v.vehicle_name, v.vehicle_type,
+           mv.launch_time, mv.recovery_time
+      FROM mission_vehicle mv
+      JOIN auv_rov v ON v.vehicle_id = mv.vehicle_id
+     WHERE mv.mission_id = p_mission_id
+     ORDER BY v.vehicle_name;
+    SELECT mo.operator_id, CONCAT(o.first_name, ' ', o.last_name) AS operator_name,
+           mo.duty_role, mo.shift
+      FROM mission_operator mo
+      JOIN `operator` o ON o.operator_id = mo.operator_id
+     WHERE mo.mission_id = p_mission_id
+     ORDER BY operator_name;
+END$$
+
+CREATE PROCEDURE sp_get_expedition_metrics(
+    IN p_expedition_id INT,
+    OUT p_mission_count INT,
+    OUT p_incident_count INT,
+    OUT p_sample_count INT
+)
+BEGIN
+    SELECT COUNT(*) INTO p_mission_count
+      FROM mission WHERE expedition_id = p_expedition_id;
+    SELECT COUNT(*) INTO p_incident_count
+      FROM incident i
+      JOIN mission m ON m.mission_id = i.mission_id
+     WHERE m.expedition_id = p_expedition_id;
+    SELECT COUNT(*) INTO p_sample_count
+      FROM sample s
+      JOIN mission m ON m.mission_id = s.mission_id
+     WHERE m.expedition_id = p_expedition_id;
+END$$
+
+DELIMITER ;
 
 
 -- ============================================================================

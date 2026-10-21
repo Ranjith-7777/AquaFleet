@@ -34,6 +34,102 @@ from mysql.connector import Error as MySQLError
 
 from database import get_db_connection
 
+# Central role policy.  Route modules stay focused on domain validation while
+# this table answers the single authorization question for every API request.
+# GET/HEAD access is shared by every active account; mutations are explicitly
+# granted per blueprint and action below.  An omitted grant means "deny".
+ALL_ROLES = frozenset({"ADMIN", "RESEARCHER", "OPERATOR", "VIEWER"})
+
+RESOURCE_PERMISSIONS = {
+    # Administrative master data
+    "vessels": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+    "marine_zones": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+    "vehicles": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+    "operators": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+    "sensors": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+    "battery_packs": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+    "offshore_assets": {"create": {"ADMIN"}, "update": {"ADMIN"}, "delete": {"ADMIN"}},
+
+    # Research planning
+    "expeditions": {
+        "create": {"ADMIN", "RESEARCHER"},
+        "update": {"ADMIN", "RESEARCHER"},
+        "delete": {"ADMIN"},
+    },
+    "missions": {
+        "create": {"ADMIN", "RESEARCHER"},
+        "update": {"ADMIN", "RESEARCHER", "OPERATOR"},
+        "delete": {"ADMIN"},
+    },
+
+    # Mission and equipment assignments
+    "mission_vehicles": {
+        action: {"ADMIN", "RESEARCHER", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+    "mission_operators": {
+        action: {"ADMIN", "RESEARCHER", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+    "vehicle_sensors": {
+        action: {"ADMIN", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+    "vehicle_batteries": {
+        action: {"ADMIN", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+
+    # Execution records
+    "maintenance_records": {
+        action: {"ADMIN", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+    "telemetry_points": {
+        action: {"ADMIN", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+    "incidents": {
+        action: {"ADMIN", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+    "inspection_tasks": {
+        action: {"ADMIN", "OPERATOR"}
+        for action in ("create", "update", "delete")
+    },
+
+    # Scientific lineage.  Deletion is deliberately admin-only so research
+    # history cannot be removed as part of an ordinary research workflow.
+    "samples": {
+        "create": {"ADMIN", "RESEARCHER"},
+        "update": {"ADMIN", "RESEARCHER"},
+        "delete": {"ADMIN"},
+    },
+    "sample_aliquots": {
+        "create": {"ADMIN", "RESEARCHER"},
+        "update": {"ADMIN", "RESEARCHER"},
+        "delete": {"ADMIN"},
+    },
+    # Notifications are created only by database triggers.  Every role may read
+    # them; marking one read is an update reserved for roles that can act on it.
+    "notifications": {
+        "create": set(),
+        "update": {"ADMIN", "RESEARCHER", "OPERATOR"},
+        "delete": set(),
+    },
+    # Reporting is intentionally read-only for every role.
+    "reports": {"create": set(), "update": set(), "delete": set()},
+}
+
+METHOD_ACTIONS = {
+    "GET": "read",
+    "HEAD": "read",
+    "POST": "create",
+    "PUT": "update",
+    "PATCH": "update",
+    "DELETE": "delete",
+}
+
 # Session keys. Kept in one place so the blueprint and the guard cannot drift.
 SESSION_USER_ID = "user_id"
 SESSION_USERNAME = "username"
@@ -76,6 +172,10 @@ def start_session(user):
     reaches the session.
     """
     session.clear()
+    # Permanent means "use the configured server-side maximum age", not
+    # "never expire". SESSION_REFRESH_EACH_REQUEST is disabled, so this is an
+    # absolute lifetime rather than an indefinitely sliding session.
+    session.permanent = True
     session[SESSION_USER_ID] = user["user_id"]
     session[SESSION_USERNAME] = user["username"]
     session[SESSION_FULL_NAME] = user["full_name"]
@@ -230,6 +330,52 @@ def database_error_response():
         "success": False,
         "message": "A database error occurred"
     }), 500
+
+
+def authorization_required_response():
+    """The stable 403 body for a valid account lacking a permission."""
+    return jsonify({
+        "success": False,
+        "message": "You do not have permission to perform this action",
+        "error_code": "INSUFFICIENT_PERMISSIONS"
+    }), 403
+
+
+def is_authorized(role, blueprint, method):
+    """Return whether *role* may use *method* on the named blueprint.
+
+    Kept pure so the complete policy can be unit-tested without a database.
+    Unknown roles and unknown mutation targets fail closed.  Unknown GET
+    targets are left to Flask's normal 404 handling after authentication.
+    """
+    action = METHOD_ACTIONS.get(method.upper())
+    if action == "read":
+        return role in ALL_ROLES
+    if action is None:
+        return False
+    resource_policy = RESOURCE_PERMISSIONS.get(blueprint)
+    if resource_policy is None:
+        return False
+    return role in resource_policy.get(action, set())
+
+
+def guard_authorization():
+    """Authorize the already verified user for the current Flask request."""
+    from flask import request
+
+    user = current_user()
+    if user is None:
+        return authentication_required_response()
+
+    # No blueprint means Flask is on its way to a 404.  Authentication still
+    # applies, but authorization should not replace that useful response.
+    if request.blueprint is None:
+        return None
+    if request.blueprint == "auth" and request.method in {"GET", "HEAD"}:
+        return None
+    if is_authorized(user["role"], request.blueprint, request.method):
+        return None
+    return authorization_required_response()
 
 
 def guard_request():

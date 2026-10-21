@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&amp;family=Manrope:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#e9eff5;font-family:Manrope,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#1c6f93;text-decoration:none}a:hover{color:#0e4f6c}
+@keyframes afIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes afGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes afFade{from{opacity:0}to{opacity:1}}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#c7d8e2;border-radius:99px}
+::-webkit-scrollbar-track{background:transparent}
+main::-webkit-scrollbar{width:0;height:0}
+main{scrollbar-width:none}
+</style>
+</helmet>
+<div style="display:flex;width:100%;min-height:100vh;height:100vh;background:#e9eff5;overflow:hidden;color:#173544">
+
+  <nav style="position:relative;z-index:3;display:flex;flex:0 0 100px;min-height:0;flex-direction:column;align-items:center;padding:clamp(12px,2.4vh,26px) 0 clamp(12px,2.2vh,24px);background:linear-gradient(180deg,#071d2c 0%,#0b2b3a 100%);border-radius:0;box-shadow:10px 0 30px rgba(8,39,57,.16)">
+    <a href="#" title="AquaFleet" style="display:grid;flex:0 0 auto;width:52px;height:52px;place-items:center;border:1px solid rgba(123,203,222,.38);border-radius:16px;background:#0c3545;color:#a8e2ed;font-family:Manrope,sans-serif;font-size:26px;font-weight:700;line-height:1;text-decoration:none">≈</a>
+
+    <div style="display:flex;flex:1 1 auto;min-height:0;flex-direction:column;justify-content:center;align-items:center;gap:clamp(8px,2.2vh,26px);width:100%;position:relative;overflow:visible">
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:56px">
+        <div style="position:absolute;left:0;right:0;top:0;bottom:0;background:#fff;border-radius:0;box-shadow:none"></div>
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#54c3e0"></div>
+        <span style="position:relative;display:grid;place-items:center;width:100%;height:56px;color:#12637f;font-size:24px;font-weight:700;line-height:1">⌁</span>
+      </div>
+      <a href="#" title="Fleet" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◇</a>
+      <a href="#" title="Missions" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◎</a>
+      <a href="#" title="Expeditions" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">⊞</a>
+      <a href="#" title="Vehicles" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">◉</a>
+      <a href="#" title="Reports" style="display:grid;place-items:center;width:56px;height:50px;border-radius:12px;color:#8eb3c0;font-size:23px;line-height:1;text-decoration:none" style-hover="background:#103a4b;color:#e9f8fa">▤</a>
+    </div>
+
+    <div style="display:flex;flex:0 0 auto;flex-direction:column;align-items:center;gap:clamp(8px,1.6vh,14px);padding-top:10px">
+      <div style="display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(140,216,232,.26);border-radius:15px;background:#124257;color:#cfeaf2;font-size:12px;font-weight:800;letter-spacing:.04em">TU</div>
+      <div title="Database connected" style="display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(140,216,232,.23);border-radius:15px;background:#10394d">
+        <span style="display:block;width:9px;height:9px;border-radius:50%;background:#4ac780;box-shadow:0 0 0 5px rgba(74,199,128,.14)"></span>
+      </div>
+    </div>
+  </nav><main style="position:relative;z-index:1;flex:1;min-width:0;margin:0 0 0 -100px;padding:22px 24px 24px 126px;background:#e9eff5;border-radius:0;box-shadow:inset 0 0 0 1px rgba(23,53,68,.04);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:14px">
+
+    <header data-af-header="1" style="position: relative; flex: 0 0 auto; min-height: 126px; margin: -22px -24px 4px -126px; box-sizing: border-box; width: auto; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; padding: 18px 30px 18px 148px; border-radius: 0; background: linear-gradient(100deg,#1266a5 0%,#2b8fc7 52%,#54c3e0 100%); box-shadow: 0 12px 30px rgba(17,91,135,.22); overflow: hidden; animation: afIn .5s ease both; align-self: stretch">
+      <div style="position:absolute;top:-104px;right:26%;width:240px;height:240px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.05),0 0 0 72px rgba(255,255,255,.03);pointer-events:none"></div>
+      <div style="position:relative;min-width:0;flex:1 1 320px">
+        <p style="margin:0 0 2px;color:#d4eef3;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;font-weight:500;letter-spacing:.11em;text-transform:uppercase">AquaFleet Command</p>
+        <h1 style="margin:0;color:#fff;font-family:Sora,Manrope,sans-serif;font-size:36px;font-weight:700;letter-spacing:-.045em;line-height:1.05">Dashboard</h1>
+        <p style="margin:6px 0 0;color:#e2f4f8;font-size:12.5px;font-weight:500">Fleet, mission and expedition readiness from the current AquaFleet database state.</p>
+      </div>
+      <div style="position:relative;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:10px;width:300px;height:48px;padding:0 18px;border-radius:999px;background:#fff;box-shadow:0 8px 20px rgba(6,48,76,.18)">
+          <span style="display:grid;place-items:center;width:18px;height:18px;color:#327f97;font-size:16px;line-height:1">⌕</span>
+          <input type="text" placeholder="Search missions" style="min-width:0;flex:1;border:0;outline:none;background:transparent;color:#193443;font-family:Manrope,sans-serif;font-size:13px;font-weight:500">
+        </label>
+        <div style="display:flex;flex-direction:column;gap:2px;color:#cde8ef;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">
+          <span>Last refreshed</span>
+          <strong style="color:#fff;font-size:11px;letter-spacing:.02em;white-space:nowrap">09:50:57 AM</strong>
+        </div>
+        <button type="button" style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:1px solid rgba(255,255,255,.67);border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-family:Manrope,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:background 170ms ease,color 170ms ease,transform 170ms ease" style-hover="background:#f0fbfd;color:#0c526f;border-color:#fff;transform:translateY(-2px)"><span style="font-size:16px;font-weight:500;line-height:1">↻</span>Refresh Dashboard</button>
+      </div>
+    </header>
+
+
+    <section aria-label="Operational summary" style="flex:0 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px">
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease .06s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e7f4f9;color:#1c7595;font-size:20px;line-height:1">⚓</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Research Vessels</p>
+          <strong data-af-count="6" style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">6</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">Registered fleet platforms</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i data-af-bar="100" style="display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#2b8fc7,#54c3e0);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) .3s both"></i></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease .12s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e6f5f1;color:#1f7f72;font-size:20px;line-height:1">⌖</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Active Expeditions</p>
+          <strong data-af-count="1" style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">1</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">1 of 2 programmes active</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:50%;border-radius:99px;background:linear-gradient(90deg,#258f89,#5cc6ae);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) .36s both"></i></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease .18s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e8f1fb;color:#1a5f97;font-size:20px;line-height:1">◎</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Active Missions</p>
+          <strong data-af-count="1" style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">1</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">1 of 7 missions in progress</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:14.3%;border-radius:99px;background:linear-gradient(90deg,#1266a5,#4aa7cc);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) .42s both"></i></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(23,53,68,.06);animation:afIn .5s ease .24s both">
+        <div style="display:grid;place-items:center;width:44px;height:44px;flex:0 0 auto;border-radius:14px;background:#e7f4f9;color:#1c7595;font-size:20px;line-height:1">▣</div>
+        <div style="min-width:0;flex:1">
+          <p style="margin:0;color:#5f7f8c;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase">Available Vehicles</p>
+          <strong data-af-count="1" style="display:block;margin:4px 0 2px;color:#123a4c;font-family:Sora,Manrope,sans-serif;font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1.05">1</strong>
+          <p style="margin:0 0 8px;color:#718a95;font-size:10.5px;font-weight:500">of 5 vehicles</p>
+          <div style="height:6px;border-radius:99px;background:#e8eff3;overflow:hidden"><i style="display:block;height:100%;width:20%;border-radius:99px;background:linear-gradient(90deg,#2b8fc7,#54c3e0);transform-origin:left;animation:afGrow .8s cubic-bezier(.2,.7,.2,1) .48s both"></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;flex:1 1 auto;min-height:340px">
+      <article style="display:flex;min-height:0;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);overflow:hidden;animation:afIn .5s ease .3s both">
+        <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 12px">
+          <h2 style="margin:0;min-width:0;flex:1;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Active Operations</h2>
+          <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">7 missions</span>
+        </div>
+        <div style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 12px 14px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <span style="color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">#1</span>
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13.5px;font-weight:700">Benthic Photographic Transect</strong><small style="color:#718996;font-size:10.5px;font-weight:500">Andaman Deep Reef Biodiversity Survey</small></div>
+            <span style="flex:0 1 auto;min-width:0;overflow:hidden;color:#486774;font-size:11.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap">Andaman Deep Reef Shelf</span>
+            <span style="color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">05/11/2025 09:00</span>
+            <span style="justify-self:start;padding:5px 11px;border-radius:999px;background:#e8f5ee;color:#25795a;font-size:10px;font-weight:700">Completed</span>
+            <a href="#" style="margin-left:auto;color:#1c7595;font-size:11.5px;font-weight:700">View</a>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <span style="color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">#2</span>
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13.5px;font-weight:700">Coral Tissue Sample Collection</strong><small style="color:#718996;font-size:10.5px;font-weight:500">Andaman Deep Reef Biodiversity Survey</small></div>
+            <span style="flex:0 1 auto;min-width:0;overflow:hidden;color:#486774;font-size:11.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap">Andaman Deep Reef Shelf</span>
+            <span style="color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">09/11/2025 07:45</span>
+            <span style="justify-self:start;padding:5px 11px;border-radius:999px;background:#e8f5ee;color:#25795a;font-size:10px;font-weight:700">Completed</span>
+            <a href="#" style="margin-left:auto;color:#1c7595;font-size:11.5px;font-weight:700">View</a>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <span style="color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">#3</span>
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13.5px;font-weight:700">Water Column Profiling</strong><small style="color:#718996;font-size:10.5px;font-weight:500">Andaman Deep Reef Biodiversity Survey</small></div>
+            <span style="flex:0 1 auto;min-width:0;overflow:hidden;color:#486774;font-size:11.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap">Andaman Deep Reef Shelf</span>
+            <span style="color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">16/11/2025 06:30</span>
+            <span style="justify-self:start;padding:5px 11px;border-radius:999px;background:#e8f5ee;color:#25795a;font-size:10px;font-weight:700">Completed</span>
+            <a href="#" style="margin-left:auto;color:#1c7595;font-size:11.5px;font-weight:700">View</a>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <span style="color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">#4</span>
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13.5px;font-weight:700">Hydrothermal Plume Survey</strong><small style="color:#718996;font-size:10.5px;font-weight:500">Carlsberg Ridge Hydrothermal Vent Programme</small></div>
+            <span style="flex:0 1 auto;min-width:0;overflow:hidden;color:#486774;font-size:11.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap">Carlsberg Ridge Vent Field</span>
+            <span style="color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">24/07/2026 05:00</span>
+            <span style="justify-self:start;padding:5px 11px;border-radius:999px;background:#e8f5ee;color:#25795a;font-size:10px;font-weight:700">Completed</span>
+            <a href="#" style="margin-left:auto;color:#1c7595;font-size:11.5px;font-weight:700">View</a>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:11px 10px;border-radius:10px;background:#f1f9fc;box-shadow:inset 3px 0 0 #54c3e0">
+            <span style="color:#8aa3ad;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px">#5</span>
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13.5px;font-weight:700">Vent Fauna Sampling</strong><small style="color:#718996;font-size:10.5px;font-weight:500">Carlsberg Ridge Hydrothermal Vent Programme</small></div>
+            <span style="flex:0 1 auto;min-width:0;overflow:hidden;color:#486774;font-size:11.5px;font-weight:500;text-overflow:ellipsis;white-space:nowrap">Carlsberg Ridge Vent Field</span>
+            <span style="color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">03/08/2026 04:30</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;justify-self:start;padding:5px 11px;border-radius:999px;background:#e5f3fa;color:#16617e;font-size:10px;font-weight:700"><i style="display:block;width:6px;height:6px;border-radius:50%;background:#2b8fc7"></i>In Progress</span>
+            <a href="#" style="margin-left:auto;color:#1c7595;font-size:11.5px;font-weight:700">View</a>
+          </div>
+        </div>
+      </article>
+
+      <article style="display:flex;min-height:0;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);overflow:hidden;animation:afIn .5s ease .36s both">
+        <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 12px">
+          <h2 style="margin:0;min-width:0;flex:1;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Fleet Availability</h2>
+          <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">3 of 5 shown</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;padding:4px 22px 14px">
+          <div style="position:relative;display:grid;place-items:center;width:104px;height:104px;flex:0 0 auto;border-radius:50%;background:conic-gradient(#54c3e0 0deg 72deg,#2b8fc7 72deg 216deg,#d8a86a 216deg 288deg,#c3d2da 288deg 360deg)">
+            <div style="display:grid;place-items:center;width:74px;height:74px;border-radius:50%;background:#fff;text-align:center">
+              <div><strong style="display:block;color:#16485d;font-family:Sora,Manrope,sans-serif;font-size:21px;font-weight:700;letter-spacing:-.04em;line-height:1">20%</strong><span style="color:#557988;font-size:9px;font-weight:700">available</span></div>
+            </div>
+          </div>
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;height:9px;gap:2px;margin-bottom:12px;border-radius:99px;overflow:hidden;background:#eef2f5">
+              <i style="flex:1;background:#54c3e0"></i><i style="flex:2;background:#2b8fc7"></i><i style="flex:1;background:#d8a86a"></i><i style="flex:1;background:#c3d2da"></i>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px">
+              <div style="display:flex;align-items:center;gap:7px;color:#567683;font-size:10.5px;font-weight:600"><i style="display:block;width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:#54c3e0"></i><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Available</span><strong style="margin-left:auto;color:#244455;font-family:Sora,Manrope,sans-serif;font-size:12px">1</strong></div>
+              <div style="display:flex;align-items:center;gap:7px;color:#567683;font-size:10.5px;font-weight:600"><i style="display:block;width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:#2b8fc7"></i><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Deployed</span><strong style="margin-left:auto;color:#244455;font-family:Sora,Manrope,sans-serif;font-size:12px">2</strong></div>
+              <div style="display:flex;align-items:center;gap:7px;color:#567683;font-size:10.5px;font-weight:600"><i style="display:block;width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:#d8a86a"></i><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Maintenance</span><strong style="margin-left:auto;color:#244455;font-family:Sora,Manrope,sans-serif;font-size:12px">1</strong></div>
+              <div style="display:flex;align-items:center;gap:7px;color:#567683;font-size:10.5px;font-weight:600"><i style="display:block;width:7px;height:7px;flex:0 0 auto;border-radius:50%;background:#c3d2da"></i><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Retired</span><strong style="margin-left:auto;color:#244455;font-family:Sora,Manrope,sans-serif;font-size:12px">1</strong></div>
+            </div>
+          </div>
+        </div>
+        <div style="min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;padding:0 14px 16px">
+          <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Trishul ROV-2</strong><small style="color:#718996;font-size:10px;font-weight:500">ROV · Schilling UHD-III</small></div>
+            <span style="padding:5px 11px;border-radius:999px;background:#fbf2e2;color:#8a6224;font-size:10px;font-weight:700;white-space:nowrap">Maintenance</span>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Neelkanth ROV-1</strong><small style="color:#718996;font-size:10px;font-weight:500">ROV · Saab Seaeye Cougar-XT</small></div>
+            <span style="padding:5px 11px;border-radius:999px;background:#e5f3fa;color:#16617e;font-size:10px;font-weight:700;white-space:nowrap">Deployed</span>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Sagarika AUV-2</strong><small style="color:#718996;font-size:10px;font-weight:500">AUV · REMUS 6000</small></div>
+            <span style="padding:5px 11px;border-radius:999px;background:#e5f3fa;color:#16617e;font-size:10px;font-weight:700;white-space:nowrap">Deployed</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section style="flex:0 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px">
+      <article style="display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);animation:afIn .5s ease .42s both">
+        <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 10px">
+          <h2 style="margin:0;min-width:0;flex:1;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Expedition Programme</h2>
+          <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">Active and planned</span>
+        </div>
+        <div style="padding:0 14px 16px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13px;font-weight:700">Carlsberg Ridge Hydrothermal Vent Programme</strong><small style="color:#718996;font-size:10.5px;font-weight:500">RV Samudra Anveshak</small></div>
+            <div style="flex:1 1 170px;min-width:150px">
+              <div style="display:flex;align-items:center;gap:6px"><i style="display:block;width:9px;height:9px;flex:0 0 auto;border-radius:50%;border:2px solid #2b8fc7;background:#fff"></i><i style="flex:1;height:3px;border-radius:99px;background:linear-gradient(90deg,#2b8fc7,#54c3e0);transform-origin:left;animation:afGrow .9s cubic-bezier(.2,.7,.2,1) .6s both"></i><i style="display:block;width:9px;height:9px;flex:0 0 auto;border-radius:50%;background:#2b8fc7"></i></div>
+              <div style="display:flex;justify-content:space-between;margin-top:5px;color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px"><span>20/07/2026</span><span>30/08/2026</span></div>
+            </div>
+            <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;text-align:right">2 missions</span>
+            <span style="justify-self:end;padding:5px 11px;border-radius:999px;background:#e8f5ee;color:#25795a;font-size:10px;font-weight:700">Active</span>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="flex:1 1 200px;min-width:150px"><strong style="display:block;color:#193949;font-size:13px;font-weight:700">Deep Sea Exploration 2026</strong><small style="color:#718996;font-size:10.5px;font-weight:500">ORV Sagar Nidhi</small></div>
+            <div style="flex:1 1 170px;min-width:150px">
+              <div style="display:flex;align-items:center;gap:6px"><i style="display:block;width:9px;height:9px;flex:0 0 auto;border-radius:50%;border:2px solid #9fb8c4;background:#fff"></i><i style="flex:1;height:3px;border-radius:99px;background:#c7d8e2;transform-origin:left;animation:afGrow .9s cubic-bezier(.2,.7,.2,1) .7s both"></i><i style="display:block;width:9px;height:9px;flex:0 0 auto;border-radius:50%;background:#9fb8c4"></i></div>
+              <div style="display:flex;justify-content:space-between;margin-top:5px;color:#7d949e;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px"><span>21/08/2026</span><span>30/08/2026</span></div>
+            </div>
+            <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;text-align:right">0 missions</span>
+            <span style="justify-self:end;padding:5px 11px;border-radius:999px;background:#eef2f5;color:#5b7381;font-size:10px;font-weight:700">Planned</span>
+          </div>
+        </div>
+      </article>
+
+      <article style="display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 8px 22px rgba(23,53,68,.07);animation:afIn .5s ease .48s both">
+        <div style="display:flex;align-items:center;gap:12px;padding:18px 22px 10px">
+          <h2 style="margin:0;min-width:0;flex:1;color:#12394a;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700;letter-spacing:-.03em">Operational Attention</h2>
+          <span style="color:#718a95;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;white-space:nowrap">Recorded conditions</span>
+        </div>
+        <div style="padding:0 14px 8px">
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#fdeceb;color:#b44a42;font-size:15px;font-weight:800;line-height:1">!</div>
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">High / critical incidents</strong><small style="color:#718996;font-size:10px;font-weight:500">Recorded incident severity</small></div>
+            <span style="color:#254a59;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700">2</span>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#fbf4e3;color:#8a6224;font-size:15px;line-height:1">✓</div>
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Pending / active inspections</strong><small style="color:#718996;font-size:10px;font-weight:500">Inspection workflow</small></div>
+            <span style="color:#254a59;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700">2</span>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#eef2f5;color:#5b7381;font-size:15px;line-height:1">⚙</div>
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Vehicles in maintenance</strong><small style="color:#718996;font-size:10px;font-weight:500">Current vehicle status</small></div>
+            <span style="color:#254a59;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700">1</span>
+          </div>
+          <div style="height:1px;margin:0 10px;background:#eef2f5"></div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;transition:background 150ms ease" style-hover="background:#f3f8fb">
+            <div style="display:grid;place-items:center;width:34px;height:34px;flex:0 0 auto;border-radius:11px;background:#e7f4f9;color:#1c7595;font-size:15px;line-height:1">▣</div>
+            <div style="min-width:0;flex:1"><strong style="display:block;color:#193949;font-size:12.5px;font-weight:700">Battery condition review</strong><small style="color:#718996;font-size:10px;font-weight:500">Fair, poor or replace</small></div>
+            <span style="color:#254a59;font-family:Sora,Manrope,sans-serif;font-size:19px;font-weight:700">2</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:0 22px 16px;padding-top:12px;border-top:1px solid #eef2f5">
+          <div style="display:flex;align-items:center;gap:7px;color:#254a59;font-size:10.5px;font-weight:600"><i style="display:block;width:7px;height:7px;border-radius:50%;background:#71c7ad"></i>Database connected <small style="color:#8296a0;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px">aquafleet_db</small></div>
+          <div style="display:flex;align-items:center;gap:7px;color:#254a59;font-size:10.5px;font-weight:600"><span style="color:#b44a42;font-weight:800">!</span>Recorded Incidents <strong style="font-family:Sora,Manrope,sans-serif;font-size:13px">6</strong></div>
+          <div style="display:flex;align-items:center;gap:7px;color:#254a59;font-size:10.5px;font-weight:600"><span style="color:#1c7595">◈</span>Scientific samples <strong style="font-family:Sora,Manrope,sans-serif;font-size:13px">8</strong></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;headerFrom&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#1266a5&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#1266a5&quot;,&quot;#0e527e&quot;,&quot;#12607f&quot;,&quot;#1b4f8f&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;headerTo&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#54c3e0&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#54c3e0&quot;,&quot;#4aa7cc&quot;,&quot;#63d6cf&quot;,&quot;#7fd0ef&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;countUp&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() {
+    const root = document.body;
+    const header = root.querySelector('[data-af-header]');
+    if (header && this.props.headerFrom && this.props.headerTo) {
+      header.style.background = 'linear-gradient(100deg,' + this.props.headerFrom + ' 0%,' + this.props.headerTo + ' 100%)';
+    }
+    if (this.props.countUp === false) return;
+    root.querySelectorAll('[data-af-count]').forEach((el, i) => {
+      const target = Number(el.getAttribute('data-af-count')) || 0;
+      const dur = 700, start = performance.now() + i * 70;
+      el.textContent = '0';
+      const step = (t) => {
+        const p = Math.max(0, Math.min(1, (t - start) / dur));
+        el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+}
+</script>
+</body>
+</html>

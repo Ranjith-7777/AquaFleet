@@ -2,7 +2,7 @@
 
 **Integrated Autonomous Underwater Expedition, Research Vessel Coordination, Marine Sample Lineage and Offshore Inspection Database**
 
-A DBMS course project. This repository currently contains only the **initial project scaffold** — no tables, CRUD APIs, authentication or complete frontend pages yet.
+A DBMS course project implementing the AquaFleet relational schema, authenticated REST API, role-based access control, dashboard, resource browsing and CRUD workflows.
 
 ---
 
@@ -26,43 +26,32 @@ A DBMS course project. This repository currently contains only the **initial pro
 ```
 AquaFleet/
 ├── backend/
-│   ├── app.py              # Flask app + /api/health endpoint
-│   ├── config.py           # Reads settings from environment variables
-│   ├── database.py         # get_db_connection() helper
-│   ├── authentication.py   # session helpers + login guard
-│   ├── create_demo_users.py # LOCAL demo account setup (run by hand)
-│   ├── requirements.txt    # Python dependencies
-│   ├── .env.example        # Template for your local .env
-│   └── routes/
-│       ├── __init__.py     # Blueprint package
-│       ├── auth.py         # login / me / logout
-│       ├── vessels.py      # CRUD for research_vessel
-│       ├── marine_zones.py # CRUD for marine_zone
-│       ├── vehicles.py     # CRUD for auv_rov
-│       ├── operators.py    # CRUD for operator + operator_contact
-│       ├── sensors.py      # CRUD for sensor
-│       ├── battery_packs.py # CRUD for battery_pack
-│       ├── offshore_assets.py # CRUD for offshore_asset
-│       ├── expeditions.py  # CRUD for expedition
-│       ├── missions.py     # CRUD for mission
-│       ├── mission_vehicles.py   # CRUD for mission_vehicle
-│       ├── mission_operators.py  # CRUD for mission_operator
-│       ├── vehicle_sensors.py    # CRUD for vehicle_sensor
-│       └── vehicle_batteries.py  # CRUD for vehicle_battery
+│   ├── app.py                    # Flask app, guards, health and Blueprints
+│   ├── authentication.py         # signed-session helpers + central RBAC
+│   ├── config.py / database.py   # environment config + MySQL connection
+│   ├── create_demo_users.py      # explicit local demo-account setup/reset
+│   ├── manage_database.py        # guarded initialization + tracked migrations
+│   ├── apply_database_upgrade.py # legacy Phase 3-only local helper
+│   ├── routes/                   # auth, reports and 20 domain Blueprints
+│   └── tests/                    # RBAC, DB objects, migration and regression
 ├── frontend/
-│   ├── index.html          # Bootstrap 5 landing page
-│   ├── css/
-│   │   └── style.css       # Custom styles
+│   ├── index.html                # authenticated SPA shell
+│   ├── css/style.css             # responsive AquaFleet visual system
 │   └── js/
-│       ├── api.js          # HTTP client (credentialed, central 401 hook)
-│       ├── ui.js           # safe DOM + formatting helpers
-│       ├── resources.js    # resource definitions
-│       ├── master-data.js  # CRUD forms
-│       ├── auth.js         # login screen, boot gate, logout
-│       └── app.js          # SPA coordinator
+│       ├── api.js / auth.js      # REST client and login/session UI
+│       ├── permissions.js        # frontend mirror of backend RBAC
+│       ├── resources.js          # resource/form definitions
+│       ├── master-data.js        # shared CRUD modal workflows
+│       ├── reporting.js          # five view-backed reports
+│       └── app.js / ui.js        # SPA coordination and DOM helpers
 ├── database/
-│   ├── schema.sql          # 20 domain tables + app_user, constraints, indexes
-│   └── sample_data.sql     # demo rows + validation queries
+│   ├── schema.sql                # 22 tables + DB programming objects
+│   ├── sample_data.sql           # deterministic domain demo reset
+│   ├── demo_transactions.sql     # commit/rollback/savepoint workflows
+│   ├── faculty_demo.sql          # ordered viva SQL demonstrations
+│   └── migrations/               # safe upgrades for existing databases
+├── docs/                         # final inventory, guides, runbook and viva Q&A
+├── scripts/verify.ps1            # complete automated verification runner
 ├── .gitignore
 └── README.md
 ```
@@ -133,7 +122,11 @@ Then open `.env` and fill in your own MySQL username and password. Leave `DB_NAM
 
 ## Database setup
 
-The database is named **`aquafleet_db`**. Both scripts are rerunnable: `schema.sql` drops and recreates every table, and `sample_data.sql` truncates and reloads every table.
+The database is named **`aquafleet_db`**. The commands in this section are for
+disposable local coursework databases: `schema.sql` drops and recreates every
+table, and `sample_data.sql` truncates and reloads demo rows. Never use these
+raw scripts against an existing or production database. Production and managed
+MySQL setup uses the guarded commands in `docs/RENDER_DEPLOYMENT.md`.
 
 ### Option A — MySQL command line
 
@@ -157,7 +150,7 @@ If `mysql` is not on your PATH on Windows, use the full path:
 
 1. Open MySQL Workbench and connect to your local MySQL 8 instance.
 2. **File → Open SQL Script…** and choose `database/schema.sql`.
-3. Click the lightning bolt (**Execute All**). The script creates `aquafleet_db` and all 20 tables.
+3. Click the lightning bolt (**Execute All**). The script creates `aquafleet_db` and all 22 tables.
 4. **File → Open SQL Script…** and choose `database/sample_data.sql`.
 5. Click **Execute All**. The inserts run first, then eight validation `SELECT` queries produce result grids.
 6. Right-click **aquafleet_db** in the Navigator and choose **Refresh All** to see the tables.
@@ -192,7 +185,8 @@ From `AquaFleet/backend` with the virtual environment active:
 python app.py
 ```
 
-The server starts at `http://localhost:5000`.
+The complete application starts at `http://localhost:5000`; Flask serves both
+the frontend and `/api` from the same origin.
 
 Test the health endpoint in a browser or with curl:
 
@@ -235,7 +229,7 @@ On failure it returns HTTP 500 with `success: false` and a short error message. 
 
 ---
 
-## Phase 9 — Authentication
+## Authentication and role-based access control
 
 **Every API below this section requires a logged-in session.** Only the two health endpoints and the login/logout endpoints are public.
 
@@ -258,14 +252,20 @@ Flask before_request  -->  session has user_id?  --no-->  401 Authentication req
                                   |
                                  yes
                                   v
-                           the resource route runs unchanged
+                       reload active user from MySQL
+                                  |
+                                  v
+                      authorize role + resource + method
+                         | allowed          | denied
+                         v                  v
+                  resource route     403 INSUFFICIENT_PERMISSIONS
 ```
 
 Three properties worth naming:
 
 - **The cookie is signed, not encrypted.** The browser can read it but cannot alter it without invalidating the `SECRET_KEY` signature, so the server trusts the identity inside it. That is why `user_id` and `role` are read from the session, never from the request body — a client sending `{"role":"ADMIN"}` is rejected as an unknown field.
 - **The cookie is `HttpOnly`.** JavaScript cannot read it, so an XSS bug cannot exfiltrate the session.
-- **`/api/auth/me` re-reads the account from MySQL.** A user deleted or deactivated after logging in loses access on their next call rather than when the cookie expires.
+- **Every protected request re-reads the account from MySQL.** Deactivation and role changes therefore take effect on the next API call without reissuing the cookie.
 
 ### The `app_user` table
 
@@ -282,7 +282,7 @@ CREATE TABLE app_user (
     CONSTRAINT pk_app_user          PRIMARY KEY (user_id),
     CONSTRAINT uq_app_user_username UNIQUE (username),
     CONSTRAINT chk_app_user_role
-        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER'))
+        CHECK (role IN ('ADMIN', 'OPERATOR', 'RESEARCHER', 'VIEWER'))
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 ```
 
@@ -322,16 +322,17 @@ Put it in `backend/.env` (which is git-ignored — never commit it):
 
 ```
 SECRET_KEY=<paste the generated value here>
-CORS_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
 SESSION_COOKIE_SECURE=False
+SESSION_LIFETIME_MINUTES=480
+LOGIN_RATE_LIMIT=10 per minute
 ```
 
 `SESSION_COOKIE_SECURE=False` is correct for local HTTP only. **Set it to `True` for any HTTPS deployment**, otherwise the session cookie travels in the clear. `app.py` refuses to start with the built-in fallback secret when `FLASK_DEBUG=False`.
 
-**2. Create the `app_user` table** — already included in `database/schema.sql`. On an existing database that predates Phase 9, add just this one table rather than re-running the whole schema:
+**2. Create or update the `app_user` table** — fresh databases receive it from `database/schema.sql`. For a database that already has the pre-RBAC table, run the one-time migration instead of rebuilding the schema:
 
 ```bash
-mysql -u root -p aquafleet_db -e "CREATE TABLE IF NOT EXISTS app_user (user_id INT AUTO_INCREMENT, username VARCHAR(50) NOT NULL, password_hash VARCHAR(255) NOT NULL, full_name VARCHAR(100) NOT NULL, role VARCHAR(20) NOT NULL, is_active BOOLEAN NOT NULL DEFAULT TRUE, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT pk_app_user PRIMARY KEY (user_id), CONSTRAINT uq_app_user_username UNIQUE (username), CONSTRAINT chk_app_user_role CHECK (role IN ('ADMIN','OPERATOR','RESEARCHER'))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+mysql -u root -p aquafleet_db < database/migrations/phase1_add_viewer_role.sql
 ```
 
 **3. Create the demonstration accounts**
@@ -346,14 +347,24 @@ venv\Scripts\python.exe create_demo_users.py
 
 The script is idempotent — run it as often as you like. It creates an account only when the username is absent, never resets an existing password, and never prints a hash. Flask does **not** run it at startup.
 
+For a deliberate local faculty-demo reset, run
+`venv\Scripts\python.exe create_demo_users.py --reset`. The explicit flag
+resets only the four usernames below to their documented password, canonical
+role, full name and active state. It never changes or deletes any other user.
+
 ### Demonstration credentials
 
 | Username | Password | Role | Full name |
 | --- | --- | --- | --- |
 | `admin` | `AquaAdmin@2026` | ADMIN | AquaFleet Administrator |
 | `researcher` | `AquaResearch@2026` | RESEARCHER | Marine Researcher |
+| `operator` | `AquaOperator@2026` | OPERATOR | Fleet Operations Officer |
+| `viewer` | `AquaViewer@2026` | VIEWER | AquaFleet Viewer |
 
-These are throwaway credentials for a local coursework deployment. They exist in plaintext only inside `create_demo_users.py` — never in `schema.sql`, `sample_data.sql` or any frontend file — and the database stores only their hashes. Change them before running this anywhere reachable by anyone else.
+These are throwaway credentials for a local coursework deployment. They exist
+only in local setup/documentation—never in `schema.sql`, `sample_data.sql` or
+any frontend file—and the database stores only their hashes. Change them before
+running this anywhere reachable by anyone else.
 
 ### Verifying with curl (Windows CMD)
 
@@ -443,14 +454,36 @@ A **nonexistent username returns exactly this same body**. The API never reveals
 **403 — correct password, deactivated account**
 
 ```json
-{ "success": false, "message": "This account is inactive. Contact an administrator." }
+{ "success": false, "message": "This account is inactive. Contact an administrator.", "error_code": "ACCOUNT_INACTIVE" }
 ```
 
 Distinct from 401 on purpose: the credentials were right, so the person is better served by being told to contact an administrator.
 
-### Role-based authorization is NOT enforced yet
+### Permission matrix
 
-`role` is stored, returned by the API and displayed in the sidebar, but **ADMIN, OPERATOR and RESEARCHER currently reach exactly the same functionality**. Any authenticated user can perform every CRUD operation. The column and the session field exist so that authorization can be layered on later without another migration — but as of Phase 9 the only distinction the backend makes is authenticated vs not.
+All active roles may read every registered resource. Mutation permissions are enforced by Flask before a route runs; hiding a button in the browser is only a usability feature.
+
+| Resource group | ADMIN | RESEARCHER | OPERATOR | VIEWER |
+| --- | --- | --- | --- | --- |
+| Master data | create/update/delete | read | read | read |
+| Expeditions | create/update/delete | create/update | read | read |
+| Missions | create/update/delete | create/update | update | read |
+| Mission vehicle/operator assignments | create/update/delete | create/update/delete | create/update/delete | read |
+| Vehicle sensor/battery assignments | create/update/delete | read | create/update/delete | read |
+| Telemetry, incidents, inspections, maintenance | create/update/delete | read | create/update/delete | read |
+| Samples and aliquots | create/update/delete | create/update | read | read |
+
+An authenticated user without a grant receives HTTP 403 and remains logged in:
+
+```json
+{
+  "success": false,
+  "message": "You do not have permission to perform this action",
+  "error_code": "INSUFFICIENT_PERMISSIONS"
+}
+```
+
+To verify a role, log in with its demonstration account, browse any resource, and compare the available controls with this matrix. A direct forbidden POST/PUT/DELETE must still return the 403 above even if a control is hidden.
 
 ### Security limitations of this local academic deployment
 
@@ -2053,39 +2086,212 @@ curl.exe -i -X DELETE http://127.0.0.1:5000/api/inspection-tasks/7
 
 ## Opening and testing the frontend
 
-Keep the Flask server running in its own terminal, then open the page.
-
-**Option A — open the file directly.** Double-click `AquaFleet/frontend/index.html`, or run:
-
-```bash
-start AquaFleet\frontend\index.html
-```
-
-**Option B — serve it on a local port (recommended).** In a second terminal, from the `AquaFleet` folder:
-
-```bash
-python -m http.server 5500 --directory frontend
-```
-
-Then visit `http://localhost:5500` in your browser.
+Keep the Flask server running and visit `http://localhost:5000`. The frontend is
+served directly by Flask, matching the production same-origin architecture.
+No Node.js server or frontend build is required.
 
 ### What you should see
 
-- The AquaFleet landing page with the subtitle "Marine Operations Database"
-- A green **Connected** badge with the message "AquaFleet API is running"
-- A **Check again** button that re-runs the health check
+- A login screen followed by the AquaFleet dashboard after authentication
+- A connected health indicator and live resource totals
+- Searchable tables and record details for all domain resources
+- Create/edit/delete controls that match the signed-in role's permission row
+- Relationship forms that show readable vessel, expedition, zone, vehicle,
+  operator, sensor, battery, sample and asset labels instead of raw IDs
 
-If the badge is red, the Flask server is not running — start it and click **Check again**.
-
----
-
-## Not included in this phase
-
-React, Node.js, Express, MongoDB, SQLAlchemy, Docker and authentication are deliberately excluded from this project.
+If the indicator is red, confirm Flask and MySQL are running and refresh the dashboard.
 
 ---
 
-## Next steps
+## Phase 2 — DBMS depth and reporting
 
-1. Add CRUD blueprints for the remaining resources under `backend/routes/`
-2. Build the frontend pages that consume those APIs
+Phase 2 keeps the normalized tables as the source of truth and adds reusable
+database programming objects for integrity and reporting. Re-run
+`database/schema.sql`, then `database/sample_data.sql`, to install them in a
+fresh database. The Reports item in the SPA is read-only for every role.
+
+### Views
+
+| View | Tables used | Purpose | Example |
+|---|---|---|---|
+| `vw_expedition_summary` | `expedition`, `research_vessel`, `mission` | Vessel and campaign details with a derived mission count | `SELECT * FROM vw_expedition_summary WHERE status = 'Active';` |
+| `vw_mission_operations` | `mission`, `expedition`, `marine_zone`, both mission junctions | Mission context, `TIMESTAMPDIFF` duration and assignment counts | `SELECT * FROM vw_mission_operations WHERE zone_id = 2;` |
+| `vw_vehicle_readiness` | `auv_rov`, `vehicle_sensor`, `vehicle_battery`, `maintenance_record` | Configuration and maintenance overview; an “open battery assignment” means only `end_cycle IS NULL` | `SELECT * FROM vw_vehicle_readiness WHERE status = 'Available';` |
+| `vw_sample_lineage` | `expedition`, `mission`, `sample`, `sample_aliquot` | Traceability from campaign to each sample and optional aliquot | `SELECT * FROM vw_sample_lineage WHERE sample_id = 1;` |
+| `vw_incident_overview` | `incident`, `mission`, `expedition`, `marine_zone` | Incident severity with operational location and campaign context | `SELECT * FROM vw_incident_overview WHERE severity = 'High';` |
+
+The views name every selected column and derive values rather than duplicating
+them in base tables.
+
+### Triggers
+
+| Trigger | Timing/event | Rule protected |
+|---|---|---|
+| `trg_mission_validate_bi` | Before mission insert | Depth is within the chosen zone and mission dates are within its expedition |
+| `trg_mission_validate_bu` | Before mission update | The same cross-table mission rules remain true after edits |
+| `trg_mission_vehicle_ready_bi` | Before assignment insert | A retired vehicle cannot be assigned to a mission |
+| `trg_mission_vehicle_ready_bu` | Before assignment update | An assignment cannot be changed to a retired vehicle |
+
+Flask performs the same checks early so API clients receive friendly errors.
+The rejection triggers use `SIGNAL SQLSTATE '45000'` because integrity must
+also hold for direct SQL, imports, and any future application client. They do
+not make hidden status changes.
+
+### Stored procedures
+
+| Procedure | Parameters | Result |
+|---|---|---|
+| `sp_get_expedition_report` | `IN p_expedition_id INT` | Expedition summary plus ordered mission summaries |
+| `sp_get_vehicle_maintenance_history` | `IN p_vehicle_id INT` | Vehicle readiness plus its maintenance history and costs |
+| `sp_get_mission_summary` | `IN p_mission_id INT` | Mission context, vehicle assignments and operator assignments |
+| `sp_get_expedition_metrics` | expedition ID plus three `OUT INT` values | Mission, incident and sample counts without inventing a cost relationship |
+
+Example calls:
+
+```sql
+CALL sp_get_expedition_report(1);
+CALL sp_get_vehicle_maintenance_history(1);
+CALL sp_get_mission_summary(1);
+CALL sp_get_expedition_metrics(1, @missions, @incidents, @samples);
+SELECT @missions, @incidents, @samples;
+```
+
+A nonexistent ID returns empty report result sets (or zero metrics) rather
+than modifying data.
+
+### Transaction demonstrations
+
+Run `database/demo_transactions.sql` only after loading the schema and sample
+data. It demonstrates two real atomic workflows and removes every committed
+demo row before finishing:
+
+1. Mission creation plus vehicle/operator assignment. One path deliberately
+   issues `ROLLBACK`; the successful path uses `COMMIT`.
+2. Sample creation plus dependent aliquots. A questionable aliquot is undone
+   with `ROLLBACK TO SAVEPOINT`, replaced, and then committed.
+
+Atomicity means each multi-table workflow is accepted as a consistent unit or
+none of it survives. `COMMIT` makes valid work durable, `ROLLBACK` abandons the
+whole transaction, and a `SAVEPOINT` permits a partial correction without
+discarding earlier valid statements.
+
+### Reporting API and UI
+
+The `reports` Flask blueprint exposes authenticated, read-only endpoints:
+
+- `GET /api/reports/expeditions?status=Completed`
+- `GET /api/reports/missions?status=Completed&zone_id=2`
+- `GET /api/reports/vehicle-readiness?status=Available`
+- `GET /api/reports/sample-lineage?expedition_id=1&mission_id=1`
+- `GET /api/reports/incidents?severity=High&expedition_id=1`
+
+Filters are allow-listed, validated and passed as SQL parameters. Successful
+responses use `{success, report, count, data}`; validation and database errors
+follow the existing AquaFleet error format. ADMIN, RESEARCHER, OPERATOR and
+VIEWER can read reports, while every report mutation is denied. The SPA uses
+five compact selector tabs and table-first results with clear empty states.
+
+### Index review
+
+Primary and unique keys already index identifiers. Existing explicit foreign
+key indexes support the main joins, including expedition-to-vessel,
+mission-to-expedition/zone, the two mission junctions, and mission-owned
+telemetry, samples, incidents and inspections.
+
+Phase 2 adds only three report-filter indexes:
+
+- `idx_expedition_status (status)` for expedition summary filtering.
+- `idx_mission_status (status)` for mission operations filtering.
+- `idx_incident_severity_time (severity, time_reported)` for severity filters
+  followed by the report's time ordering.
+
+`EXPLAIN` verification confirms all three are candidate keys. MySQL may still
+choose a full scan for the deliberately tiny sample dataset; the cost-based
+choice can change as operational rows grow.
+
+### Phase 2 verification
+
+The integration suite creates `aquafleet_phase2_test`, loads the schema and
+sample data, tests views/triggers/procedures/reports/query plans and the
+transaction demo, then drops that database. Normal local AquaFleet data is not
+changed.
+
+```bat
+set AQUAFLEET_RUN_DB_TESTS=1
+backend\venv\Scripts\python.exe -m unittest backend.tests.test_phase2_database -v
+backend\venv\Scripts\python.exe -m unittest backend.tests.test_rbac -v
+node frontend\tests\phase1.test.js
+node frontend\tests\phase2.test.js
+```
+
+---
+
+## Phase 3 — existing-database upgrade and hardening
+
+Phase 3 adds a non-destructive upgrade path for an existing `aquafleet_db`.
+It preserves base-table rows and application users while installing the
+VIEWER-compatible role constraint and the Phase 2 views, triggers, procedures
+and report indexes. The migration is idempotent, so an interrupted deployment
+can be checked and run again safely.
+
+### Upgrade an existing local database
+
+1. Stop writers and create a verified `mysqldump` backup outside committed
+   source files. Keep database credentials in environment variables or the
+   existing local `.env`; do not put them on the command line or in Git.
+2. From `backend`, run the guarded ordered migration utility:
+
+   ```bat
+   venv\Scripts\python.exe manage_database.py migrate
+   ```
+
+3. Run `venv\Scripts\python.exe manage_database.py status` and confirm the
+   complete schema and both tracked migrations are reported.
+4. Start Flask and check `GET /api/health` and
+   `GET /api/health/database` before allowing normal use.
+
+The ordered utility accepts the configured database name, refuses empty or
+incomplete databases, and records migration checksums in `schema_migration`.
+Do not substitute `schema.sql` for this step because the development bootstrap
+intentionally recreates tables and is only for disposable local installations.
+
+### Verification
+
+Run the complete project check from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\verify.ps1
+```
+
+Use `-SkipDatabase` only when MySQL is unavailable; that skips the integration
+coverage that proves migration idempotency, real-MySQL RBAC/CRUD/reporting,
+trigger and constraint rejections, transaction rollback/commit behavior and
+savepoint recovery. The database tests use disposable schemas and drop them
+afterward; they do not mutate the normal `aquafleet_db`.
+
+Phase 3 also verifies all role paths in a real browser. ADMIN has full domain
+administration; RESEARCHER manages expeditions, missions and scientific sample
+records; OPERATOR manages assigned operational records such as telemetry;
+VIEWER is read-only. Flask authorization remains the security boundary even
+when the SPA hides unavailable controls.
+
+---
+
+## Final evaluation package
+
+The Phase 4 freeze adds prepared, implementation-specific faculty material:
+
+- `database/faculty_demo.sql` — ordered SQL demonstrations with cleanup
+- `docs/FACULTY_DEMO_RUNBOOK.md` — deterministic 5–7 minute demo
+- `docs/FINAL_DATABASE_INVENTORY.md` — authoritative object/constraint inventory
+- `docs/ARCHITECTURE_AND_CODE_GUIDE.md` — request flow and repository guide
+- `docs/RELATIONSHIP_GUIDE.md` — cardinality, participation and FK actions
+- `docs/DBMS_CONCEPT_MAP.md` — direct course-concept mapping
+- `docs/ROLE_MATRIX.md` — accounts and effective permissions
+- `docs/VIVA_QA.md` — concise viva question bank
+- `docs/PROJECT_OVERVIEW.md` — implemented system overview
+- `docs/LIMITATIONS_AND_FUTURE_WORK.md` — honest scope and extensions
+
+Use the runbook as the presentation entry point. It names the exact accounts,
+screens, records, queries and expected outcomes, while avoiding unnecessary
+live data creation.
